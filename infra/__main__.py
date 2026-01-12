@@ -223,7 +223,7 @@ uploads_bucket = gcp.storage.Bucket(
     ],
     opts=pulumi.ResourceOptions(
         import_=uploads_bucket_import_id,
-        ignore_changes=["name"],
+        ignore_changes=["name", "forceDestroy"],
     ),
 )
 
@@ -240,7 +240,7 @@ summaries_bucket = gcp.storage.Bucket(
     storage_class="NEARLINE",  # Cost-effective for infrequent access
     opts=pulumi.ResourceOptions(
         import_=summaries_bucket_import_id,
-        ignore_changes=["name"],
+        ignore_changes=["name", "forceDestroy"],
     ),
 )
 
