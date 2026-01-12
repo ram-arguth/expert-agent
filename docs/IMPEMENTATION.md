@@ -164,29 +164,37 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 - [ ] **Cloud Scheduler:** Define job for memory summarization (daily, hits internal API endpoint).
 - [ ] **Networking:** Ensure Cloud Run can reach Cloud SQL (via VPC connector or public IP with authorized networks). HTTPS enforced.
 
-### 0.3 CI/CD Pipeline (GitHub Actions or Cloud Build)
+### 0.3 CI/CD Pipeline (Cloud Build Triggers - Pure GCP)
 
-- [ ] **On Push to `dev`:**
-  1. Install dependencies (pnpm cache)
-  2. Run lint, type-check, unit tests
+**Architecture:** GitHub Push → Cloud Build Trigger → Cloud Build
+
+This approach eliminates GitHub Actions for app CI/CD, keeping everything in GCP.
+
+- [ ] **Connect GitHub to Cloud Build:**
+  1. Go to Cloud Build > Triggers in GCP Console
+  2. Connect GitHub repository `ram-arguth/expert-agent`
+  3. Authorize Cloud Build GitHub App
+
+- [ ] **Create Cloud Build Triggers:**
+  - **`dev` trigger**: On push to `dev` branch → deploy to `expert-ai-dev`
+  - **`beta-*` trigger**: On tag `beta-*` → deploy to `expert-ai-beta` + E2E tests
+  - **`gamma-*` trigger**: On tag `gamma-*` → deploy to `expert-ai-gamma` + E2E tests
+  - **`prod-*` trigger**: On tag `prod-*` → deploy to `expert-ai-prod` (requires approval)
+
+- [ ] **Build Steps (cloudbuild.yaml):**
+  1. Install dependencies (pnpm with caching)
+  2. Run lint, type-check, unit tests (parallel)
   3. Build Next.js app
   4. Build Docker image, push to Artifact Registry
-  5. Deploy to `expert-ai-dev` Cloud Run
-  6. Run smoke test (healthcheck endpoint)
-- [ ] **On Tag `beta-*`:**
-  1. Deploy tagged image to `expert-ai-beta`
-  2. Run E2E tests (Playwright against beta)
-  3. Notify team (Slack/email)
-- [ ] **On Tag `gamma-*`:**
-  1. Deploy tagged image to `expert-ai-gamma`
-  2. Run E2E tests (Playwright against gamma)
-  3. Notify team (Slack/email)
-- [ ] **On Tag `prod-*`:**
-  1. Require manual approval
-  2. Deploy to `expert-ai-prod`
-  3. Run smoke test
-  4. Notify team
-- [ ] **Pulumi Integration:** Run `pulumi preview` on PR, `pulumi up` on merge to `main` (with approval for prod stack).
+  5. Deploy to Cloud Run
+  6. Run database migrations
+  7. Run smoke test (health endpoint)
+
+- [ ] **Cross-Project Permissions:**
+  - Dev/Beta/Gamma Cloud Build SAs need `artifactregistry.admin` on `expert-ai-root`
+  - Dev/Beta/Gamma Cloud Build SAs need `run.admin` on their respective projects
+
+- [ ] **Pulumi Infrastructure:** GitHub Actions workflow ONLY for infrastructure changes (not app CI/CD)
 
 ### 0.4 DNS & Domain Configuration
 
@@ -199,10 +207,12 @@ DNS zones are provisioned via Pulumi (CI/CD), but registrar delegation requires 
   - `ai-dev-oz-ly` zone in `expert-ai-dev` for `ai-dev.oz.ly`
 
 - [ ] **Nameserver Delegation** (manual at registrar):
-  After Pulumi deploys DNS zones, get NS records from outputs:
+      After Pulumi deploys DNS zones, get NS records from outputs:
+
   ```bash
   cd infra && pulumi stack output dns_nameservers
   ```
+
   Then configure at `oz.ly` registrar:
   - `ai` subdomain → prod nameservers
   - `ai-gamma` subdomain → gamma nameservers

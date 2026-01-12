@@ -57,7 +57,7 @@ Primary value proposition:
 | **Prompt Templating** | Handlebars                          | `{{placeholder}}` interpolation                               |
 | **Billing**           | Stripe                              | Checkout, Webhooks, Customer Portal                           |
 | **IaC**               | Pulumi (Python)                     | All infrastructure as code                                    |
-| **CI/CD**             | GitHub Actions + Cloud Build        | Auto-deploy on tags                                           |
+| **CI/CD**             | Cloud Build Triggers                | GitHub Push → Cloud Build (no GitHub Actions for app CI/CD)   |
 | **Observability**     | OpenTelemetry → Cloud Logging/Trace | W3C TraceContext propagation                                  |
 | **Default Region**    | `us-west1`                          | Single-region for dev/beta/gamma; multi-region later for prod |
 
