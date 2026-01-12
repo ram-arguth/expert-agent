@@ -759,6 +759,24 @@ We adopt strong DevOps practices to manage the complexity of deploying this plat
 - **Resource Management and Cost:** We use monitoring to ensure our usage of Vertex AI and other resources is within budget. If needed, set budget alerts on GCP. The serverless nature should handle scaling economically, but the LLM usage can be costly – hence the importance of token limits and possibly caching common queries or using lower tiers for non-critical tasks.
 - **Pre-commit Hooks:** Developers will have pre-commit hooks (using Husky or similar) to run basic checks before allowing commit, such as lint and unit tests. This speeds up catching issues earlier.
 
+### Cloud Build Optimization
+
+To maximize build speed and minimize developer wait times, we employ several optimizations:
+
+- **High-CPU Machine Type (`E2_HIGHCPU_32`):** Cloud Build runs on a 32-vCPU machine, providing ~8x faster builds compared to the default machine type. This significantly reduces CI feedback loop time.
+
+- **Docker Layer Caching (Kaniko):** Instead of standard Docker builds, we use [Kaniko](https://github.com/GoogleContainerTools/kaniko) which provides:
+  - Layer caching stored in Artifact Registry
+  - 60-80% faster image builds on subsequent runs
+  - No Docker daemon requirement (more secure)
+  - Compressed caching for smaller cache objects
+
+- **pnpm Store Caching:** Package manager cache is preserved across builds using Cloud Build volumes, eliminating redundant downloads.
+
+- **Parallel Step Execution:** Tests and builds run in parallel where dependencies allow, reducing total pipeline time.
+
+- **Incremental Builds:** Next.js build cache is preserved where possible to speed up application builds.
+
 With this CI/CD and environment setup, we can confidently and rapidly iterate, getting new features (or new expert agents) out to testing and then to production with minimal risk. Automated tests and observability will catch regressions or performance issues early.
 
 ## DNS and Domain Configuration

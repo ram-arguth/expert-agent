@@ -236,6 +236,29 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] **Stripe:** Create account, define Products/Prices for plans (Free, Pro, Enterprise). Get API keys (test + live). Configure webhook endpoint (`/api/stripe/webhook`).
 - [ ] **Email Service (Optional):** Set up SendGrid/Mailgun for transactional emails (invites, notifications). Configure SPF/DKIM DNS records.
 
+### 0.6 Cloud Build Optimization
+
+- [ ] **High-CPU Machine Type:**
+  - Use `E2_HIGHCPU_32` in `cloudbuild.yaml` for ~8x faster builds
+  - Verify machine type is applied: `options.machineType: E2_HIGHCPU_32`
+
+- [ ] **Docker Layer Caching (Kaniko):**
+  - Replace Docker build with Kaniko executor
+  - Configure cache repository: `--cache-repo=${ARTIFACT_REGISTRY}/cache`
+  - Set cache TTL: `--cache-ttl=168h` (7 days)
+  - Enable compressed caching: `--compressed-caching=true`
+
+- [ ] **pnpm Store Caching:**
+  - Configure volume mount for pnpm store: `/workspace/.pnpm-store`
+  - Set store directory in build steps: `pnpm config set store-dir /workspace/.pnpm-store`
+
+- [ ] **Parallel Step Execution:**
+  - Run tests parallel with build where possible
+  - Use `waitFor` to express only true dependencies
+
+- [ ] **Disk Size:**
+  - Increase disk for larger builds: `options.diskSizeGb: 100`
+
 ### 0.5 Observability Foundation
 
 - [ ] **Structured Logging:** Configure Winston or Pino for JSON logs. Include `traceId`, `spanId`, `userId`, `orgId` in log context.

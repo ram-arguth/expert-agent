@@ -60,6 +60,37 @@ Primary value proposition:
 | **CI/CD**             | GitHub Actions + Cloud Build        | Auto-deploy on tags                                         |
 | **Observability**     | OpenTelemetry → Cloud Logging/Trace | W3C TraceContext propagation                                |
 
+### 2.1 Latest Stable Libraries Mandate
+
+> **⚠️ ALWAYS use the most modern, industry-standard, and latest stable versions of libraries.**
+
+> [!CAUTION]
+> **PREFER MODERN OVER LEGACY**
+>
+> When selecting or recommending libraries:
+>
+> 1. **Always choose latest stable versions** – Check npm/PyPI for current versions
+> 2. **Prefer modern alternatives** – e.g., pnpm over npm, Vitest over Jest, TanStack Query over Redux
+> 3. **Stay current with frameworks** – Use Next.js 15, React 18, Node.js 20 LTS
+> 4. **Avoid deprecated patterns** – No class components, no legacy Context API patterns
+> 5. **Check maintenance status** – Prefer actively maintained packages with recent commits
+>
+> **Examples:**
+>
+> - ✅ `pnpm@9` (fast, efficient, modern)
+> - ❌ `npm@6` (legacy)
+> - ✅ `vitest` (modern, fast, ESM-first)
+> - ❌ `jest` (legacy, slower)
+> - ✅ `@tanstack/react-query@5` (latest)
+> - ❌ `react-query@3` (outdated)
+>
+> **Why this matters:**
+>
+> - Security patches are in latest versions
+> - Performance improvements compound
+> - Community support is strongest for current versions
+> - Reduces technical debt accumulation
+
 ---
 
 ## 3. Infrastructure & Deployment Rules
