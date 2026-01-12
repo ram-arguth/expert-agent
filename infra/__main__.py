@@ -235,11 +235,18 @@ summaries_bucket = gcp.storage.Bucket(
 # ============================================
 # Service Account for Cloud Run
 # ============================================
+# Import existing SA if it exists (created before Pulumi management)
+sa_import_id = f"projects/{project_id}/serviceAccounts/expert-agent-sa@{project_id}.iam.gserviceaccount.com"
+
 cloud_run_sa = gcp.serviceaccount.Account(
     f"expert-agent-sa-{env}",
     project=project_id,
-    account_id=f"expert-agent-sa",
+    account_id="expert-agent-sa",
     display_name=f"Expert Agent Cloud Run Service Account ({env})",
+    opts=pulumi.ResourceOptions(
+        import_=sa_import_id,
+        ignore_changes=["account_id"],  # Don't try to update immutable field
+    ),
 )
 
 # Service account permissions
