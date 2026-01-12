@@ -68,13 +68,11 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Setup Pulumi
-        uses: pulumi/actions@v5
-        with:
-          command: login
-          work-dir: infra
-        env:
-          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+      - name: Setup Pulumi CLI
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Login to GCS Backend
+        run: pulumi login ${{ env.PULUMI_BACKEND_URL }}
 
       - name: Pulumi Preview
         uses: pulumi/actions@v5
@@ -115,13 +113,18 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Setup Pulumi
-        uses: pulumi/actions@v5
-        with:
-          command: login
-          work-dir: infra
+      - name: Setup Pulumi CLI
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Login to GCS Backend
+        run: pulumi login ${{ env.PULUMI_BACKEND_URL }}
+
+      - name: Initialize Stack (if needed)
+        run: |
+          cd infra
+          pulumi stack select dev 2>/dev/null || pulumi stack init dev
         env:
-          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
       - name: Pulumi Up (Dev)
         uses: pulumi/actions@v5
@@ -164,13 +167,18 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Setup Pulumi
-        uses: pulumi/actions@v5
-        with:
-          command: login
-          work-dir: infra
+      - name: Setup Pulumi CLI
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Login to GCS Backend
+        run: pulumi login ${{ env.PULUMI_BACKEND_URL }}
+
+      - name: Initialize Stack (if needed)
+        run: |
+          cd infra
+          pulumi stack select ${{ matrix.stack }} 2>/dev/null || pulumi stack init ${{ matrix.stack }}
         env:
-          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
       - name: Pulumi Up
         uses: pulumi/actions@v5
@@ -212,13 +220,18 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Setup Pulumi
-        uses: pulumi/actions@v5
-        with:
-          command: login
-          work-dir: infra
+      - name: Setup Pulumi CLI
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Login to GCS Backend
+        run: pulumi login ${{ env.PULUMI_BACKEND_URL }}
+
+      - name: Initialize Stack (if needed)
+        run: |
+          cd infra
+          pulumi stack select prod 2>/dev/null || pulumi stack init prod
         env:
-          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
       - name: Pulumi Up (Prod)
         uses: pulumi/actions@v5
@@ -259,13 +272,18 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Setup Pulumi
-        uses: pulumi/actions@v5
-        with:
-          command: login
-          work-dir: infra
+      - name: Setup Pulumi CLI
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Login to GCS Backend
+        run: pulumi login ${{ env.PULUMI_BACKEND_URL }}
+
+      - name: Initialize Stack (if needed)
+        run: |
+          cd infra
+          pulumi stack select ${{ github.event.inputs.environment }} 2>/dev/null || pulumi stack init ${{ github.event.inputs.environment }}
         env:
-          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
       - name: Pulumi ${{ github.event.inputs.action }}
         uses: pulumi/actions@v5
