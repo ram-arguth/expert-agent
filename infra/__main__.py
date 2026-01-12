@@ -167,8 +167,16 @@ database = gcp.sql.Database(
     name="expert_agent",
 )
 
-# Database User
-db_password = pulumi.Output.secret(config.require_secret("db_password"))
+# Database User - Generate password automatically for CI/CD
+import pulumi_random as random
+
+db_password_resource = random.RandomPassword(
+    f"db-password-{env}",
+    length=32,
+    special=True,
+    override_special="!#$%&*()-_=+[]{}<>:?",  # Cloud SQL compatible special chars
+)
+db_password = pulumi.Output.secret(db_password_resource.result)
 
 db_user = gcp.sql.User(
     f"expert-agent-db-user-{env}",
