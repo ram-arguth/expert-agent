@@ -97,6 +97,7 @@ env_config = ENV_CONFIGS[env]
 required_apis = [
     "run.googleapis.com",
     "sqladmin.googleapis.com",
+    "compute.googleapis.com",  # Required for GCP provider region listing
     "storage.googleapis.com",
     "aiplatform.googleapis.com",
     "secretmanager.googleapis.com",
