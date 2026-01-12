@@ -252,6 +252,96 @@ for role in sa_roles:
     )
 
 # ============================================
+# CI/CD IAM Permissions
+# ============================================
+# These permissions are required for Cloud Build to deploy to Cloud Run
+
+# Get the Cloud Build service account for this project
+# Format: PROJECT_NUMBER@cloudbuild.gserviceaccount.com
+cloud_build_sa_email = f"{gcp.organizations.get_project(project=project_id).number}@cloudbuild.gserviceaccount.com"
+
+# Also need the Compute Engine default SA (used by some Cloud Build steps)
+compute_sa_email = f"{gcp.organizations.get_project(project=project_id).number}-compute@developer.gserviceaccount.com"
+
+# Grant Cloud Build SA permission to act as Cloud Run SA (for deployments)
+gcp.serviceaccount.IAMBinding(
+    f"cloud-build-acts-as-cloud-run-sa-{env}",
+    service_account_id=cloud_run_sa.id,
+    role="roles/iam.serviceAccountUser",
+    members=[
+        f"serviceAccount:{cloud_build_sa_email}",
+        f"serviceAccount:{compute_sa_email}",
+    ],
+)
+
+# Grant Cloud Build SA permission to deploy Cloud Run services
+gcp.projects.IAMMember(
+    f"cloud-build-run-admin-{env}",
+    project=project_id,
+    role="roles/run.admin",
+    member=f"serviceAccount:{cloud_build_sa_email}",
+)
+
+# Grant Cloud Build SA permission to write to Artifact Registry
+gcp.projects.IAMMember(
+    f"cloud-build-artifact-writer-{env}",
+    project=project_id,
+    role="roles/artifactregistry.writer",
+    member=f"serviceAccount:{cloud_build_sa_email}",
+)
+
+# ============================================
+# Cross-Project Permissions (GitHub Actions SA from root)
+# ============================================
+# The github-actions SA in root project needs permissions across all stages
+# This enables centralized CI/CD control from the root project
+github_actions_sa = f"serviceAccount:github-actions@{root_project_id}.iam.gserviceaccount.com"
+
+# Grant GitHub Actions SA editor access to this project (for Pulumi deployments)
+gcp.projects.IAMMember(
+    f"github-actions-editor-{env}",
+    project=project_id,
+    role="roles/editor",
+    member=github_actions_sa,
+)
+
+# Grant GitHub Actions SA ability to manage IAM (for creating service accounts)
+gcp.projects.IAMMember(
+    f"github-actions-iam-admin-{env}",
+    project=project_id,
+    role="roles/iam.securityAdmin",
+    member=github_actions_sa,
+)
+
+# Grant GitHub Actions SA ability to manage Cloud Run
+gcp.projects.IAMMember(
+    f"github-actions-run-admin-{env}",
+    project=project_id,
+    role="roles/run.admin",
+    member=github_actions_sa,
+)
+
+# Grant GitHub Actions SA ability to manage Artifact Registry
+gcp.projects.IAMMember(
+    f"github-actions-artifact-admin-{env}",
+    project=project_id,
+    role="roles/artifactregistry.admin",
+    member=github_actions_sa,
+)
+
+# ============================================
+# Artifact Registry (per project for isolation)
+# ============================================
+artifact_registry = gcp.artifactregistry.Repository(
+    f"expert-agent-docker-repo-{env}",
+    project=project_id,
+    location=region,
+    repository_id="expert-agent",
+    format="DOCKER",
+    description=f"Docker images for Expert Agent Platform ({env})",
+)
+
+# ============================================
 # Secret Manager Secrets (placeholders)
 # ============================================
 secrets = [
@@ -314,18 +404,7 @@ if env != "dev":  # Skip scheduler in dev
         opts=pulumi.ResourceOptions(depends_on=enabled_apis),
     )
 
-# ============================================
-# Artifact Registry (in root project only)
-# ============================================
-if env == "dev":  # Only create once, in dev context triggers root setup
-    artifact_registry = gcp.artifactregistry.Repository(
-        "expert-agent-docker-repo",
-        project=root_project_id,
-        location=region,
-        repository_id="expert-agent",
-        format="DOCKER",
-        description="Docker images for Expert Agent Platform",
-    )
+# NOTE: Artifact Registry is now created per-project (see line ~340) for isolation
 
 # ============================================
 # Cloud DNS Configuration
