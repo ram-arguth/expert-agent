@@ -138,22 +138,23 @@ steps:
     waitFor: ["build-image"]
 
   # ============================================
-  # Step 6: Run database migrations (parallel with smoke test setup)
+  # Step 6: Run database migrations
   # ============================================
-  - id: "run-migrations"
-    name: "node:20-alpine"
-    entrypoint: "sh"
-    args:
-      - "-c"
-      - |
-        npm install -g pnpm@9
-        pnpm config set store-dir /workspace/.pnpm-store
-        pnpm db:migrate || echo "Database migrations not configured yet, skipping"
-    secretEnv: ["DATABASE_URL"]
-    volumes:
-      - name: pnpm-store
-        path: /workspace/.pnpm-store
-    waitFor: ["deploy-cloud-run"]
+  # TODO: Re-enable once database is configured via IaC
+  # - id: "run-migrations"
+  #   name: "node:20-alpine"
+  #   entrypoint: "sh"
+  #   args:
+  #     - "-c"
+  #     - |
+  #       npm install -g pnpm@9
+  #       pnpm config set store-dir /workspace/.pnpm-store
+  #       pnpm db:migrate || echo "Database migrations not configured yet, skipping"
+  #   secretEnv: ["DATABASE_URL"]
+  #   volumes:
+  #     - name: pnpm-store
+  #       path: /workspace/.pnpm-store
+  #   waitFor: ["deploy-cloud-run"]
 
   # ============================================
   # Step 7: Smoke test
