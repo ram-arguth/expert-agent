@@ -485,21 +485,34 @@ www_cname_record = gcp.dns.RecordSet(
 # Cloud Run Domain Mapping
 # ============================================
 # Maps the custom domain to Cloud Run service
-# Requires: Domain verification via Google Search Console (one-time manual step)
 # SSL certificates are provisioned automatically by Cloud Run
-domain_mapping = gcp.cloudrun.DomainMapping(
-    f"domain-mapping-{env}",
-    project=project_id,
-    location=region,
-    name=domain_config["domain"],
-    metadata=gcp.cloudrun.DomainMappingMetadataArgs(
-        namespace=project_id,
-    ),
-    spec=gcp.cloudrun.DomainMappingSpecArgs(
-        route_name="expert-agent",  # Cloud Run service name
-    ),
-    opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
-)
+#
+# ⚠️ PREREQUISITE: Domain verification via Google Search Console (one-time manual step)
+#
+# Steps to enable domain mapping:
+# 1. Verify domain ownership at: https://search.google.com/search-console
+#    - Verify the apex domain (oz.ly) to cover all subdomains
+# 2. Add the github-actions SA as a verified owner:
+#    gcloud alpha iap web add-iam-policy-binding \
+#      --member="serviceAccount:github-actions@expert-ai-root.iam.gserviceaccount.com" \
+#      --role="roles/run.admin"
+# 3. Uncomment the domain_mapping resource below
+# 4. Push to dev to trigger Pulumi deployment
+#
+# TODO: Uncomment once domain verification is complete
+# domain_mapping = gcp.cloudrun.DomainMapping(
+#     f"domain-mapping-{env}",
+#     project=project_id,
+#     location=region,
+#     name=domain_config["domain"],
+#     metadata=gcp.cloudrun.DomainMappingMetadataArgs(
+#         namespace=project_id,
+#     ),
+#     spec=gcp.cloudrun.DomainMappingSpecArgs(
+#         route_name="expert-agent",  # Cloud Run service name
+#     ),
+#     opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
+# )
 
 # ============================================
 # Exports
