@@ -44,21 +44,22 @@ Primary value proposition:
 
 > **⚠️ These are non-negotiable. Do not suggest alternatives.**
 
-| Category              | Technology                          | Notes                                                       |
-| --------------------- | ----------------------------------- | ----------------------------------------------------------- |
-| **Frontend**          | Next.js 15 + React 18 + Radix UI    | SSR/SSG, accessible components                              |
-| **State Management**  | TanStack Query (React Query)        | Server state caching                                        |
-| **Backend**           | Next.js API Routes on Cloud Run     | Serverless Node.js                                          |
-| **Database**          | Cloud SQL for PostgreSQL            | Via Prisma ORM                                              |
-| **File Storage**      | Google Cloud Storage (GCS)          | Signed URLs for direct uploads                              |
-| **AI/LLM**            | Vertex AI Agent Engine + Gemini 3   | `gemini-3-pro-preview`, global endpoint                     |
-| **Authorization**     | Cedar Policy Engine                 | Fine-grained RBAC, default-deny                             |
-| **Schema Validation** | Zod                                 | Input/Output schemas, A2A-compatible via JSON Schema export |
-| **Prompt Templating** | Handlebars                          | `{{placeholder}}` interpolation                             |
-| **Billing**           | Stripe                              | Checkout, Webhooks, Customer Portal                         |
-| **IaC**               | Pulumi (Python)                     | All infrastructure as code                                  |
-| **CI/CD**             | GitHub Actions + Cloud Build        | Auto-deploy on tags                                         |
-| **Observability**     | OpenTelemetry → Cloud Logging/Trace | W3C TraceContext propagation                                |
+| Category              | Technology                          | Notes                                                         |
+| --------------------- | ----------------------------------- | ------------------------------------------------------------- |
+| **Frontend**          | Next.js 15 + React 18 + Radix UI    | SSR/SSG, accessible components                                |
+| **State Management**  | TanStack Query (React Query)        | Server state caching                                          |
+| **Backend**           | Next.js API Routes on Cloud Run     | Serverless Node.js                                            |
+| **Database**          | Cloud SQL for PostgreSQL            | Via Prisma ORM                                                |
+| **File Storage**      | Google Cloud Storage (GCS)          | Signed URLs for direct uploads                                |
+| **AI/LLM**            | Vertex AI Agent Engine + Gemini 3   | `gemini-3-pro-preview`, global endpoint                       |
+| **Authorization**     | Cedar Policy Engine                 | Fine-grained RBAC, default-deny                               |
+| **Schema Validation** | Zod                                 | Input/Output schemas, A2A-compatible via JSON Schema export   |
+| **Prompt Templating** | Handlebars                          | `{{placeholder}}` interpolation                               |
+| **Billing**           | Stripe                              | Checkout, Webhooks, Customer Portal                           |
+| **IaC**               | Pulumi (Python)                     | All infrastructure as code                                    |
+| **CI/CD**             | GitHub Actions + Cloud Build        | Auto-deploy on tags                                           |
+| **Observability**     | OpenTelemetry → Cloud Logging/Trace | W3C TraceContext propagation                                  |
+| **Default Region**    | `us-west1`                          | Single-region for dev/beta/gamma; multi-region later for prod |
 
 ### 2.1 Latest Stable Libraries Mandate
 
@@ -118,13 +119,13 @@ Primary value proposition:
 > These are documented in Section 3.2 and run EXACTLY ONCE per project lifetime.
 > After bootstrap, there are NO EXCEPTIONS to the CI/CD-first policy.
 
-| Action | Allowed Method | Prohibited |
-|--------|----------------|------------|
-| **GCP resource creation** | Pulumi via CI/CD | `gcloud` commands, Console UI |
-| **Secret updates** | Pulumi or Secret Manager API via CI | Manual console edits |
-| **Cloud Run deploys** | Cloud Build triggered by Git tags | `gcloud run deploy` locally |
-| **Database migrations** | CI/CD pipeline step | Manual `prisma migrate` in prod |
-| **Infra changes** | PR to `infra/` → CI runs `pulumi preview` → merge → `pulumi up` | Any ad-hoc changes |
+| Action                    | Allowed Method                                                  | Prohibited                      |
+| ------------------------- | --------------------------------------------------------------- | ------------------------------- |
+| **GCP resource creation** | Pulumi via CI/CD                                                | `gcloud` commands, Console UI   |
+| **Secret updates**        | Pulumi or Secret Manager API via CI                             | Manual console edits            |
+| **Cloud Run deploys**     | Cloud Build triggered by Git tags                               | `gcloud run deploy` locally     |
+| **Database migrations**   | CI/CD pipeline step                                             | Manual `prisma migrate` in prod |
+| **Infra changes**         | PR to `infra/` → CI runs `pulumi preview` → merge → `pulumi up` | Any ad-hoc changes              |
 
 **Why CI/CD-First Matters:**
 
@@ -351,22 +352,22 @@ export function withAuthZ(action: string) {
   return async (req: NextRequest, context: { params: Promise<Params> }) => {
     const session = await getSession();
     if (!session) return unauthorized();
-    
+
     const resource = await resolveResource(context);
     const decision = await cedar.isAuthorized({
-      principal: { type: 'User', id: session.userId },
-      action: { type: 'Action', id: action },
+      principal: { type: "User", id: session.userId },
+      action: { type: "Action", id: action },
       resource: resource,
     });
-    
+
     if (!decision.isAuthorized) return forbidden();
-    
+
     return executeHandler(req, context);
   };
 }
 
 // Usage in route.ts
-export const GET = withAuthZ('ReadAgent')(async (req, { params }) => {
+export const GET = withAuthZ("ReadAgent")(async (req, { params }) => {
   // Handler implementation
 });
 ```
@@ -379,10 +380,7 @@ export const GET = withAuthZ('ReadAgent')(async (req, { params }) => {
 // Every database query MUST include tenant filtering
 const files = await prisma.file.findMany({
   where: {
-    OR: [
-      { userId: session.userId },
-      { orgId: session.activeOrgId },
-    ],
+    OR: [{ userId: session.userId }, { orgId: session.activeOrgId }],
   },
 });
 ```
@@ -392,7 +390,8 @@ const files = await prisma.file.findMany({
 ```typescript
 // Pre-query check (before calling AI)
 const hasQuota = await checkTokenQuota(session.userId, estimatedTokens);
-if (!hasQuota) return NextResponse.json({ error: 'Quota exceeded' }, { status: 402 });
+if (!hasQuota)
+  return NextResponse.json({ error: "Quota exceeded" }, { status: 402 });
 
 // Post-query deduction (after AI response)
 await deductTokens(session.userId, response.usage.totalTokens);
@@ -409,9 +408,9 @@ const OutputSchema = z.object({
 
 // 2. Configure Gemini for structured output
 const response = await client.generateContent({
-  contents: [{ role: 'user', parts: [{ text: assembledPrompt }] }],
+  contents: [{ role: "user", parts: [{ text: assembledPrompt }] }],
   generationConfig: {
-    responseMimeType: 'application/json',
+    responseMimeType: "application/json",
     responseSchema: zodToJsonSchema(OutputSchema),
   },
 });
@@ -427,30 +426,32 @@ const markdown = renderToMarkdown(parsed);
 
 ```handlebars
 {{! packages/agents/legal-advisor/prompt.hbs }}
-You are a legal expert AI specializing in {{jurisdiction}} contract law.
-
-IMPORTANT: You MUST respond with a valid JSON object matching the Output Schema.
-Do NOT include any text outside the JSON object.
-
-## Contract to Analyze
-- **Type:** {{contractType}}
-- **Primary Document:** {{primaryContract.url}}
+You are a legal expert AI specializing in
+{{jurisdiction}}
+contract law. IMPORTANT: You MUST respond with a valid JSON object matching the
+Output Schema. Do NOT include any text outside the JSON object. ## Contract to
+Analyze - **Type:**
+{{contractType}}
+- **Primary Document:**
+{{primaryContract.url}}
 
 {{#if supportingDocuments.length}}
-## Supporting Documents
-{{#each supportingDocuments}}
-- {{this.filename}}: {{this.url}}
-{{/each}}
+  ## Supporting Documents
+  {{#each supportingDocuments}}
+    -
+    {{this.filename}}:
+    {{this.url}}
+  {{/each}}
 {{/if}}
 
 {{#if additionalContext}}
-## Additional Instructions
-{{additionalContext}}
+  ## Additional Instructions
+  {{additionalContext}}
 {{/if}}
 
 {{#if orgContext}}
-## Organization Context
-{{orgContext}}
+  ## Organization Context
+  {{orgContext}}
 {{/if}}
 ```
 
@@ -549,15 +550,15 @@ When working on this project, verify these are addressed:
 
 ## 9. Key Files Reference
 
-| Purpose | File |
-|---------|------|
-| Technical Design | `docs/DESIGN.md` |
-| Implementation Checklist | `docs/IMPEMENTATION.md` |
-| UX Analysis Rules | `docs/ux-analysis-rules.md` |
-| Infrastructure Code | `infra/__main__.py` |
-| CI/CD Workflow | `.github/workflows/ci.yaml` |
-| Cloud Build Config | `cloudbuild.yaml` |
-| AuthZ Exceptions | `authz-exceptions.json` |
+| Purpose                  | File                        |
+| ------------------------ | --------------------------- |
+| Technical Design         | `docs/DESIGN.md`            |
+| Implementation Checklist | `docs/IMPEMENTATION.md`     |
+| UX Analysis Rules        | `docs/ux-analysis-rules.md` |
+| Infrastructure Code      | `infra/__main__.py`         |
+| CI/CD Workflow           | `.github/workflows/ci.yaml` |
+| Cloud Build Config       | `cloudbuild.yaml`           |
+| AuthZ Exceptions         | `authz-exceptions.json`     |
 
 ---
 
@@ -586,21 +587,23 @@ When working on this project, verify these are addressed:
 
 ### Branch Rules
 
-| Branch | Purpose | Merge Strategy | Auto-Deploy |
-|--------|---------|----------------|-------------|
-| `feature/*` | New features | Merge to `dev` | No |
-| `fix/*` | Bug fixes | Merge to `dev` | No |
-| `dev` | Active development | Squash-merge to `main` | → `expert-ai-dev` |
-| `main` | Stable, deployable | Protected, squash-only | Tags trigger stage deploys |
+| Branch      | Purpose            | Merge Strategy         | Auto-Deploy                |
+| ----------- | ------------------ | ---------------------- | -------------------------- |
+| `feature/*` | New features       | Merge to `dev`         | No                         |
+| `fix/*`     | Bug fixes          | Merge to `dev`         | No                         |
+| `dev`       | Active development | Squash-merge to `main` | → `expert-ai-dev`          |
+| `main`      | Stable, deployable | Protected, squash-only | Tags trigger stage deploys |
 
 ### Stage Deployment Workflow
 
 **Step 1: Develop in `dev` branch**
+
 - All work happens on `dev` or feature branches
 - Tight iteration cycles with frequent commits
 - Auto-deploys to `expert-ai-dev` on every push
 
 **Step 2: Squash-merge to `main` (before stage deployment)**
+
 ```bash
 # On main branch
 git checkout main
@@ -611,12 +614,13 @@ git push origin main
 ```
 
 **Step 3: Tag on `main` for stage deployment**
+
 ```bash
 # Create tag for target environment (always on main!)
 git tag beta-20260111
 git push origin beta-20260111   # → deploys to expert-ai-beta
 
-git tag gamma-20260112  
+git tag gamma-20260112
 git push origin gamma-20260112  # → deploys to expert-ai-gamma
 
 git tag prod-20260115
@@ -641,11 +645,11 @@ git push origin prod-20260115   # → deploys to expert-ai-prod (requires approv
 
 ### Tag Format
 
-| Tag Pattern | Target Environment | Approval |
-|-------------|-------------------|----------|
-| `beta-YYYYMMDD` | `expert-ai-beta` | Auto |
-| `gamma-YYYYMMDD` | `expert-ai-gamma` | Auto |
-| `prod-YYYYMMDD` | `expert-ai-prod` | Manual |
+| Tag Pattern      | Target Environment | Approval |
+| ---------------- | ------------------ | -------- |
+| `beta-YYYYMMDD`  | `expert-ai-beta`   | Auto     |
+| `gamma-YYYYMMDD` | `expert-ai-gamma`  | Auto     |
+| `prod-YYYYMMDD`  | `expert-ai-prod`   | Manual   |
 
 ### Why This Pattern
 
@@ -654,4 +658,3 @@ git push origin prod-20260115   # → deploys to expert-ai-prod (requires approv
 3. **Easy Rollback**: Revert to previous tag if issues arise
 4. **Stage Isolation**: Each environment has its own promotion gate
 5. **Audit Trail**: Clear record of what code went to which environment when
-
