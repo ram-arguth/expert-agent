@@ -215,6 +215,46 @@ prod-YYYYMMDD tag   → expert-ai-prod (manual approval + E2E tests)
 - **`gamma-YYYYMMDD`**: Tag format for gamma promotion.
 - **`prod-YYYYMMDD`**: Tag format for production promotion.
 
+### 3.5 Service Account and Least-Privilege Principles
+
+> **⚠️ HARD REQUIREMENT:** Never use default service accounts. Always use dedicated SAs with least-privilege permissions.
+
+> [!CAUTION]
+> **DEDICATED SERVICE ACCOUNTS ONLY**
+>
+> - **NEVER use** `PROJECT_NUMBER-compute@developer.gserviceaccount.com` (Compute Engine default)
+> - **NEVER use** `PROJECT_NUMBER@cloudbuild.gserviceaccount.com` for production workloads
+> - **ALWAYS create** dedicated service accounts for each workload (e.g., `expert-agent-sa`, `cloud-build-deployer`)
+> - **ALWAYS apply** least-privilege: grant only the minimum permissions required
+> - **ALWAYS define** IAM grants in Pulumi IaC, never via ad-hoc `gcloud` commands
+
+| Workload       | Service Account                                         | Permissions                            |
+| -------------- | ------------------------------------------------------- | -------------------------------------- |
+| Cloud Run      | `expert-agent-sa@PROJECT.iam.gserviceaccount.com`       | `run.invoker`, database access, GCS    |
+| Cloud Build    | `cloud-build-deployer@PROJECT.iam.gserviceaccount.com`  | `artifactregistry.writer`, `run.admin` |
+| GitHub Actions | `github-actions@expert-ai-root.iam.gserviceaccount.com` | WIF-authenticated, limited scope       |
+
+**Why This Matters:**
+
+- **Security**: Default SAs have over-broad permissions
+- **Auditability**: Know exactly what each service can do
+- **Blast radius**: Compromise of one SA doesn't affect others
+- **Compliance**: Enterprise requirements mandate least-privilege
+
+**IAM Grants in IaC:**
+
+All IAM bindings MUST be defined in `infra/__main__.py`:
+
+```python
+# Example: Grant Cloud Build SA permission to deploy to Cloud Run
+gcp.projects.IAMBinding(
+    "cloud-build-run-admin",
+    project=project_id,
+    role="roles/run.admin",
+    members=[pulumi.Output.concat("serviceAccount:", cloud_build_sa.email)],
+)
+```
+
 ---
 
 ## 4. Coding Standards

@@ -132,7 +132,8 @@ steps:
       - "--min-instances=0"
       - "--max-instances=10"
       - "--set-env-vars=NODE_ENV=production,ENV=${_ENV}"
-      - "--set-secrets=DATABASE_URL=database-url:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest"
+      # TODO: Re-enable secrets once they're configured in IaC:
+      # - "--set-secrets=DATABASE_URL=database-url:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest"
       - "--service-account=${_SERVICE_NAME}-sa@${_PROJECT_ID}.iam.gserviceaccount.com"
     waitFor: ["build-image"]
 
