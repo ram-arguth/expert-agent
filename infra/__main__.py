@@ -191,6 +191,8 @@ db_user = gcp.sql.User(
 # ============================================
 
 # User uploads bucket
+# Import existing bucket if it exists
+uploads_bucket_import_id = f"{project_id}/expert-agent-uploads-{env}"
 uploads_bucket = gcp.storage.Bucket(
     f"expert-agent-uploads-{env}",
     project=project_id,
@@ -219,9 +221,15 @@ uploads_bucket = gcp.storage.Bucket(
             max_age_seconds=3600,
         ),
     ],
+    opts=pulumi.ResourceOptions(
+        import_=uploads_bucket_import_id,
+        ignore_changes=["name"],
+    ),
 )
 
 # Session summaries bucket (cold storage)
+# Import existing bucket if it exists
+summaries_bucket_import_id = f"{project_id}/expert-agent-summaries-{env}"
 summaries_bucket = gcp.storage.Bucket(
     f"expert-agent-summaries-{env}",
     project=project_id,
@@ -230,6 +238,10 @@ summaries_bucket = gcp.storage.Bucket(
     force_destroy=env != "prod",
     uniform_bucket_level_access=True,
     storage_class="NEARLINE",  # Cost-effective for infrequent access
+    opts=pulumi.ResourceOptions(
+        import_=summaries_bucket_import_id,
+        ignore_changes=["name"],
+    ),
 )
 
 # ============================================
@@ -473,6 +485,8 @@ dns_api = gcp.projects.Service(
 # - gamma: ai-gamma.oz.ly
 # - beta:  ai-beta.oz.ly
 # - dev:   ai-dev.oz.ly
+# Import existing zone if it exists
+dns_zone_import_id = f"projects/{project_id}/managedZones/{domain_config['dns_zone_name']}"
 dns_zone = gcp.dns.ManagedZone(
     f"dns-zone-{env}",
     project=project_id,
@@ -480,7 +494,11 @@ dns_zone = gcp.dns.ManagedZone(
     dns_name=f"{domain_config['domain']}.",  # Trailing dot required
     description=f"DNS zone for Expert Agent Platform ({env})",
     visibility="public",
-    opts=pulumi.ResourceOptions(depends_on=[dns_api]),
+    opts=pulumi.ResourceOptions(
+        depends_on=[dns_api],
+        import_=dns_zone_import_id,
+        ignore_changes=["name"],
+    ),
 )
 
 # Note: Cloud Run domain mapping requires:
