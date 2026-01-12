@@ -698,3 +698,19 @@ git push origin prod-20260115   # → deploys to expert-ai-prod (requires approv
 3. **Easy Rollback**: Revert to previous tag if issues arise
 4. **Stage Isolation**: Each environment has its own promotion gate
 5. **Audit Trail**: Clear record of what code went to which environment when
+
+---
+
+## 11. Assistant Interaction Preferences
+
+> **⚠️ MANDATORY:** Follow these interaction preferences when working in this repository.
+
+### 11.1 No Browser Usage
+
+- **NEVER use the browser subagent** for GCP console, GitHub, or other web interfaces
+- **ALWAYS use CLI tools** instead:
+  - `gcloud` for GCP operations (Cloud Build, Cloud Run, IAM, etc.)
+  - `gh` for GitHub operations
+  - `pulumi` for infrastructure state queries
+  - `curl` for API testing
+- This ensures reproducibility and keeps all operations scriptable
