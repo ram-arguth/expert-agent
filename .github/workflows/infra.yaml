@@ -7,15 +7,15 @@ on:
   push:
     branches: [main, dev]
     paths:
-      - 'infra/**'
+      - "infra/**"
   pull_request:
     branches: [main, dev]
     paths:
-      - 'infra/**'
+      - "infra/**"
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: "Environment to deploy"
         required: true
         type: choice
         options:
@@ -24,7 +24,7 @@ on:
           - gamma
           - prod
       action:
-        description: 'Pulumi action'
+        description: "Pulumi action"
         required: true
         type: choice
         options:
@@ -32,7 +32,8 @@ on:
           - up
 
 env:
-  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+  # GCS backend for Pulumi state (no Pulumi Cloud dependency)
+  PULUMI_BACKEND_URL: gs://expert-ai-pulumi-state
 
 jobs:
   # ============================================
@@ -54,7 +55,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -67,6 +68,14 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+        with:
+          command: login
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+
       - name: Pulumi Preview
         uses: pulumi/actions@v5
         with:
@@ -76,6 +85,7 @@ jobs:
           comment-on-pr: true
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
 
   # ============================================
   # Deploy Dev (on dev branch push)
@@ -92,7 +102,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -105,6 +115,14 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+        with:
+          command: login
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+
       - name: Pulumi Up (Dev)
         uses: pulumi/actions@v5
         with:
@@ -113,6 +131,7 @@ jobs:
           work-dir: infra
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
 
   # ============================================
   # Deploy Others (on main branch push)
@@ -132,7 +151,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -144,6 +163,14 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+        with:
+          command: login
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
 
       - name: Pulumi Up
         uses: pulumi/actions@v5
@@ -153,6 +180,7 @@ jobs:
           work-dir: infra
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
 
   # ============================================
   # Deploy Prod (requires manual approval)
@@ -161,7 +189,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: deploy-non-prod
     runs-on: ubuntu-latest
-    environment: production  # Requires manual approval
+    environment: production # Requires manual approval
     permissions:
       contents: read
       id-token: write
@@ -171,7 +199,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -184,6 +212,14 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+        with:
+          command: login
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+
       - name: Pulumi Up (Prod)
         uses: pulumi/actions@v5
         with:
@@ -192,6 +228,7 @@ jobs:
           work-dir: infra
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
 
   # ============================================
   # Manual Deployment (workflow_dispatch)
@@ -209,7 +246,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -222,6 +259,14 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
+      - name: Setup Pulumi
+        uses: pulumi/actions@v5
+        with:
+          command: login
+          work-dir: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
+
       - name: Pulumi ${{ github.event.inputs.action }}
         uses: pulumi/actions@v5
         with:
@@ -230,3 +275,4 @@ jobs:
           work-dir: infra
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_BACKEND_URL: ${{ env.PULUMI_BACKEND_URL }}
