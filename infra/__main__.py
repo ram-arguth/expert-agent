@@ -274,10 +274,11 @@ for role in sa_roles:
 
 # Get the Cloud Build service account for this project
 # Format: PROJECT_NUMBER@cloudbuild.gserviceaccount.com
-cloud_build_sa_email = f"{gcp.organizations.get_project(project=project_id).number}@cloudbuild.gserviceaccount.com"
+project_info = gcp.organizations.get_project(project_id)
+cloud_build_sa_email = f"{project_info.number}@cloudbuild.gserviceaccount.com"
 
 # Also need the Compute Engine default SA (used by some Cloud Build steps)
-compute_sa_email = f"{gcp.organizations.get_project(project=project_id).number}-compute@developer.gserviceaccount.com"
+compute_sa_email = f"{project_info.number}-compute@developer.gserviceaccount.com"
 
 # Grant Cloud Build SA permission to act as Cloud Run SA (for deployments)
 gcp.serviceaccount.IAMBinding(
