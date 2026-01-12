@@ -481,6 +481,21 @@ www_cname_record = gcp.dns.RecordSet(
     opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
 )
 
+# Google Site Verification TXT record (for domain mapping)
+# Each env has its own verification token from Google Search Console
+site_verification_token = config.get("site_verification_token")
+if site_verification_token:
+    site_verification_txt = gcp.dns.RecordSet(
+        f"dns-site-verification-{env}",
+        project=project_id,
+        managed_zone=dns_zone.name,
+        name=f"{domain_config['domain']}.",
+        type="TXT",
+        ttl=300,
+        rrdatas=[f'"{site_verification_token}"'],
+        opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
+    )
+
 # ============================================
 # Cloud Run Domain Mapping
 # ============================================
