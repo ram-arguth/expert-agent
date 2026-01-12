@@ -561,25 +561,97 @@ When working on this project, verify these are addressed:
 
 ---
 
-## 10. Git Branch Workflow
+## 10. Git Branch and Deployment Workflow
 
 > **HARD REQUIREMENT**: Keep `main` branch clean with squash-merged commits only.
-> Do NOT merge to `main` without explicit user approval.
+> Tags for stage deployments ALWAYS happen on `main` branch, never on `dev`.
 
-**Workflow for incremental work:**
+### Development Flow
 
-1. **All work on `dev` branch** – commit and push all incremental changes
-2. **Wait for explicit approval** – do NOT move `main` forward until user asks
-3. **Squash merge to `main`** – when requested, with comprehensive commit message
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DEVELOPMENT WORKFLOW                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  feature/* ──┐                                                          │
+│              ├──→ dev branch ──→ (squash-merge) ──→ main ──→ tag ──→ β │
+│  fix/*     ──┘         │                              │                 │
+│                        │                              │                 │
+│                        v                              v                 │
+│                   auto-deploy                   tag-triggered           │
+│                   to expert-ai-dev              deployments             │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-**What is acceptable:**
+### Branch Rules
 
-- ✅ Commit and push to `dev` branch
-- ✅ Multiple incremental commits on `dev`
-- ✅ Creating feature branches from `dev`
+| Branch | Purpose | Merge Strategy | Auto-Deploy |
+|--------|---------|----------------|-------------|
+| `feature/*` | New features | Merge to `dev` | No |
+| `fix/*` | Bug fixes | Merge to `dev` | No |
+| `dev` | Active development | Squash-merge to `main` | → `expert-ai-dev` |
+| `main` | Stable, deployable | Protected, squash-only | Tags trigger stage deploys |
 
-**What is NOT acceptable:**
+### Stage Deployment Workflow
 
-- ❌ Merging to `main` without explicit user request
-- ❌ Fast-forward merging `dev` to `main` (use squash merge only)
+**Step 1: Develop in `dev` branch**
+- All work happens on `dev` or feature branches
+- Tight iteration cycles with frequent commits
+- Auto-deploys to `expert-ai-dev` on every push
+
+**Step 2: Squash-merge to `main` (before stage deployment)**
+```bash
+# On main branch
+git checkout main
+git pull origin main
+git merge --squash dev
+git commit -m "release: [description of changes]"
+git push origin main
+```
+
+**Step 3: Tag on `main` for stage deployment**
+```bash
+# Create tag for target environment (always on main!)
+git tag beta-20260111
+git push origin beta-20260111   # → deploys to expert-ai-beta
+
+git tag gamma-20260112  
+git push origin gamma-20260112  # → deploys to expert-ai-gamma
+
+git tag prod-20260115
+git push origin prod-20260115   # → deploys to expert-ai-prod (requires approval)
+```
+
+### What is Acceptable
+
+- ✅ Frequent commits to `dev` branch
+- ✅ Feature branches merged to `dev`
+- ✅ Tight iteration development on `dev`
+- ✅ Squash-merge from `dev` to `main` when ready for stage deployment
+- ✅ Tags on `main` branch only
+
+### What is NOT Acceptable
+
+- ❌ Tags on `dev` branch (will not trigger stage deployments)
+- ❌ Fast-forward merge to `main` (always squash)
 - ❌ Direct commits to `main`
+- ❌ Merging to `main` without completing dev testing
+- ❌ Skipping `dev` → deploying directly from feature branch to stages
+
+### Tag Format
+
+| Tag Pattern | Target Environment | Approval |
+|-------------|-------------------|----------|
+| `beta-YYYYMMDD` | `expert-ai-beta` | Auto |
+| `gamma-YYYYMMDD` | `expert-ai-gamma` | Auto |
+| `prod-YYYYMMDD` | `expert-ai-prod` | Manual |
+
+### Why This Pattern
+
+1. **Clean History**: `main` has a clear, readable history of releases
+2. **Traceability**: Each tag points to a known-good squashed commit
+3. **Easy Rollback**: Revert to previous tag if issues arise
+4. **Stage Isolation**: Each environment has its own promotion gate
+5. **Audit Trail**: Clear record of what code went to which environment when
+
