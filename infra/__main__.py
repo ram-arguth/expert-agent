@@ -349,6 +349,9 @@ gcp.projects.IAMMember(
 # ============================================
 # Artifact Registry (per project for isolation)
 # ============================================
+# Import existing repository if it exists
+ar_import_id = f"projects/{project_id}/locations/{region}/repositories/expert-agent"
+
 artifact_registry = gcp.artifactregistry.Repository(
     f"expert-agent-docker-repo-{env}",
     project=project_id,
@@ -356,6 +359,10 @@ artifact_registry = gcp.artifactregistry.Repository(
     repository_id="expert-agent",
     format="DOCKER",
     description=f"Docker images for Expert Agent Platform ({env})",
+    opts=pulumi.ResourceOptions(
+        import_=ar_import_id,
+        ignore_changes=["repository_id"],
+    ),
 )
 
 # ============================================
