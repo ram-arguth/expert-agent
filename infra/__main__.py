@@ -468,8 +468,6 @@ dns_zone = gcp.dns.ManagedZone(
 # - Creates the necessary DNS records (A/AAAA) for the domain
 #
 # The nameservers are exported below for delegation at your registrar.
-# After delegation, create a Cloud Run domain mapping via:
-#   gcloud run domain-mappings create --service=expert-agent --domain=ai-dev.oz.ly
 
 # WWW subdomain CNAME (required since www. is a subdomain, not apex)
 www_cname_record = gcp.dns.RecordSet(
@@ -480,6 +478,26 @@ www_cname_record = gcp.dns.RecordSet(
     type="CNAME",
     ttl=300,
     rrdatas=["ghs.googlehosted.com."],  # Google-managed SSL endpoint
+    opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
+)
+
+# ============================================
+# Cloud Run Domain Mapping
+# ============================================
+# Maps the custom domain to Cloud Run service
+# Requires: Domain verification via Google Search Console (one-time manual step)
+# SSL certificates are provisioned automatically by Cloud Run
+domain_mapping = gcp.cloudrun.DomainMapping(
+    f"domain-mapping-{env}",
+    project=project_id,
+    location=region,
+    name=domain_config["domain"],
+    metadata=gcp.cloudrun.DomainMappingMetadataArgs(
+        namespace=project_id,
+    ),
+    spec=gcp.cloudrun.DomainMappingSpecArgs(
+        route_name="expert-agent",  # Cloud Run service name
+    ),
     opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
 )
 
