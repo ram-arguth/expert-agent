@@ -13,7 +13,6 @@ substitutions:
   _REGION: "us-central1"
   _SERVICE_NAME: "expert-agent"
   _ARTIFACT_REGISTRY: "us-central1-docker.pkg.dev/expert-ai-root/expert-agent"
-  _CACHE_BUCKET: "expert-ai-root-cache"
 
 options:
   logging: CLOUD_LOGGING_ONLY
