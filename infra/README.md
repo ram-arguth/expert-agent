@@ -153,3 +153,4 @@ Clear locks if a previous operation failed:
 pulumi cancel --stack dev
 ```
 \n# Triggered: Mon Jan 12 00:49:29 PST 2026
+\n# APIs pre-enabled via gcloud: Mon Jan 12 00:55:23 PST 2026
