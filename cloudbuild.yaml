@@ -186,7 +186,7 @@ steps:
 
         echo "❌ Smoke test failed after 5 attempts"
         exit 1
-    waitFor: ["run-migrations"]
+    waitFor: ["deploy-cloud-run"]
 
 availableSecrets:
   secretManager:
