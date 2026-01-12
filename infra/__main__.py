@@ -482,37 +482,67 @@ www_cname_record = gcp.dns.RecordSet(
 )
 
 # ============================================
+# Automated Domain Verification
+# ============================================
+# Uses GCP Site Verification API to verify domain ownership programmatically
+# This eliminates the need for manual Google Search Console verification
+
+# Enable Site Verification API
+site_verification_api = gcp.projects.Service(
+    f"enable-siteverification-api-{env}",
+    project=project_id,
+    service="siteverification.googleapis.com",
+    disable_on_destroy=False,
+)
+
+# Get verification token for DNS method
+verification_token = gcp.siteverification.get_token(
+    identifier=domain_config["domain"],
+    type="INET_DOMAIN",
+    verification_method="DNS_TXT",
+)
+
+# Add the verification TXT record to Cloud DNS
+verification_txt_record = gcp.dns.RecordSet(
+    f"dns-verification-txt-{env}",
+    project=project_id,
+    managed_zone=dns_zone.name,
+    name=f"{domain_config['domain']}.",
+    type="TXT",
+    ttl=300,
+    rrdatas=[f'"{verification_token.token}"'],
+    opts=pulumi.ResourceOptions(depends_on=[dns_zone, site_verification_api]),
+)
+
+# Complete the domain verification
+domain_verification = gcp.siteverification.WebResource(
+    f"domain-verification-{env}",
+    site=gcp.siteverification.WebResourceSiteArgs(
+        identifier=domain_config["domain"],
+        type="INET_DOMAIN",
+    ),
+    verification_method="DNS_TXT",
+    opts=pulumi.ResourceOptions(depends_on=[verification_txt_record]),
+)
+
+# ============================================
 # Cloud Run Domain Mapping
 # ============================================
 # Maps the custom domain to Cloud Run service
 # SSL certificates are provisioned automatically by Cloud Run
-#
-# ⚠️ PREREQUISITE: Domain verification via Google Search Console (one-time manual step)
-#
-# Steps to enable domain mapping:
-# 1. Verify domain ownership at: https://search.google.com/search-console
-#    - Verify the apex domain (oz.ly) to cover all subdomains
-# 2. Add the github-actions SA as a verified owner:
-#    gcloud alpha iap web add-iam-policy-binding \
-#      --member="serviceAccount:github-actions@expert-ai-root.iam.gserviceaccount.com" \
-#      --role="roles/run.admin"
-# 3. Uncomment the domain_mapping resource below
-# 4. Push to dev to trigger Pulumi deployment
-#
-# TODO: Uncomment once domain verification is complete
-# domain_mapping = gcp.cloudrun.DomainMapping(
-#     f"domain-mapping-{env}",
-#     project=project_id,
-#     location=region,
-#     name=domain_config["domain"],
-#     metadata=gcp.cloudrun.DomainMappingMetadataArgs(
-#         namespace=project_id,
-#     ),
-#     spec=gcp.cloudrun.DomainMappingSpecArgs(
-#         route_name="expert-agent",  # Cloud Run service name
-#     ),
-#     opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
-# )
+domain_mapping = gcp.cloudrun.DomainMapping(
+    f"domain-mapping-{env}",
+    project=project_id,
+    location=region,
+    name=domain_config["domain"],
+    metadata=gcp.cloudrun.DomainMappingMetadataArgs(
+        namespace=project_id,
+    ),
+    spec=gcp.cloudrun.DomainMappingSpecArgs(
+        route_name="expert-agent",  # Cloud Run service name
+    ),
+    opts=pulumi.ResourceOptions(depends_on=[domain_verification]),
+)
 
 # ============================================
 # Exports
