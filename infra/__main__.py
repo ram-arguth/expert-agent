@@ -460,38 +460,28 @@ dns_zone = gcp.dns.ManagedZone(
 # 1. Domain verification via Google Search Console (manual one-time step)
 # 2. SSL certificate is provisioned automatically by Cloud Run
 #
-# The A record will be created once Cloud Run service is deployed.
-# For now, we export the nameservers so the domain can be delegated.
+# IMPORTANT: CNAME records cannot be created at zone apex (e.g., ai-dev.oz.ly)
+# They can only be created for subdomains (e.g., www.ai-dev.oz.ly)
 #
-# After Cloud Run deployment, we'll need to add:
-# - A/AAAA records pointing to Cloud Run's reserved IPs
-# - Or use CNAME to ghs.googlehosted.com (for managed SSL)
+# For apex domains with Cloud Run, you must use Cloud Run Domain Mappings which:
+# - Automatically provisions SSL certificates
+# - Creates the necessary DNS records (A/AAAA) for the domain
+#
+# The nameservers are exported below for delegation at your registrar.
+# After delegation, create a Cloud Run domain mapping via:
+#   gcloud run domain-mappings create --service=expert-agent --domain=ai-dev.oz.ly
 
-# Placeholder A record for Cloud Run (will be updated by Cloud Build after deployment)
-# Using ghs.googlehosted.com as the target for Google-managed SSL
-dns_cname_record = gcp.dns.RecordSet(
-    f"dns-cname-{env}",
+# WWW subdomain CNAME (required since www. is a subdomain, not apex)
+www_cname_record = gcp.dns.RecordSet(
+    f"dns-www-cname-{env}",
     project=project_id,
     managed_zone=dns_zone.name,
-    name=f"{domain_config['domain']}.",
+    name=f"www.{domain_config['domain']}.",
     type="CNAME",
     ttl=300,
-    rrdatas=["ghs.googlehosted.com."],
+    rrdatas=["ghs.googlehosted.com."],  # Google-managed SSL endpoint
     opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
 )
-
-# WWW redirect (optional - points www.ai.oz.ly to ai.oz.ly for prod)
-if env == "prod":
-    www_cname_record = gcp.dns.RecordSet(
-        f"dns-www-cname-{env}",
-        project=project_id,
-        managed_zone=dns_zone.name,
-        name=f"www.{domain_config['domain']}.",
-        type="CNAME",
-        ttl=300,
-        rrdatas=[f"{domain_config['domain']}."],
-        opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
-    )
 
 # ============================================
 # Exports
