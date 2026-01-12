@@ -91,10 +91,12 @@ For each environment, the following resources are provisioned:
 
 ## CI/CD Integration
 
-The infrastructure is deployed via GitHub Actions:
+The infrastructure is deployed via **Cloud Build** (Sovereign Orchestration):
 
-1. **Infrastructure changes** are detected and applied via a separate Pulumi workflow
-2. **Application deployments** use Cloud Build to deploy to Cloud Run
+1. **Infrastructure changes** are detected and applied via `cloudbuild-infra.yaml`
+2. **Application deployments** use `cloudbuild.yaml` to deploy to Cloud Run
+
+All CI/CD runs 100% within GCP. No GitHub Actions are used.
 
 ### Manual Deployment (Emergency Only)
 
@@ -152,8 +154,10 @@ Clear locks if a previous operation failed:
 ```bash
 pulumi cancel --stack dev
 ```
+
 \n# Triggered: Mon Jan 12 00:49:29 PST 2026
 \n# APIs pre-enabled via gcloud: Mon Jan 12 00:55:23 PST 2026
 \n# SQL Admin API enabled in root: Mon Jan 12 00:57:42 PST 2026
 \n# IAM admin permission granted: Mon Jan 12 01:55:57 PST 2026
+
 # Last updated: Mon Jan 12 12:14:46 PST 2026

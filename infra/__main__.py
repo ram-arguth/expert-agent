@@ -308,45 +308,6 @@ gcp.projects.IAMMember(
 )
 
 # ============================================
-# Cross-Project Permissions (GitHub Actions SA from root)
-# ============================================
-# The github-actions SA in root project needs permissions across all stages
-# This enables centralized CI/CD control from the root project
-github_actions_sa = f"serviceAccount:github-actions@{root_project_id}.iam.gserviceaccount.com"
-
-# Grant GitHub Actions SA editor access to this project (for Pulumi deployments)
-gcp.projects.IAMMember(
-    f"github-actions-editor-{env}",
-    project=project_id,
-    role="roles/editor",
-    member=github_actions_sa,
-)
-
-# Grant GitHub Actions SA ability to manage IAM (for creating service accounts)
-gcp.projects.IAMMember(
-    f"github-actions-iam-admin-{env}",
-    project=project_id,
-    role="roles/iam.securityAdmin",
-    member=github_actions_sa,
-)
-
-# Grant GitHub Actions SA ability to manage Cloud Run
-gcp.projects.IAMMember(
-    f"github-actions-run-admin-{env}",
-    project=project_id,
-    role="roles/run.admin",
-    member=github_actions_sa,
-)
-
-# Grant GitHub Actions SA ability to manage Artifact Registry
-gcp.projects.IAMMember(
-    f"github-actions-artifact-admin-{env}",
-    project=project_id,
-    role="roles/artifactregistry.admin",
-    member=github_actions_sa,
-)
-
-# ============================================
 # Cloud Build Infrastructure SA (Dedicated)
 # ============================================
 # Dedicated SA for Pulumi infrastructure deployments via Cloud Build
@@ -431,12 +392,18 @@ secrets = [
 ]
 
 for secret_name in secrets:
+    # Import if exists from previous deployment
+    secret_import_id = f"projects/{project_id}/secrets/{secret_name}"
     secret = gcp.secretmanager.Secret(
         f"secret-{secret_name}-{env}",
         project=project_id,
         secret_id=secret_name,
         replication=gcp.secretmanager.SecretReplicationArgs(
             auto=gcp.secretmanager.SecretReplicationAutoArgs(),
+        ),
+        opts=pulumi.ResourceOptions(
+            import_=secret_import_id,
+            ignore_changes=["secret_id"],
         ),
     )
 
@@ -449,6 +416,10 @@ summarization_topic = gcp.pubsub.Topic(
     f"session-summarization-{env}",
     project=project_id,
     name=f"session-summarization-{env}",
+    opts=pulumi.ResourceOptions(
+        import_=f"projects/{project_id}/topics/session-summarization-{env}",
+        ignore_changes=["name"],
+    ),
 )
 
 # File processing topic
@@ -456,6 +427,10 @@ file_processing_topic = gcp.pubsub.Topic(
     f"file-processing-{env}",
     project=project_id,
     name=f"file-processing-{env}",
+    opts=pulumi.ResourceOptions(
+        import_=f"projects/{project_id}/topics/file-processing-{env}",
+        ignore_changes=["name"],
+    ),
 )
 
 # ============================================

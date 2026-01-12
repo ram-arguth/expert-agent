@@ -119,7 +119,7 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 **Goal:** Establish foundational cloud infrastructure, development pipeline, and tooling.
 
-**Prerequisites:** GCP organization with billing; domain name; GitHub repo access; Stripe/Apple Developer/Google Cloud accounts.
+**Prerequisites:** GCP organization with billing; domain name; Stripe/Apple Developer/Google Cloud accounts.
 
 ### 0.1 Repository & Tooling Setup
 
@@ -134,7 +134,7 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
   │   └── ui/               # Shared Radix UI components
   ├── infra/                # Pulumi IaC
   ├── docs/                 # DESIGN.md, IMPLEMENTATION.md, etc.
-  └── .github/workflows/    # CI/CD
+  └── cloudbuild.yaml       # CI/CD (Cloud Build)
   ```
 - [ ] **Branch Strategy:** `main` (squash-merged only), `dev` (active development). Tags: `beta-*`, `gamma-*`, `prod-*` for promotions.
 - [ ] **Tooling:** Configure ESLint, Prettier, Husky pre-commit hooks. Add `turbo` or `nx` for monorepo task orchestration.
@@ -166,9 +166,9 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 ### 0.3 CI/CD Pipeline (Cloud Build Triggers - Pure GCP)
 
-**Architecture:** GitHub Push → Cloud Build Trigger → Cloud Build
+**Architecture:** Git Push → Cloud Build Trigger → Cloud Build
 
-This approach eliminates GitHub Actions for app CI/CD, keeping everything in GCP.
+This project uses **100% Cloud Build** (Sovereign Orchestration) - no GitHub Actions.
 
 - [ ] **Connect GitHub to Cloud Build:**
   1. Go to Cloud Build > Triggers in GCP Console
@@ -194,7 +194,7 @@ This approach eliminates GitHub Actions for app CI/CD, keeping everything in GCP
   - Dev/Beta/Gamma Cloud Build SAs need `artifactregistry.admin` on `expert-ai-root`
   - Dev/Beta/Gamma Cloud Build SAs need `run.admin` on their respective projects
 
-- [ ] **Pulumi Infrastructure:** GitHub Actions workflow ONLY for infrastructure changes (not app CI/CD)
+- [ ] **Pulumi Infrastructure:** Cloud Build Trigger for infrastructure changes via `cloudbuild-infra.yaml`
 
 ### 0.4 DNS & Domain Configuration
 

@@ -1,121 +1,106 @@
 # Bootstrap Status
 
-Last updated: 2026-01-11T20:27:00-08:00
+Last updated: 2026-01-12T15:13:00-08:00
 
-## ✅ Bootstrap Complete!
+## ✅ Bootstrap Complete - Sovereign Orchestration Active
 
-All one-time manual bootstrap steps have been executed. **From this point forward, all infrastructure changes MUST go through CI/CD.**
+All one-time manual bootstrap steps have been executed. **From this point forward, all infrastructure and application changes MUST go through Cloud Build.**
+
+---
+
+## Architecture: Sovereign Orchestration (Cloud Build Only)
+
+This project uses **100% Cloud Build** for all CI/CD:
+
+| CI/CD Type         | Config File             | Trigger                             |
+| ------------------ | ----------------------- | ----------------------------------- |
+| **Infrastructure** | `cloudbuild-infra.yaml` | Cloud Build Trigger on `infra/**`   |
+| **Application**    | `cloudbuild.yaml`       | Cloud Build Trigger on code changes |
+
+**No GitHub Actions are used.** All CI/CD runs entirely within GCP's boundary.
 
 ---
 
 ## ✅ Verified: All Projects Ready
 
-| Project | Billing | SA Access | Status |
-|---------|---------|-----------|--------|
-| `expert-ai-root` | ✅ Enabled | N/A (root) | ✅ Ready |
-| `expert-ai-dev` | ✅ Enabled | ✅ roles/editor | ✅ Ready |
-| `expert-ai-beta` | ✅ Enabled | ✅ roles/editor | ✅ Ready |
-| `expert-ai-gamma` | ✅ Enabled | ✅ roles/editor | ✅ Ready |
-| `expert-ai-prod-484103` | ✅ Enabled | ✅ roles/editor | ✅ Ready |
+| Project                 | Billing    | Cloud Build Infra SA                         | Status   |
+| ----------------------- | ---------- | -------------------------------------------- | -------- |
+| `expert-ai-root`        | ✅ Enabled | N/A (root)                                   | ✅ Ready |
+| `expert-ai-dev`         | ✅ Enabled | ✅ `cloud-build-infra@expert-ai-dev`         | ✅ Ready |
+| `expert-ai-beta`        | ✅ Enabled | ✅ `cloud-build-infra@expert-ai-beta`        | ✅ Ready |
+| `expert-ai-gamma`       | ✅ Enabled | ✅ `cloud-build-infra@expert-ai-gamma`       | ✅ Ready |
+| `expert-ai-prod-484103` | ✅ Enabled | ✅ `cloud-build-infra@expert-ai-prod-484103` | ✅ Ready |
 
 ---
 
 ## ✅ Completed Bootstrap Steps
 
 ### Root Project (`expert-ai-root`)
+
 - [x] Enabled APIs: Cloud Build, Artifact Registry, Secret Manager, IAM
-- [x] Created Workload Identity Pool: `github-pool`
-- [x] Created OIDC Provider: `github-provider` (for GitHub Actions)
-- [x] Created Service Account: `github-actions@expert-ai-root.iam.gserviceaccount.com`
-- [x] Bound WIF to Service Account for repo `arguth/expert-agent`
-- [x] Created Artifact Registry: `us-central1-docker.pkg.dev/expert-ai-root/expert-agent`
+- [x] Created Pulumi State Bucket: `gs://expert-ai-pulumi-state`
+- [x] Created `pulumi-config-passphrase` secret (centralized for all envs)
 
-### Development Project (`expert-ai-dev`)
-- [x] Enabled APIs: Cloud Run, Cloud SQL, Cloud Storage, Vertex AI, Secret Manager, Cloud Build
-- [x] Granted `github-actions` SA editor access
-- [x] Billing enabled
+### Each Environment Project (dev, beta, gamma, prod)
 
-### Beta Project (`expert-ai-beta`)
-- [x] Granted `github-actions` SA editor access
-- [x] Billing enabled (2026-01-11)
-
-### Gamma Project (`expert-ai-gamma`)
-- [x] Granted `github-actions` SA editor access
-- [x] Billing enabled (2026-01-11)
-
-### Production Project (`expert-ai-prod-484103`)
-- [x] Granted `github-actions` SA editor access (2026-01-11)
-- [x] Billing enabled (2026-01-11)
+- [x] Created dedicated `cloud-build-infra` Service Account
+- [x] Granted cross-project access to root passphrase secret
+- [x] Granted access to Pulumi state bucket
+- [x] Enabled required APIs via Pulumi
 
 ---
 
-## 🔧 GitHub Repository Secrets Required
+## 🔧 Service Accounts
 
-Add these secrets to your GitHub repository:
-**Settings → Secrets and variables → Actions → New repository secret**
-
-| Secret Name | Value |
-|-------------|-------|
-| `WIF_PROVIDER` | `projects/658385619058/locations/global/workloadIdentityPools/github-pool/providers/github-provider` |
-| `WIF_SERVICE_ACCOUNT` | `github-actions@expert-ai-root.iam.gserviceaccount.com` |
-
----
-
-## 📋 Remaining Setup Steps (CI/CD-Based)
-
-All remaining steps can be done via CI/CD or local development:
-
-### 1. Add GitHub Secrets (if not already done)
-- Go to: https://github.com/arguth/expert-agent/settings/secrets/actions
-- Add `WIF_PROVIDER` and `WIF_SERVICE_ACCOUNT` from table above
-
-### 2. Initialize Pulumi Stacks
-This can be done locally once or via CI/CD:
-```bash
-cd infra
-pulumi login
-pulumi stack init dev
-pulumi stack init beta
-pulumi stack init gamma
-pulumi stack init prod
-```
-
-### 3. First Deployment
-Push to `dev` branch to trigger the CI/CD pipeline:
-```bash
-git push origin dev
-```
+| Workload                      | Service Account                                       | Purpose                               |
+| ----------------------------- | ----------------------------------------------------- | ------------------------------------- |
+| **Infrastructure Deployment** | `cloud-build-infra@{project}.iam.gserviceaccount.com` | Pulumi infrastructure via Cloud Build |
+| **Application Runtime**       | `expert-agent-sa@{project}.iam.gserviceaccount.com`   | Cloud Run service identity            |
+| **Default Cloud Build**       | `{number}@cloudbuild.gserviceaccount.com`             | Application builds only               |
 
 ---
 
 ## 🔐 CI/CD Flow (Active)
 
 ```
-Push to dev branch     → Deploys to expert-ai-dev (auto)
-Tag beta-YYYYMMDD      → Deploys to expert-ai-beta (auto + E2E tests)
-Tag gamma-YYYYMMDD     → Deploys to expert-ai-gamma (auto + E2E tests)  
-Tag prod-YYYYMMDD      → Deploys to expert-ai-prod (manual approval)
+Push to dev branch     → Cloud Build Trigger → Deploys to expert-ai-dev (auto)
+Tag beta-YYYYMMDD      → Cloud Build Trigger → Deploys to expert-ai-beta (auto + E2E tests)
+Tag gamma-YYYYMMDD     → Cloud Build Trigger → Deploys to expert-ai-gamma (auto + E2E tests)
+Tag prod-YYYYMMDD      → Cloud Build Trigger → Deploys to expert-ai-prod (manual approval)
 ```
 
 ---
 
 ## 📊 GCP Project Details
 
-| Environment | Project ID | Project Number |
-|-------------|------------|----------------|
-| Root (shared) | `expert-ai-root` | `658385619058` |
-| Development | `expert-ai-dev` | `908233028666` |
-| Beta | `expert-ai-beta` | `176343569448` |
-| Gamma | `expert-ai-gamma` | `937337640142` |
-| Production | `expert-ai-prod-484103` | `8386655776` |
+| Environment   | Project ID              | Project Number |
+| ------------- | ----------------------- | -------------- |
+| Root (shared) | `expert-ai-root`        | `658385619058` |
+| Development   | `expert-ai-dev`         | `908233028666` |
+| Beta          | `expert-ai-beta`        | `176343569448` |
+| Gamma         | `expert-ai-gamma`       | `937337640142` |
+| Production    | `expert-ai-prod-484103` | `8386655776`   |
 
 ---
 
-## ⚠️ No More Manual Operations
+## ⚠️ No Manual Operations
 
 **All bootstrap operations are complete.** Per the CI/CD-First Cardinal Rule in `GEMINI.md`:
 
 - ❌ NO manual `gcloud` commands for resource creation
-- ❌ NO manual `pulumi up` on production stacks  
+- ❌ NO manual `pulumi up` on production stacks
 - ❌ NO GCP Console resource modifications
-- ✅ All changes via PR → CI/CD pipeline
+- ✅ All changes via PR → Cloud Build pipeline
+
+---
+
+## 🗑️ Deprecated (Removed)
+
+The following legacy systems have been **removed** as part of the Sovereign Orchestration migration:
+
+| Resource                     | Status       | Notes                                 |
+| ---------------------------- | ------------ | ------------------------------------- |
+| GitHub Actions workflows     | ❌ Deleted   | `.github/workflows/` removed          |
+| `github-actions` SA          | 🔒 To Delete | Manual cleanup in `expert-ai-root`    |
+| Workload Identity Federation | 🔒 To Delete | `github-pool` in `expert-ai-root`     |
+| GitHub repo secrets          | 🔒 To Delete | `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT` |

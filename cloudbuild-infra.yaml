@@ -1,7 +1,7 @@
 # Cloud Build - Infrastructure Deployment (Pulumi)
 #
-# This replaces GitHub Actions for infrastructure CI/CD.
-# Triggered by: infra/** changes on dev branch
+# Sovereign Orchestration: All infrastructure changes managed via Cloud Build
+# Triggered by: Cloud Build Trigger on infra/** changes
 #
 # Uses dedicated service account: cloud-build-infra@{project}.iam.gserviceaccount.com
 # (NOT the default Cloud Build SA per least-privilege principles)
@@ -64,8 +64,8 @@ steps:
       - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
     secretEnv: ["PULUMI_CONFIG_PASSPHRASE"]
 
-# Available secrets (configure in Secret Manager)
+# Available secrets (from root project - shared across all environments)
 availableSecrets:
   secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/pulumi-config-passphrase/versions/latest
+    - versionName: projects/expert-ai-root/secrets/pulumi-config-passphrase/versions/latest
       env: "PULUMI_CONFIG_PASSPHRASE"

@@ -1,5 +1,5 @@
 # Cloud Build configuration for Expert Agent Platform
-# This file is triggered by GitHub Actions or directly via gcloud builds submit
+# Triggered by: Cloud Build Trigger or directly via gcloud builds submit
 #
 # Performance Optimizations:
 # - E2_HIGHCPU_32 machine for faster builds (8x faster than default)

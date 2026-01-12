@@ -338,7 +338,7 @@ async function queryAgent(agentId: string, validatedInput: LegalAdvisorInput) {
       (validatedInput.supportingDocuments || []).map(async (file) => ({
         filename: file.name,
         url: await uploadAndGetSignedUrl(file),
-      })),
+      }))
     ),
   };
 
@@ -365,13 +365,13 @@ async function queryAgent(agentId: string, validatedInput: LegalAdvisorInput) {
 
 **Key Design Decisions:**
 
-| Aspect | Decision | Rationale |
-| --- | --- | --- |
-| **Where interpolation happens** | Our backend (not Agent Engine) | Full control, testability, no vendor lock-in |
-| **Template engine** | Handlebars | Simple, widely used, supports iteration/conditionals |
-| **Output constraint** | Gemini structured output mode + Zod validation | Double enforcement: generation-time + post-validation |
-| **Session handling** | Vertex Agent Engine Sessions API | Built-in multi-turn context, memory management |
-| **File handling** | Presigned URLs in prompt OR tool calls | URLs for simple cases; tools for large/RAG files |
+| Aspect                          | Decision                                       | Rationale                                             |
+| ------------------------------- | ---------------------------------------------- | ----------------------------------------------------- |
+| **Where interpolation happens** | Our backend (not Agent Engine)                 | Full control, testability, no vendor lock-in          |
+| **Template engine**             | Handlebars                                     | Simple, widely used, supports iteration/conditionals  |
+| **Output constraint**           | Gemini structured output mode + Zod validation | Double enforcement: generation-time + post-validation |
+| **Session handling**            | Vertex Agent Engine Sessions API               | Built-in multi-turn context, memory management        |
+| **File handling**               | Presigned URLs in prompt OR tool calls         | URLs for simple cases; tools for large/RAG files      |
 
 **A2A Protocol Alignment:**
 
@@ -417,7 +417,7 @@ export const LegalAdvisorOutputSchema = z.object({
           .string()
           .optional()
           .describe("Relevant contract clause."),
-      }),
+      })
     )
     .describe("List of issues or observations found."),
   recommendations: z
@@ -426,7 +426,7 @@ export const LegalAdvisorOutputSchema = z.object({
         action: z.string().describe("Recommended action."),
         priority: z.enum(["immediate", "short-term", "long-term"]),
         rationale: z.string().describe("Why this action is recommended."),
-      }),
+      })
     )
     .describe("Actionable next steps."),
   appendix: z.string().optional().describe("Supporting data or references."),
@@ -530,14 +530,14 @@ Output (Zod: RiskAssessmentOutputSchema) --> validated JSON
 
 **Benefits of this Unified Approach:**
 
-| Aspect | Benefit |
-| --- | --- |
-| **Type Safety** | End-to-end: Form → Backend → Agent → Downstream Agent → UI |
-| **A2A Compatibility** | Our agents can participate in external A2A orchestration |
-| **Multi-Agent Chaining** | Structured output enables clean pipelines |
-| **Flexible Rendering** | Same data → Markdown, JSON API, charts, etc. |
-| **Validation** | Input and Output validated at every boundary |
-| **Reusability** | Shared schemas/renderers across similar agents |
+| Aspect                   | Benefit                                                    |
+| ------------------------ | ---------------------------------------------------------- |
+| **Type Safety**          | End-to-end: Form → Backend → Agent → Downstream Agent → UI |
+| **A2A Compatibility**    | Our agents can participate in external A2A orchestration   |
+| **Multi-Agent Chaining** | Structured output enables clean pipelines                  |
+| **Flexible Rendering**   | Same data → Markdown, JSON API, charts, etc.               |
+| **Validation**           | Input and Output validated at every boundary               |
+| **Reusability**          | Shared schemas/renderers across similar agents             |
 
 When developers create a new expert agent, they will:
 
@@ -742,7 +742,7 @@ We adopt strong DevOps practices to manage the complexity of deploying this plat
   - **Gamma (`expert-ai-gamma`):** possibly an intermediate pre-prod or load test environment. (The term "gamma" suggests maybe a limited release environment). We might use gamma as a short-lived environment for final verification or internal demos. Or it could be for a small external audience under NDA. This is optional; it depends on how the team wants to manage final QA.
   - **Prod (`expert-ai-prod`):** the live production environment for all users. Strictly controlled releases.
   - **Root Project (`expert-ai-root`):** a GCP project for shared infrastructure. This could host common resources like a container registry for images, perhaps the Pulumi state storage, or CI service accounts. It might also host global services that are not environment-specific (though ideally, each environment has its own isolated resources). The mention of root suggests maybe things like a central secrets manager or a monitoring project might reside there.
-- **CI/CD Pipeline:** We will use a CI/CD system (perhaps GitHub Actions, GitLab CI, or Cloud Build) that automates build, test, and deployment. The workflow:
+- **CI/CD Pipeline:** We use **Cloud Build Triggers** (100% within GCP - Sovereign Orchestration) that automates build, test, and deployment. The workflow:
   - Every commit to dev branch triggers CI to run unit tests, linting, etc. If tests pass, it auto-deploys to the Dev environment (Continuous Deployment for dev). Developers can then see their changes live in dev.
   - When we're ready to promote to Beta, we create a Git tag in the format `beta-YYYYMMDDHHmmss` (timestamped). The CI pipeline detects this tag and if it matches the pattern for beta, it takes the corresponding commit and deploys that to the Beta environment. Similarly, a tag `prod-YYYYMMDDHHmmss` would trigger deployment to Prod (after perhaps an approval step if we want human gate). This tagging strategy ensures traceability of exactly what code went out.
   - **Automated tests** will also run on these environments. We will maintain suites of:
@@ -785,12 +785,12 @@ We use a consistent domain structure across all environments for easy identifica
 
 ### Domain Structure
 
-| Environment | Domain | Purpose |
-|-------------|--------|---------|
-| **Production** | `ai.oz.ly` | Live production for all users |
-| **Gamma** | `ai-gamma.oz.ly` | Pre-production, load testing |
-| **Beta** | `ai-beta.oz.ly` | QA and beta user testing |
-| **Development** | `ai-dev.oz.ly` | Active development |
+| Environment     | Domain           | Purpose                       |
+| --------------- | ---------------- | ----------------------------- |
+| **Production**  | `ai.oz.ly`       | Live production for all users |
+| **Gamma**       | `ai-gamma.oz.ly` | Pre-production, load testing  |
+| **Beta**        | `ai-beta.oz.ly`  | QA and beta user testing      |
+| **Development** | `ai-dev.oz.ly`   | Active development            |
 
 ### Architecture
 
@@ -825,6 +825,7 @@ After deploying Pulumi infrastructure, the `dns_nameservers` output provides the
 ### Infrastructure as Code
 
 DNS zones are provisioned via Pulumi (`infra/__main__.py`), creating:
+
 1. Cloud DNS managed zone per environment
 2. CNAME record pointing to `ghs.googlehosted.com` for Cloud Run SSL
 3. WWW CNAME redirect for production (`www.ai.oz.ly` → `ai.oz.ly`)
@@ -832,7 +833,6 @@ DNS zones are provisioned via Pulumi (`infra/__main__.py`), creating:
 This ensures DNS infrastructure follows the same CI/CD-first principles as all other resources.
 
 For detailed setup instructions, see [docs/DNS.md](./DNS.md).
-
 
 ## Feature Checklist (MVP Scope)
 

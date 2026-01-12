@@ -57,7 +57,7 @@ Primary value proposition:
 | **Prompt Templating** | Handlebars                          | `{{placeholder}}` interpolation                               |
 | **Billing**           | Stripe                              | Checkout, Webhooks, Customer Portal                           |
 | **IaC**               | Pulumi (Python)                     | All infrastructure as code                                    |
-| **CI/CD**             | Cloud Build Triggers                | GitHub Push → Cloud Build (no GitHub Actions for app CI/CD)   |
+| **CI/CD**             | Cloud Build Triggers                | Sovereign Orchestration: 100% Cloud Build (no GitHub Actions) |
 | **Observability**     | OpenTelemetry → Cloud Logging/Trace | W3C TraceContext propagation                                  |
 | **Default Region**    | `us-west1`                          | Single-region for dev/beta/gamma; multi-region later for prod |
 
@@ -108,7 +108,7 @@ Primary value proposition:
 > Every infrastructure change MUST follow this principle:
 >
 > 1. **Define all resources in Pulumi IaC FIRST** – Never create resources manually
-> 2. **Deploy ONLY via CI/CD pipelines** – GitHub Actions triggers Cloud Build
+> 2. **Deploy ONLY via CI/CD pipelines** – Cloud Build Triggers (not GitHub Actions)
 > 3. **NEVER run `pulumi up` locally on production stacks** – Use CI/CD
 > 4. **NEVER run ad-hoc `gcloud` commands for deployments** – Define in IaC
 > 5. **NEVER modify production resources via GCP Console** – Causes drift
@@ -145,7 +145,6 @@ Primary value proposition:
 **When to run bootstrap:**
 
 - When creating a brand new project/environment from scratch
-- When setting up Workload Identity Federation for a new GitHub repository
 - When establishing the root project for shared infrastructure
 
 **Bootstrap operations (run in order):**
@@ -159,37 +158,58 @@ gcloud services enable cloudbuild.googleapis.com artifactregistry.googleapis.com
   secretmanager.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com \
   --project=expert-ai-root
 
-# 3. Create Workload Identity Federation for GitHub Actions
-gcloud iam workload-identity-pools create "github-pool" \
-  --project="expert-ai-root" --location="global" --display-name="GitHub Pool"
-
-gcloud iam workload-identity-pools providers create-oidc "github-provider" \
-  --project="expert-ai-root" --location="global" \
-  --workload-identity-pool="github-pool" \
-  --display-name="GitHub Provider" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
-  --issuer-uri="https://token.actions.githubusercontent.com"
-
-# 4. Create CI service account and grant permissions
-gcloud iam service-accounts create github-actions --project=expert-ai-root \
-  --description="GitHub Actions CI/CD service account"
-
-# Grant permissions to each environment project
-for project in expert-ai-dev expert-ai-beta expert-ai-gamma expert-ai-prod; do
-  gcloud projects add-iam-policy-binding $project \
-    --member="serviceAccount:github-actions@expert-ai-root.iam.gserviceaccount.com" \
-    --role="roles/owner"
-done
-
-# 5. Allow GitHub Actions to impersonate the service account
-gcloud iam service-accounts add-iam-policy-binding \
-  github-actions@expert-ai-root.iam.gserviceaccount.com \
+# 3. Create Pulumi state bucket (in root project)
+gcloud storage buckets create gs://expert-ai-pulumi-state \
   --project=expert-ai-root \
-  --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/YOUR_GITHUB_ORG/YOUR_REPO"
+  --location=us-west1 \
+  --uniform-bucket-level-access \
+  --public-access-prevention
+gcloud storage buckets update gs://expert-ai-pulumi-state --versioning
+
+# 4. Create centralized Pulumi passphrase secret
+PASSPHRASE=$(openssl rand -base64 32)
+echo -n "$PASSPHRASE" | gcloud secrets create pulumi-config-passphrase \
+  --project=expert-ai-root \
+  --data-file=-
+
+# 5. Bootstrap each environment (dev, beta, gamma, prod)
+for PROJECT in expert-ai-dev expert-ai-beta expert-ai-gamma expert-ai-prod-484103; do
+  echo "=== Bootstrapping $PROJECT ==="
+
+  # Create dedicated cloud-build-infra SA
+  gcloud iam service-accounts create cloud-build-infra \
+    --project=$PROJECT \
+    --display-name="Cloud Build Infrastructure Deployer"
+
+  # Grant access to root passphrase secret
+  gcloud secrets add-iam-policy-binding pulumi-config-passphrase \
+    --project=expert-ai-root \
+    --member="serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor" --quiet
+
+  # Grant access to Pulumi state bucket
+  gsutil iam ch serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com:objectAdmin \
+    gs://expert-ai-pulumi-state
+
+  # Grant storage.objectViewer for Cloud Build source bucket
+  gcloud projects add-iam-policy-binding $PROJECT \
+    --member="serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com" \
+    --role="roles/storage.objectViewer" --condition=None --quiet
+
+  # Grant logging.logWriter for build logs
+  gcloud projects add-iam-policy-binding $PROJECT \
+    --member="serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com" \
+    --role="roles/logging.logWriter" --condition=None --quiet
+
+  # Enable required APIs
+  gcloud services enable cloudresourcemanager.googleapis.com --project=$PROJECT --quiet
+
+  echo "✅ $PROJECT bootstrapped"
+done
 
 # 6. Create initial Pulumi stacks (run once per environment)
 cd infra
+pulumi login gs://expert-ai-pulumi-state
 pulumi stack init dev
 pulumi stack init beta
 pulumi stack init gamma
@@ -228,11 +248,11 @@ prod-YYYYMMDD tag   → expert-ai-prod (manual approval + E2E tests)
 > - **ALWAYS apply** least-privilege: grant only the minimum permissions required
 > - **ALWAYS define** IAM grants in Pulumi IaC, never via ad-hoc `gcloud` commands
 
-| Workload       | Service Account                                         | Permissions                            |
-| -------------- | ------------------------------------------------------- | -------------------------------------- |
-| Cloud Run      | `expert-agent-sa@PROJECT.iam.gserviceaccount.com`       | `run.invoker`, database access, GCS    |
-| Cloud Build    | `cloud-build-deployer@PROJECT.iam.gserviceaccount.com`  | `artifactregistry.writer`, `run.admin` |
-| GitHub Actions | `github-actions@expert-ai-root.iam.gserviceaccount.com` | WIF-authenticated, limited scope       |
+| Workload    | Service Account                                     | Permissions                                      |
+| ----------- | --------------------------------------------------- | ------------------------------------------------ |
+| Cloud Run   | `expert-agent-sa@PROJECT.iam.gserviceaccount.com`   | `run.invoker`, database access, GCS              |
+| App Build   | `PROJECT_NUMBER@cloudbuild.gserviceaccount.com`     | `artifactregistry.writer`, `run.admin`           |
+| Infra Build | `cloud-build-infra@PROJECT.iam.gserviceaccount.com` | `editor`, `projectIamAdmin`, state bucket access |
 
 **Why This Matters:**
 
@@ -503,11 +523,11 @@ When working on this project, verify these are addressed:
 
 ### Phase 0: Bootstrap & Infrastructure
 
-- [ ] Bootstrap commands run (Section 3.2)
-- [ ] Pulumi stacks created for all environments
-- [ ] GitHub Actions workflow configured with WIF
-- [ ] Cloud Build triggers set up
-- [ ] Artifact Registry created in root project
+- [x] Bootstrap commands run (Section 3.2)
+- [x] Pulumi stacks created for all environments
+- [x] Cloud Build triggers set up (Sovereign Orchestration)
+- [x] Artifact Registry created per environment
+- [ ] Cloud Build Triggers connected to GitHub repo
 - [ ] Rate limiting and circuit breakers configured
 - [ ] CSP headers and input size limits set
 
@@ -596,8 +616,8 @@ When working on this project, verify these are addressed:
 | Implementation Checklist | `docs/IMPEMENTATION.md`     |
 | UX Analysis Rules        | `docs/ux-analysis-rules.md` |
 | Infrastructure Code      | `infra/__main__.py`         |
-| CI/CD Workflow           | `.github/workflows/ci.yaml` |
-| Cloud Build Config       | `cloudbuild.yaml`           |
+| App CI/CD Config         | `cloudbuild.yaml`           |
+| Infra CI/CD Config       | `cloudbuild-infra.yaml`     |
 | AuthZ Exceptions         | `authz-exceptions.json`     |
 
 ---
@@ -707,17 +727,16 @@ git push origin prod-20260115   # → deploys to expert-ai-prod (requires approv
 
 ### 11.1 No Browser Usage
 
-- **NEVER use the browser subagent** for GCP console, GitHub, or other web interfaces
+- **NEVER use the browser subagent** for GCP console or other web interfaces
 - **ALWAYS use CLI tools** instead:
   - `gcloud` for GCP operations (Cloud Build, Cloud Run, IAM, etc.)
-  - `gh` for GitHub operations
   - `pulumi` for infrastructure state queries
   - `curl` for API testing
 - This ensures reproducibility and keeps all operations scriptable
 
 ### 11.2 CI/CD Status Monitoring
 
-When monitoring GitHub Actions or Cloud Build:
+When monitoring Cloud Build:
 
 - **Use short polling intervals** (30-60 seconds) instead of long waits (180+ seconds)
 - **Check status more frequently** to provide faster feedback to the user
@@ -725,10 +744,13 @@ When monitoring GitHub Actions or Cloud Build:
 
   ```bash
   # Quick status check
-  gh run view <id> --json status,conclusion --jq '.status + " " + .conclusion'
+  gcloud builds describe BUILD_ID --project=PROJECT_ID --format="value(status)"
 
-  # Check current step
-  gh run view <id> --json jobs --jq '.jobs[] | select(.status == "in_progress") | .steps[] | select(.status == "in_progress") | .name'
+  # List recent builds
+  gcloud builds list --project=PROJECT_ID --limit=5 --format="table(id,createTime,status)"
+
+  # Stream logs
+  gcloud builds log BUILD_ID --project=PROJECT_ID --stream
   ```
 
 - **Avoid**: Long `WaitDurationSeconds` values (180+) when polling `command_status`
