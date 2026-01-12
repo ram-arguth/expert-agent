@@ -152,3 +152,4 @@ Clear locks if a previous operation failed:
 ```bash
 pulumi cancel --stack dev
 ```
+\n# Triggered: Mon Jan 12 00:49:29 PST 2026
