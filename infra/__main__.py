@@ -19,7 +19,7 @@ import pulumi_gcp as gcp
 # ============================================
 config = Config()
 env = config.require("env")  # dev, beta, gamma, prod
-region = config.get("region") or "us-central1"
+region = config.get("region") or "us-west1"
 
 # Project IDs (must match actual GCP project IDs)
 projects = {

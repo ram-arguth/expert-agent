@@ -10,9 +10,9 @@
 substitutions:
   _ENV: "dev"
   _PROJECT_ID: "expert-ai-dev"
-  _REGION: "us-central1"
+  _REGION: "us-west1"
   _SERVICE_NAME: "expert-agent"
-  _ARTIFACT_REGISTRY: "us-central1-docker.pkg.dev/expert-ai-root/expert-agent"
+  _ARTIFACT_REGISTRY: "us-west1-docker.pkg.dev/expert-ai-root/expert-agent"
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -87,28 +87,31 @@ steps:
     waitFor: ["install-deps"] # Run in parallel with tests
 
   # ============================================
-  # Step 4: Build Docker image with Kaniko (layer caching)
+  # Step 4: Build Docker image
   # ============================================
-  # Kaniko provides Docker layer caching via GCS, reducing build times by 60-80%
   - id: "build-image"
-    name: "gcr.io/kaniko-project/executor:latest"
+    name: "gcr.io/cloud-builders/docker"
     args:
-      - "--dockerfile=Dockerfile"
-      - "--context=dir:///workspace"
-      - "--destination=${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${SHORT_SHA}"
-      - "--destination=${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${_ENV}-latest"
-      - "--build-arg=ENV=${_ENV}"
-      # Enable caching to GCS bucket for faster subsequent builds
-      - "--cache=true"
-      - "--cache-ttl=168h" # 7 days cache TTL
-      - "--cache-repo=${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}/cache"
-      # Use compressed caching for smaller cache objects
-      - "--compressed-caching=true"
-      # Reproduce builds for layer caching
-      - "--reproducible"
-      # Snapshot mode for faster builds
-      - "--snapshot-mode=redo"
+      - "build"
+      - "-t"
+      - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${SHORT_SHA}"
+      - "-t"
+      - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${_ENV}-latest"
+      - "--build-arg"
+      - "ENV=${_ENV}"
+      - "."
     waitFor: ["build-app", "run-tests"]
+
+  # ============================================
+  # Step 5: Push to Artifact Registry
+  # ============================================
+  - id: "push-image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "--all-tags"
+      - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}"
+    waitFor: ["build-image"]
 
   # ============================================
   # Step 5: Deploy to Cloud Run

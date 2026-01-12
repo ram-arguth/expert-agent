@@ -1,5 +1,5 @@
 config:
   expert-agent-infra:env: prod
-  expert-agent-infra:region: us-central1
+  expert-agent-infra:region: us-west1
   gcp:project: expert-ai-prod-484103
-  gcp:region: us-central1
+  gcp:region: us-west1

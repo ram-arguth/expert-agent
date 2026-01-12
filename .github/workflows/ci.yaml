@@ -19,7 +19,7 @@ env:
   PROJECT_BETA: expert-ai-beta
   PROJECT_GAMMA: expert-ai-gamma
   PROJECT_PROD: expert-ai-prod
-  REGION: us-central1
+  REGION: us-west1
   SERVICE_NAME: expert-agent
 
 jobs:
