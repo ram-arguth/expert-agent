@@ -1,0 +1,4 @@
+[
+  "app/api/health/route.ts",
+  "app/api/stripe/webhook/route.ts"
+]
