@@ -154,3 +154,4 @@ pulumi cancel --stack dev
 ```
 \n# Triggered: Mon Jan 12 00:49:29 PST 2026
 \n# APIs pre-enabled via gcloud: Mon Jan 12 00:55:23 PST 2026
+\n# SQL Admin API enabled in root: Mon Jan 12 00:57:42 PST 2026
