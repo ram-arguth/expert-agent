@@ -36,10 +36,10 @@ steps:
       - |
         # Install pnpm globally
         npm install -g pnpm@9
-        
+
         # Configure pnpm store location for caching
         pnpm config set store-dir /workspace/.pnpm-store
-        
+
         # Install dependencies (allow failure for initial setup without lockfile)
         pnpm install || pnpm install --no-frozen-lockfile
     volumes:
@@ -85,7 +85,7 @@ steps:
     volumes:
       - name: pnpm-store
         path: /workspace/.pnpm-store
-    waitFor: ["install-deps"]  # Run in parallel with tests
+    waitFor: ["install-deps"] # Run in parallel with tests
 
   # ============================================
   # Step 4: Build Docker image with Kaniko (layer caching)
@@ -101,7 +101,7 @@ steps:
       - "--build-arg=ENV=${_ENV}"
       # Enable caching to GCS bucket for faster subsequent builds
       - "--cache=true"
-      - "--cache-ttl=168h"  # 7 days cache TTL
+      - "--cache-ttl=168h" # 7 days cache TTL
       - "--cache-repo=${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}/cache"
       # Use compressed caching for smaller cache objects
       - "--compressed-caching=true"
@@ -164,22 +164,22 @@ steps:
         # Wait for service to be ready
         echo "Waiting for Cloud Run service to be ready..."
         sleep 15
-        
-        # Get service URL
-        SERVICE_URL=$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')
-        echo "Service URL: $SERVICE_URL"
-        
+
+        # Get service URL (use $$ to escape from Cloud Build substitution)
+        SERVICE_URL=$$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')
+        echo "Service URL: $$SERVICE_URL"
+
         # Health check with retries
         for i in 1 2 3 4 5; do
-          if curl -sf "$SERVICE_URL/api/health"; then
+          if curl -sf "$$SERVICE_URL/api/health"; then
             echo ""
-            echo "✅ Smoke test passed: $SERVICE_URL"
+            echo "✅ Smoke test passed: $$SERVICE_URL"
             exit 0
           fi
-          echo "Attempt $i failed, retrying in 10s..."
+          echo "Attempt $$i failed, retrying in 10s..."
           sleep 10
         done
-        
+
         echo "❌ Smoke test failed after 5 attempts"
         exit 1
     waitFor: ["run-migrations"]
