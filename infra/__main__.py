@@ -563,6 +563,8 @@ if site_verification_token:
 domain_verified = config.get_bool("domain_verified") or False
 
 if domain_verified:
+    # Import existing domain mapping if it exists
+    domain_mapping_import_id = f"locations/{region}/namespaces/{project_id}/domainmappings/{domain_config['domain']}"
     domain_mapping = gcp.cloudrun.DomainMapping(
         f"domain-mapping-{env}",
         project=project_id,
@@ -574,7 +576,17 @@ if domain_verified:
         spec=gcp.cloudrun.DomainMappingSpecArgs(
             route_name="expert-agent",  # Cloud Run service name
         ),
-        opts=pulumi.ResourceOptions(depends_on=[dns_zone]),
+        opts=pulumi.ResourceOptions(
+            depends_on=[dns_zone],
+            import_=domain_mapping_import_id,
+            ignore_changes=["name"],
+            # Don't wait forever for domain mapping to become ready
+            # The Cloud Run service is deployed separately by app build
+            custom_timeouts=pulumi.CustomTimeouts(
+                create="2m",
+                update="2m",
+            ),
+        ),
     )
     export("domain_mapping_url", f"https://{domain_config['domain']}")
 else:
