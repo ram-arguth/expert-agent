@@ -114,7 +114,7 @@ jobs:
           gcloud builds submit \
             --project=${{ env.PROJECT_DEV }} \
             --config=cloudbuild.yaml \
-            --substitutions=_ENV=dev,_PROJECT_ID=${{ env.PROJECT_DEV }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
+            --substitutions=SHORT_SHA=${{ github.sha }},_ENV=dev,_PROJECT_ID=${{ env.PROJECT_DEV }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
 
   # ============================================
   # Deploy to Beta (on beta-* tag)
@@ -143,7 +143,7 @@ jobs:
           gcloud builds submit \
             --project=${{ env.PROJECT_BETA }} \
             --config=cloudbuild.yaml \
-            --substitutions=_ENV=beta,_PROJECT_ID=${{ env.PROJECT_BETA }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
+            --substitutions=SHORT_SHA=${{ github.sha }},_ENV=beta,_PROJECT_ID=${{ env.PROJECT_BETA }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
 
       - name: Run E2E Tests (Playwright)
         run: |
@@ -180,7 +180,7 @@ jobs:
           gcloud builds submit \
             --project=${{ env.PROJECT_GAMMA }} \
             --config=cloudbuild.yaml \
-            --substitutions=_ENV=gamma,_PROJECT_ID=${{ env.PROJECT_GAMMA }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
+            --substitutions=SHORT_SHA=${{ github.sha }},_ENV=gamma,_PROJECT_ID=${{ env.PROJECT_GAMMA }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
 
       - name: Run E2E Tests (Playwright)
         run: |
@@ -218,7 +218,7 @@ jobs:
           gcloud builds submit \
             --project=${{ env.PROJECT_PROD }} \
             --config=cloudbuild.yaml \
-            --substitutions=_ENV=prod,_PROJECT_ID=${{ env.PROJECT_PROD }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
+            --substitutions=SHORT_SHA=${{ github.sha }},_ENV=prod,_PROJECT_ID=${{ env.PROJECT_PROD }},_REGION=${{ env.REGION }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
 
       - name: Notify Team
         run: echo "🚀 Production deployment complete for ${{ github.ref_name }}"
