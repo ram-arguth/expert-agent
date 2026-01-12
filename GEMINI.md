@@ -714,3 +714,22 @@ git push origin prod-20260115   # → deploys to expert-ai-prod (requires approv
   - `pulumi` for infrastructure state queries
   - `curl` for API testing
 - This ensures reproducibility and keeps all operations scriptable
+
+### 11.2 CI/CD Status Monitoring
+
+When monitoring GitHub Actions or Cloud Build:
+
+- **Use short polling intervals** (30-60 seconds) instead of long waits (180+ seconds)
+- **Check status more frequently** to provide faster feedback to the user
+- **Preferred pattern**:
+
+  ```bash
+  # Quick status check
+  gh run view <id> --json status,conclusion --jq '.status + " " + .conclusion'
+
+  # Check current step
+  gh run view <id> --json jobs --jq '.jobs[] | select(.status == "in_progress") | .steps[] | select(.status == "in_progress") | .name'
+  ```
+
+- **Avoid**: Long `WaitDurationSeconds` values (180+) when polling `command_status`
+- **Prefer**: 30-60 second intervals with multiple checks

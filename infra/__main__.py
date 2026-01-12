@@ -347,6 +347,58 @@ gcp.projects.IAMMember(
 )
 
 # ============================================
+# Cloud Build Infrastructure SA (Dedicated)
+# ============================================
+# Dedicated SA for Pulumi infrastructure deployments via Cloud Build
+# This replaces the default Cloud Build SA per least-privilege principles
+#
+# Bootstrap: Create the SA once via gcloud (documented in GEMINI.md bootstrap section)
+#   gcloud iam service-accounts create cloud-build-infra --project={project_id}
+#
+# The SA email: cloud-build-infra@{project_id}.iam.gserviceaccount.com
+cloud_build_infra_sa_email = f"cloud-build-infra@{project_id}.iam.gserviceaccount.com"
+
+# Grant editor access for infrastructure provisioning
+gcp.projects.IAMMember(
+    f"cloud-build-infra-editor-{env}",
+    project=project_id,
+    role="roles/editor",
+    member=f"serviceAccount:{cloud_build_infra_sa_email}",
+)
+
+# Grant IAM admin for creating service accounts and bindings
+gcp.projects.IAMMember(
+    f"cloud-build-infra-iam-admin-{env}",
+    project=project_id,
+    role="roles/resourcemanager.projectIamAdmin",
+    member=f"serviceAccount:{cloud_build_infra_sa_email}",
+)
+
+# Grant access to Cloud Build source bucket (for build sources)
+gcp.projects.IAMMember(
+    f"cloud-build-infra-storage-{env}",
+    project=project_id,
+    role="roles/storage.admin",
+    member=f"serviceAccount:{cloud_build_infra_sa_email}",
+)
+
+# Grant secret access for Pulumi passphrase
+gcp.projects.IAMMember(
+    f"cloud-build-infra-secrets-{env}",
+    project=project_id,
+    role="roles/secretmanager.secretAccessor",
+    member=f"serviceAccount:{cloud_build_infra_sa_email}",
+)
+
+# Grant logging for build logs
+gcp.projects.IAMMember(
+    f"cloud-build-infra-logging-{env}",
+    project=project_id,
+    role="roles/logging.logWriter",
+    member=f"serviceAccount:{cloud_build_infra_sa_email}",
+)
+
+# ============================================
 # Artifact Registry (per project for isolation)
 # ============================================
 # Import existing repository if it exists
