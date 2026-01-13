@@ -214,7 +214,50 @@ pulumi stack init dev
 pulumi stack init beta
 pulumi stack init gamma
 pulumi stack init prod
+
+# 7. Enable Cloud Build API on all projects (BEFORE running builds)
+# This must happen before any Cloud Build submission
+for PROJECT in expert-ai-dev expert-ai-beta expert-ai-gamma expert-ai-prod-484103; do
+  gcloud services enable cloudbuild.googleapis.com --project=$PROJECT --quiet
+done
 ```
+
+### 3.2.1 Cloud Build Triggers (One-Time Console Setup)
+
+Cloud Build Triggers cannot be fully automated via IaC because GitHub connection requires OAuth.
+This is a **one-time manual setup** per repository:
+
+1. **Go to Cloud Build Console** for each environment project:
+   - https://console.cloud.google.com/cloud-build/triggers?project=expert-ai-dev
+   - https://console.cloud.google.com/cloud-build/triggers?project=expert-ai-beta
+   - etc.
+
+2. **Connect Repository** (first time only):
+   - Click "Manage repositories" → "Link repository"
+   - Select "GitHub" and authorize Cloud Build GitHub App
+   - Select `expert-agent` repository
+
+3. **Create Triggers**:
+
+   | Project         | Trigger Name | Event          | Filter                       | Config File             |
+   | --------------- | ------------ | -------------- | ---------------------------- | ----------------------- |
+   | expert-ai-dev   | dev-push     | Push to branch | `^dev$`                      | `cloudbuild.yaml`       |
+   | expert-ai-dev   | dev-infra    | Push to branch | `^dev$` + path `infra/**`    | `cloudbuild-infra.yaml` |
+   | expert-ai-beta  | beta-tag     | Push new tag   | `^beta-.*`                   | `cloudbuild.yaml`       |
+   | expert-ai-beta  | beta-infra   | Push new tag   | `^beta-.*` + path `infra/**` | `cloudbuild-infra.yaml` |
+   | expert-ai-gamma | gamma-tag    | Push new tag   | `^gamma-.*`                  | `cloudbuild.yaml`       |
+   | expert-ai-prod  | prod-tag     | Push new tag   | `^prod-.*`                   | `cloudbuild.yaml`       |
+
+4. **Set Substitutions** for each trigger:
+   - `_ENV`: dev/beta/gamma/prod (matching the project)
+   - `_PROJECT_ID`: The project ID
+   - `_REGION`: us-west1
+
+**After triggers are set up:**
+
+- Push to `dev` branch → auto-deploys to expert-ai-dev
+- Tag `beta-*` on `main` → auto-deploys to expert-ai-beta
+- No more manual `gcloud builds submit` needed!
 
 **After bootstrap, ALL subsequent changes go through CI/CD. No exceptions.**
 

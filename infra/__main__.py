@@ -191,8 +191,11 @@ db_user = gcp.sql.User(
 # ============================================
 
 # User uploads bucket
-# Import existing bucket if it exists
-uploads_bucket_import_id = f"{project_id}/expert-agent-uploads-{env}"
+# Only import for dev where resource was created before Pulumi management
+uploads_bucket_opts = pulumi.ResourceOptions(
+    import_=f"{project_id}/expert-agent-uploads-{env}" if env == "dev" else None,
+    ignore_changes=["name", "forceDestroy"] if env == "dev" else [],
+)
 uploads_bucket = gcp.storage.Bucket(
     f"expert-agent-uploads-{env}",
     project=project_id,
@@ -221,15 +224,15 @@ uploads_bucket = gcp.storage.Bucket(
             max_age_seconds=3600,
         ),
     ],
-    opts=pulumi.ResourceOptions(
-        import_=uploads_bucket_import_id,
-        ignore_changes=["name", "forceDestroy"],
-    ),
+    opts=uploads_bucket_opts,
 )
 
 # Session summaries bucket (cold storage)
-# Import existing bucket if it exists
-summaries_bucket_import_id = f"{project_id}/expert-agent-summaries-{env}"
+# Only import for dev where resource was created before Pulumi management
+summaries_bucket_opts = pulumi.ResourceOptions(
+    import_=f"{project_id}/expert-agent-summaries-{env}" if env == "dev" else None,
+    ignore_changes=["name", "forceDestroy"] if env == "dev" else [],
+)
 summaries_bucket = gcp.storage.Bucket(
     f"expert-agent-summaries-{env}",
     project=project_id,
@@ -238,27 +241,25 @@ summaries_bucket = gcp.storage.Bucket(
     force_destroy=env != "prod",
     uniform_bucket_level_access=True,
     storage_class="NEARLINE",  # Cost-effective for infrequent access
-    opts=pulumi.ResourceOptions(
-        import_=summaries_bucket_import_id,
-        ignore_changes=["name", "forceDestroy"],
-    ),
+    opts=summaries_bucket_opts,
 )
 
 # ============================================
 # Service Account for Cloud Run
 # ============================================
-# Import existing SA if it exists (created before Pulumi management)
+# Only import for dev where SA was created before Pulumi management
 sa_import_id = f"projects/{project_id}/serviceAccounts/expert-agent-sa@{project_id}.iam.gserviceaccount.com"
+sa_opts = pulumi.ResourceOptions(
+    import_=sa_import_id if env == "dev" else None,
+    ignore_changes=["account_id"] if env == "dev" else [],
+)
 
 cloud_run_sa = gcp.serviceaccount.Account(
     f"expert-agent-sa-{env}",
     project=project_id,
     account_id="expert-agent-sa",
     display_name=f"Expert Agent Cloud Run Service Account ({env})",
-    opts=pulumi.ResourceOptions(
-        import_=sa_import_id,
-        ignore_changes=["account_id"],  # Don't try to update immutable field
-    ),
+    opts=sa_opts,
 )
 
 # Service account permissions
@@ -485,8 +486,13 @@ dns_api = gcp.projects.Service(
 # - gamma: ai-gamma.oz.ly
 # - beta:  ai-beta.oz.ly
 # - dev:   ai-dev.oz.ly
-# Import existing zone if it exists
+# Only import for dev where zone was created before Pulumi management
 dns_zone_import_id = f"projects/{project_id}/managedZones/{domain_config['dns_zone_name']}"
+dns_zone_opts = pulumi.ResourceOptions(
+    depends_on=[dns_api],
+    import_=dns_zone_import_id if env == "dev" else None,
+    ignore_changes=["name"] if env == "dev" else [],
+)
 dns_zone = gcp.dns.ManagedZone(
     f"dns-zone-{env}",
     project=project_id,
@@ -494,11 +500,7 @@ dns_zone = gcp.dns.ManagedZone(
     dns_name=f"{domain_config['domain']}.",  # Trailing dot required
     description=f"DNS zone for Expert Agent Platform ({env})",
     visibility="public",
-    opts=pulumi.ResourceOptions(
-        depends_on=[dns_api],
-        import_=dns_zone_import_id,
-        ignore_changes=["name"],
-    ),
+    opts=dns_zone_opts,
 )
 
 # Note: Cloud Run domain mapping requires:
@@ -563,8 +565,19 @@ if site_verification_token:
 domain_verified = config.get_bool("domain_verified") or False
 
 if domain_verified:
-    # Import existing domain mapping if it exists
+    # Only import for dev where domain mapping was created before Pulumi management
     domain_mapping_import_id = f"locations/{region}/namespaces/{project_id}/domainmappings/{domain_config['domain']}"
+    domain_mapping_opts = pulumi.ResourceOptions(
+        depends_on=[dns_zone],
+        import_=domain_mapping_import_id if env == "dev" else None,
+        ignore_changes=["name"] if env == "dev" else [],
+        # Don't wait forever for domain mapping to become ready
+        # The Cloud Run service is deployed separately by app build
+        custom_timeouts=pulumi.CustomTimeouts(
+            create="2m",
+            update="2m",
+        ),
+    )
     domain_mapping = gcp.cloudrun.DomainMapping(
         f"domain-mapping-{env}",
         project=project_id,
@@ -576,17 +589,7 @@ if domain_verified:
         spec=gcp.cloudrun.DomainMappingSpecArgs(
             route_name="expert-agent",  # Cloud Run service name
         ),
-        opts=pulumi.ResourceOptions(
-            depends_on=[dns_zone],
-            import_=domain_mapping_import_id,
-            ignore_changes=["name"],
-            # Don't wait forever for domain mapping to become ready
-            # The Cloud Run service is deployed separately by app build
-            custom_timeouts=pulumi.CustomTimeouts(
-                create="2m",
-                update="2m",
-            ),
-        ),
+        opts=domain_mapping_opts,
     )
     export("domain_mapping_url", f"https://{domain_config['domain']}")
 else:
