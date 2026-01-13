@@ -435,6 +435,8 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   }
   ```
 
+- [x] **Prisma Schema:** Created `prisma/schema.prisma` with all models (User, Org, Membership, Invite, Session, Message, File, ContextFile, Agent, UsageRecord, StripeEvent).
+- [x] **Prisma Client:** Created `lib/db/client.ts` singleton with HMR support.
 - [ ] **Run Migrations:** `npx prisma migrate dev` in dev. Integrate migration into CI/CD for beta/prod.
 
 ### 1.2 Social OAuth Login (Google, Apple, Microsoft Entra ID)
@@ -467,12 +469,18 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.4 Team Org Creation & Invites
 
-- [ ] **Create Team API:** `POST /api/org` with `{ name, type: "team" }`. Creator becomes `owner`. Require identity from Google, Apple, or MSA (reject otherwise).
-- [ ] **Invite API:** `POST /api/org/:orgId/invite` with `{ email, role }`. Generate secure token, store Invite record, set 7-day expiry. **Restrict invites to Google/Apple/MSA identities** (validate email domain compatibility).
-- [ ] **Send Invite Email:** Use email service to send invite link: `https://app/invite?token=...`.
-- [ ] **Accept Invite:** `POST /api/invite/accept?token=...`. User must be authenticated. Validate token, check email matches, create Membership, mark invite accepted.
-- [ ] **Invite UI:** Team admin page with "Invite Member" form, pending invites list, resend/cancel buttons.
-- [ ] **Test:** Full invite flow with two test accounts.
+> **Implementation Status:** API routes **COMPLETE**. Email sending and UI deferred.
+
+- [x] **Create Team API:** `POST /api/org` with `{ name, slug?, type: "TEAM" }`. Creator becomes `OWNER`. Validates identity from Google, Apple, or Microsoft only.
+- [x] **List Orgs API:** `GET /api/org` returns user's organizations with roles.
+- [x] **Invite API:** `POST /api/org/:orgId/invite` with `{ email, role }`. Generates secure token, stores Invite record, sets 7-day expiry. Owner/Admin only (Cedar + direct check).
+- [x] **List Invites API:** `GET /api/org/:orgId/invite` returns pending invites with expiry status.
+- [x] **Revoke Invite API:** `DELETE /api/org/:orgId/invite?inviteId=...` marks invite as revoked.
+- [x] **Accept Invite API:** `POST /api/invite/accept` with `{ token }`. Validates token, email match, provider. Creates Membership in transaction.
+- [x] **Get Invite Info:** `GET /api/invite/accept?token=...` returns public invite details (no auth required).
+- [ ] **Send Invite Email:** Deferred to email service integration (SendGrid/SES).
+- [ ] **Invite UI:** Team admin page with "Invite Member" form, pending invites list.
+- [ ] **Test:** Full invite flow integration tests.
 
 ### 1.5 Enterprise Domain Verification
 
