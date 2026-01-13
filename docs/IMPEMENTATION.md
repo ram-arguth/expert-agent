@@ -1195,7 +1195,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 4.1 Agent Selection Sidebar
 
-- [ ] **Component:** Sidebar listing agents (from `GET /api/agents`). Group by category if many. Show beta badge. Highlight selected agent.
+- [x] **Component:** Sidebar listing agents (from `GET /api/agents`). Group by category if many. Show beta badge. Highlight selected agent.
 - [ ] **Workspace Indicator:** Show current org context at top of sidebar.
 
 ### 4.2 Dynamic Input Form
@@ -1254,12 +1254,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Unit Tests (Vitest/Jest + React Testing Library)
 
-**`components/sidebar.test.tsx`**
+**`components/agent-sidebar.test.tsx`**
 
-- [ ] Renders agent list from props
-- [ ] Shows beta badge when `isBeta: true`
-- [ ] Highlights selected agent
-- [ ] Calls `onSelect` when agent clicked
+- [x] Renders agent list from API
+- [x] Shows beta badge when `isBeta: true`
+- [x] Highlights selected agent
+- [x] Calls `onSelectAgent` when agent clicked
 - [ ] Shows workspace indicator
 
 **`components/dynamic-form.test.tsx`**
