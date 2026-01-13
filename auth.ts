@@ -10,16 +10,18 @@
  * - GOOGLE_CLIENT_ID: Google OAuth client ID
  * - GOOGLE_CLIENT_SECRET: Google OAuth client secret
  *
- * Optional:
- * - GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET: For GitHub OAuth
+ * Optional (enable when configured):
+ * - APPLE_CLIENT_ID / APPLE_CLIENT_SECRET: For Apple OAuth
+ * - AZURE_AD_CLIENT_ID / AZURE_AD_CLIENT_SECRET / AZURE_AD_TENANT_ID: For Microsoft OAuth
  *
  * @see https://authjs.dev/getting-started/installation
  */
 
 import NextAuth from 'next-auth';
-import type { NextAuthConfig, Session, User } from 'next-auth';
+import type { NextAuthConfig, Session } from 'next-auth';
 import Google from 'next-auth/providers/google';
-import GitHub from 'next-auth/providers/github';
+import Apple from 'next-auth/providers/apple';
+import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
 
 // Extend session type to include user id
 declare module 'next-auth' {
@@ -33,10 +35,12 @@ declare module 'next-auth' {
   }
 }
 
-export const authConfig: NextAuthConfig = {
-  // Configure authentication providers
-  providers: [
-    // Google OAuth - Primary login method
+// Build providers array dynamically based on available credentials
+const providers: NextAuthConfig['providers'] = [];
+
+// Google OAuth - Primary login method (required)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -47,24 +51,47 @@ export const authConfig: NextAuthConfig = {
           response_type: 'code',
         },
       },
-    }),
-    // GitHub OAuth - Optional secondary provider
-    ...(process.env.GITHUB_CLIENT_ID
-      ? [
-          GitHub({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-  ],
+    })
+  );
+}
+
+// Apple OAuth - Enable when configured
+// Setup: https://developer.apple.com/account/resources/identifiers/list/serviceId
+if (process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET) {
+  providers.push(
+    Apple({
+      clientId: process.env.APPLE_CLIENT_ID,
+      clientSecret: process.env.APPLE_CLIENT_SECRET,
+    })
+  );
+}
+
+// Microsoft Entra ID (Azure AD) - Enable when configured
+// Setup: https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps
+if (
+  process.env.AZURE_AD_CLIENT_ID &&
+  process.env.AZURE_AD_CLIENT_SECRET &&
+  process.env.AZURE_AD_TENANT_ID
+) {
+  providers.push(
+    MicrosoftEntraID({
+      clientId: process.env.AZURE_AD_CLIENT_ID,
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
+      // The issuer URL includes the tenant ID
+      // Use 'common' for multi-tenant, or specific tenant ID for single-tenant
+      issuer: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0`,
+    })
+  );
+}
+
+export const authConfig: NextAuthConfig = {
+  providers,
 
   // Custom pages for authentication flows
   pages: {
     signIn: '/login',
     signOut: '/login',
     error: '/login', // Show errors on login page
-    // Note: signUp not needed - users sign up by signing in
   },
 
   // Session configuration

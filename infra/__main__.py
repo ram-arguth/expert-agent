@@ -417,17 +417,22 @@ artifact_registry = gcp.artifactregistry.Repository(
 # Secret Manager Secrets (placeholders)
 # ============================================
 # These secrets must be populated via gcloud or Console before Cloud Run can use them
-# See docs/SETUP.md for setup instructions
+# See docs/GOOGLE_SSO_SETUP.md for Google OAuth setup instructions
 secrets = [
     "database-url",
-    "nextauth-secret",        # NextAuth session encryption key
-    "google-client-id",       # Google OAuth
+    "nextauth-secret",          # NextAuth session encryption key
+    # Google OAuth (Primary)
+    "google-client-id",
     "google-client-secret",
-    "github-client-id",       # GitHub OAuth (optional)
-    "github-client-secret",
-    "apple-client-id",        # Apple OAuth (optional)
+    # Apple OAuth (Optional)
+    "apple-client-id",
     "apple-client-secret",
-    "stripe-secret-key",      # Stripe billing
+    # Microsoft Entra ID / Azure AD (Optional)
+    "azure-ad-client-id",
+    "azure-ad-client-secret",
+    "azure-ad-tenant-id",
+    # Stripe billing
+    "stripe-secret-key",
     "stripe-webhook-secret",
 ]
 
