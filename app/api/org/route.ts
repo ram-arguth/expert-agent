@@ -31,6 +31,13 @@ const CreateOrgSchema = z.object({
 // Allowed auth providers for team creation
 const ALLOWED_PROVIDERS = ['google', 'apple', 'microsoft'];
 
+// Check if provider is allowed (handles variants like microsoft-entra-id)
+function isAllowedProvider(provider: string | undefined): boolean {
+  if (!provider) return false;
+  const lowerProvider = provider.toLowerCase();
+  return ALLOWED_PROVIDERS.some((allowed) => lowerProvider.startsWith(allowed));
+}
+
 export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate
@@ -43,8 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Validate provider (only Google, Apple, Microsoft allowed)
-    const provider = session.user.provider;
-    if (!provider || !ALLOWED_PROVIDERS.includes(provider.toLowerCase())) {
+    if (!isAllowedProvider(session.user.provider)) {
       return NextResponse.json(
         {
           error: 'Forbidden',
