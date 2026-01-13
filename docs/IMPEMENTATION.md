@@ -1027,8 +1027,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [x] **Create Session:** On first query with no `sessionId`, creates new Session record
 - [x] **Continue Session:** On subsequent queries, loads session, appends messages
-- [ ] **List Sessions:** `GET /api/sessions` returns user's sessions (with agent name, last message preview, timestamp).
-- [ ] **Get Session:** `GET /api/sessions/:sessionId` returns full message history.
+- [x] **List Sessions:** `GET /api/sessions` returns user's sessions (with agent name, last message preview, timestamp).
+- [x] **Get Session:** `GET /api/sessions/:sessionId` returns full message history.
+- [x] **Delete Session:** `DELETE /api/sessions/:sessionId` soft-deletes (archives) session.
 
 ### 3.5 Memory Summarization
 

@@ -51,6 +51,7 @@ export interface CedarResource {
   attributes?: {
     orgId?: string;
     ownerId?: string;
+    userId?: string; // For session/message ownership
     isPublic?: boolean;
     isBeta?: boolean;
     allowedOrgIds?: string[];
