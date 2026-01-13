@@ -221,10 +221,10 @@ pulumi stack init prod
 ### 3.3 Environment Promotion Strategy
 
 ```
-dev branch push     → expert-ai-dev (auto-deploy)
-beta-YYYYMMDD tag   → expert-ai-beta (auto-deploy + E2E tests)
-gamma-YYYYMMDD tag  → expert-ai-gamma (auto-deploy + E2E tests)
-prod-YYYYMMDD tag   → expert-ai-prod (manual approval + E2E tests)
+dev branch push              → expert-ai-dev (auto-deploy)
+beta-YYYYmmdd-HHMMss tag     → expert-ai-beta (auto-deploy + E2E tests)
+gamma-YYYYmmdd-HHMMss tag    → expert-ai-gamma (auto-deploy + E2E tests)
+prod-YYYYmmdd-HHMMss tag     → expert-ai-prod (manual approval + E2E tests)
 ```
 
 ### 3.4 Branch and Tag Conventions
@@ -677,14 +677,20 @@ git push origin main
 
 ```bash
 # Create tag for target environment (always on main!)
-git tag beta-20260111
-git push origin beta-20260111   # → deploys to expert-ai-beta
+# Format: {env}-YYYYmmdd-HHMMss (timestamp for uniqueness)
+TAG="beta-$(date +%Y%m%d-%H%M%S)"
+git tag $TAG
+git push origin $TAG   # → deploys to expert-ai-beta
 
-git tag gamma-20260112
-git push origin gamma-20260112  # → deploys to expert-ai-gamma
+# For gamma:
+TAG="gamma-$(date +%Y%m%d-%H%M%S)"
+git tag $TAG
+git push origin $TAG   # → deploys to expert-ai-gamma
 
-git tag prod-20260115
-git push origin prod-20260115   # → deploys to expert-ai-prod (requires approval)
+# For prod:
+TAG="prod-$(date +%Y%m%d-%H%M%S)"
+git tag $TAG
+git push origin $TAG   # → deploys to expert-ai-prod (requires approval)
 ```
 
 ### What is Acceptable
@@ -705,11 +711,11 @@ git push origin prod-20260115   # → deploys to expert-ai-prod (requires approv
 
 ### Tag Format
 
-| Tag Pattern      | Target Environment | Approval |
-| ---------------- | ------------------ | -------- |
-| `beta-YYYYMMDD`  | `expert-ai-beta`   | Auto     |
-| `gamma-YYYYMMDD` | `expert-ai-gamma`  | Auto     |
-| `prod-YYYYMMDD`  | `expert-ai-prod`   | Manual   |
+| Tag Pattern             | Target Environment | Approval | Example                 |
+| ----------------------- | ------------------ | -------- | ----------------------- |
+| `beta-YYYYmmdd-HHMMss`  | `expert-ai-beta`   | Auto     | `beta-20260112-160000`  |
+| `gamma-YYYYmmdd-HHMMss` | `expert-ai-gamma`  | Auto     | `gamma-20260112-160000` |
+| `prod-YYYYmmdd-HHMMss`  | `expert-ai-prod`   | Manual   | `prod-20260112-160000`  |
 
 ### Why This Pattern
 
