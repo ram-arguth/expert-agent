@@ -72,7 +72,11 @@ _Explanation:_ A user interacts with the React UI in their browser. For example,
 
 We support multiple sign-in methods:
 
-- **Social Logins:** Users can sign up or log in using Google or Apple accounts (which covers a majority of consumers). We integrate using OAuth 2.0/OpenID Connect – leveraging libraries or services that streamline this (e.g., NextAuth.js or Firebase Authentication with Google/Apple providers). After a successful OAuth callback, we create or update the user's account in our database (storing name, email, IdP UID, etc.).
+- **Social Logins:** Users can sign up or log in using **Google, Apple, or Microsoft** accounts. We integrate using OAuth 2.0/OpenID Connect via **NextAuth.js v5 (Auth.js)**. After a successful OAuth callback, we create or update the user's account in our database (storing name, email, IdP UID, etc.). Providers are conditionally enabled based on environment variable availability.
+  - **Google OAuth:** Primary login method. Required for MVP.
+  - **Apple Sign-In:** Optional. Requires Apple Developer Program membership.
+  - **Microsoft Entra ID (Azure AD):** Optional. Supports single-tenant or multi-tenant ("common").
+  - **Note:** GitHub OAuth is intentionally NOT supported to maintain a focused identity backbone.
 - **SAML/OIDC Enterprise Auth:** We support **Bring Your Own (BYO) Identity**. Enterprise admins can configure their own Identity Provider (IdP) such as Okta, Azure AD, or PingIdentity via SAML 2.0 or OIDC. We will use an auth middleware (e.g., Auth.js/NextAuth or a specialized service) to handle the protocol complexity, allowing any compliant IdP to be connected.
 - **Team Invites:** For "Team" organizations, we restrict invites to users with identities from our supported general providers: **Google, Apple, or Microsoft**. This ensures a verifiable identity backbone without managing custom passwords. When a user is invited via email, they must authenticate with one of these providers to accept.
 

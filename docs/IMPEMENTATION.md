@@ -239,10 +239,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 0.5 External Services (Manual Setup)
 
-- [ ] **OAuth Clients:**
-  - Google: Create OAuth 2.0 Client ID in Cloud Console. Set redirect URI. Store in Secret Manager.
-  - Apple: Create Service ID, generate private key, verify domain (upload `.well-known/apple-developer-domain-association.txt`). Store in Secret Manager.
-  - Microsoft (MSA): Register app in Azure AD. Store in Secret Manager.
+- [x] **OAuth Clients (Google):** OAuth 2.0 Client ID created for `dev`. Redirect URIs configured. Secrets stored in Secret Manager. See [docs/GOOGLE_SSO_SETUP.md](./GOOGLE_SSO_SETUP.md).
+- [ ] **OAuth Clients (Apple):** Create Service ID, generate private key, verify domain. Store in Secret Manager.
+- [ ] **OAuth Clients (Microsoft):** Register app in Azure Portal. Configure tenant ID. Store in Secret Manager.
 - [ ] **Stripe:** Create account, define Products/Prices for plans (Free, Pro, Enterprise). Get API keys (test + live). Configure webhook endpoint (`/api/stripe/webhook`).
 - [ ] **Email Service (Optional):** Set up SendGrid/Mailgun for transactional emails (invites, notifications). Configure SPF/DKIM DNS records.
 
@@ -438,14 +437,20 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [ ] **Run Migrations:** `npx prisma migrate dev` in dev. Integrate migration into CI/CD for beta/prod.
 
-### 1.2 Social OAuth Login (Google, Apple, MSA)
+### 1.2 Social OAuth Login (Google, Apple, Microsoft Entra ID)
 
-- [ ] **NextAuth.js Setup:** Configure providers for Google, Apple, Microsoft. Set `NEXTAUTH_URL` and secrets.
-- [ ] **Callbacks:**
-  - `signIn`: Create/update User record in DB. Store `authProvider` and `authProviderId`.
-  - `jwt`: Attach `userId` to token.
+> **Implementation Status:** Google OAuth is **LIVE** in dev. Apple and Microsoft are placeholders.
+
+- [x] **NextAuth.js v5 Setup:** Configure providers in `auth.ts`. Providers are conditionally loaded based on env vars.
+  - [x] **Google OAuth:** Live on `ai-dev.oz.ly`. Secrets stored in Secret Manager.
+  - [ ] **Apple Sign-In:** Placeholder. Requires Apple Developer Program ($99/yr) and domain verification.
+  - [ ] **Microsoft Entra ID:** Placeholder. Uses issuer URL pattern with tenant ID.
+- [x] **Callbacks:**
+  - `jwt`: Attach `userId` and `provider` to token.
   - `session`: Expose `userId` and `email` to client.
-- [ ] **Login UI:** Build `/login` page with branded SSO buttons: "Sign in with Google", "Sign in with Apple", "Sign in with Microsoft".
+- [x] **Login UI:** `SocialAuthButtons` component shows available providers. Buttons auto-hide when provider not configured.
+- [x] **Route Handler:** `/api/auth/[...nextauth]/route.ts` exports NextAuth handlers.
+- [x] **Secret Manager Integration:** `cloudbuild.yaml` injects `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` into Cloud Run.
 - [ ] **Test:** Verify new user creation, existing user login, session persistence.
 
 ### 1.3 Enterprise SSO (BYO SAML/OIDC)
@@ -478,38 +483,29 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.6 Cedar Policy Engine Integration
 
-- [ ] **Cedar Setup:** Include `@cedar-policy/cedar-wasm` or similar. Load policies on server start.
-- [ ] **Define Policies:** Create `.cedar` policy files:
+> **Implementation Status:** Cedar engine is **COMPLETE** with in-memory TypeScript implementation. 86 tests passing.
 
-  ```cedar
-  // Only org members can query agents in their org context
-  permit(
-    principal is User,
-    action == "QueryAgent",
-    resource is Agent
-  ) when {
-    principal.orgId == context.activeOrgId || resource.isPublic == true
-  };
-
-  // Only owners/admins can invite
-  permit(
-    principal is User,
-    action == "InviteMember",
-    resource is Org
-  ) when {
-    principal.role in ["owner", "admin"] && principal.orgId == resource.id
-  };
-
-  // Default deny
-  forbid(principal, action, resource);
-  ```
-
-- [ ] **Authorization Middleware:** Create `withAuthZ(action, getResource)` wrapper for API routes. On each request:
-  1. Get authenticated user from session.
-  2. Load user's memberships/roles.
+- [x] **Cedar Setup:** Implemented high-performance in-memory Cedar engine in `lib/authz/cedar.ts`. Uses TypeScript-native policy evaluation instead of WASM for faster startup in serverless.
+- [x] **CedarActions Registry:** Type-safe action enumeration with explicit ID assignments (prevents accidental breaking changes).
+- [x] **Define Policies:** 11 comprehensive policies implemented:
+  - `admin-full-access`: System admins bypass all checks
+  - `global-view-public-agents`: Anyone can view public agent catalog
+  - `user-query-own-sessions`: Users can query their own sessions
+  - `anonymous-limited-access`: Anonymous users can only view landing pages
+  - `owner-manage-org`: Org owners have full control
+  - `admin-manage-org`: Org admins can manage except billing
+  - `auditor-view-logs`: Auditors can view usage and session logs
+  - `member-use-agents`: Members can query agents and view team context
+  - `billing-manager`: Billing managers handle subscription only
+  - `user-manage-sessions`: Users can CRUD their own sessions
+  - `user-manage-files`: Users can CRUD their own files
+- [x] **Authorization Middleware:** `withAuthZ(action, getResource)` wrapper in `lib/authz/middleware.ts`. Integrates with NextAuth v5 via `auth()`.
+  1. Get authenticated user from `auth()` session.
+  2. Build Cedar principal with roles, memberships.
   3. Call `cedar.isAuthorized(principal, action, resource)`.
-  4. Return 403 if denied.
-- [ ] **Test:** Unit tests for policy logic. Integration tests for cross-org access denial.
+  4. Return 401/403 on failure with reason.
+- [x] **AuthZ Coverage Enforcement:** `scripts/check-authz-coverage.ts` enforces 100% API route coverage. Runs in pre-commit and CI.
+- [x] **Test:** 30 policy tests + 9 middleware tests passing. Full coverage of permit/deny scenarios.
 
 ### 1.7 Workspace Switcher
 
