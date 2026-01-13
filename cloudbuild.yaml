@@ -104,7 +104,8 @@ steps:
     env:
       - "VERTEX_AI_MOCK=true"
       - "STRIPE_MOCK=true"
-      - "DATABASE_URL=${DATABASE_URL}"
+      # Use file-based SQLite for integration tests (no external DB required)
+      - "DATABASE_URL=file:./test.db"
     volumes:
       - name: pnpm-store
         path: /workspace/.pnpm-store
