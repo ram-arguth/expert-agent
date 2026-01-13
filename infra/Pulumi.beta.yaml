@@ -1,5 +1,7 @@
 config:
   expert-agent-infra:env: beta
   expert-agent-infra:region: us-west1
+  expert-agent-infra:site_verification_token: "lYpqF7kruzVQVG3spqlytEGYH2sfnFrhtyUX3OYEy14"
+  expert-agent-infra:domain_verified: true
   gcp:project: expert-ai-beta
   gcp:region: us-west1

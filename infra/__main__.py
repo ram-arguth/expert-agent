@@ -58,38 +58,59 @@ DOMAIN_CONFIGS = {
 domain_config = DOMAIN_CONFIGS[env]
 
 # Environment-specific configurations
+# Note: For serverless/cost-optimization:
+# - Cloud SQL: db-f1-micro is cheapest (~$7/mo), no true serverless option in GCP
+# - Cloud Run: min_instances=0 = serverless (pay only when running)
+# - Prod is skipped to avoid costs until ready
 ENV_CONFIGS = {
     "dev": {
-        "cloud_sql_tier": "db-f1-micro",
+        "cloud_sql_tier": "db-f1-micro",  # Cheapest: ~$7/mo
         "cloud_run_memory": "512Mi",
         "cloud_run_cpu": "1",
-        "cloud_run_min_instances": 0,
-        "cloud_run_max_instances": 5,
+        "cloud_run_min_instances": 0,  # Serverless: scale to zero
+        "cloud_run_max_instances": 3,
+        "skip_resources": False,
     },
     "beta": {
-        "cloud_sql_tier": "db-g1-small",
-        "cloud_run_memory": "1Gi",
+        "cloud_sql_tier": "db-f1-micro",  # Cheapest: ~$7/mo
+        "cloud_run_memory": "512Mi",
         "cloud_run_cpu": "1",
-        "cloud_run_min_instances": 0,
-        "cloud_run_max_instances": 10,
+        "cloud_run_min_instances": 0,  # Serverless: scale to zero
+        "cloud_run_max_instances": 5,
+        "skip_resources": False,
     },
     "gamma": {
-        "cloud_sql_tier": "db-g1-small",
+        "cloud_sql_tier": "db-f1-micro",  # Cheapest for now
         "cloud_run_memory": "1Gi",
-        "cloud_run_cpu": "2",
-        "cloud_run_min_instances": 1,
-        "cloud_run_max_instances": 20,
+        "cloud_run_cpu": "1",
+        "cloud_run_min_instances": 0,  # Serverless: scale to zero
+        "cloud_run_max_instances": 10,
+        "skip_resources": False,
     },
     "prod": {
-        "cloud_sql_tier": "db-custom-2-4096",
-        "cloud_run_memory": "2Gi",
+        "cloud_sql_tier": "db-g1-small",  # Not used - prod skipped
+        "cloud_run_memory": "1Gi",
         "cloud_run_cpu": "2",
-        "cloud_run_min_instances": 2,
-        "cloud_run_max_instances": 100,
+        "cloud_run_min_instances": 0,
+        "cloud_run_max_instances": 50,
+        "skip_resources": True,  # Skip prod to avoid costs
     },
 }
 
 env_config = ENV_CONFIGS[env]
+
+# ============================================
+# Skip Resources Check (for prod cost savings)
+# ============================================
+if env_config.get("skip_resources", False):
+    # For environments we're skipping (like prod), just export minimal info
+    export("project_id", project_id)
+    export("env", env)
+    export("skip_resources", True)
+    export("message", f"Resources skipped for {env} environment to avoid costs. Set skip_resources: False when ready to deploy.")
+    # Exit early - don't create any resources
+    import sys
+    sys.exit(0)
 
 # ============================================
 # Enable Required APIs
