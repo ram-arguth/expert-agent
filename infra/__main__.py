@@ -541,6 +541,54 @@ dns_zone = gcp.dns.ManagedZone(
 #
 # The nameservers are exported below for delegation at your registrar.
 
+# Cloud Run Domain Mapping DNS Records (required for apex domains)
+# These are Google's standard Cloud Run frontend IPs
+# Without these records, SSL certificate provisioning will remain pending
+
+# A records for apex domain (IPv4)
+apex_a_record_opts = pulumi.ResourceOptions(
+    depends_on=[dns_zone],
+    import_=f"{project_id}/ai-dev-oz-ly/ai-dev.oz.ly./A" if env == "dev" else None,
+    ignore_changes=["name", "type"] if env == "dev" else [],
+)
+apex_a_record = gcp.dns.RecordSet(
+    f"dns-apex-a-{env}",
+    project=project_id,
+    managed_zone=dns_zone.name,
+    name=f"{domain_config['domain']}.",
+    type="A",
+    ttl=300,
+    rrdatas=[
+        "216.239.32.21",
+        "216.239.34.21",
+        "216.239.36.21",
+        "216.239.38.21",
+    ],
+    opts=apex_a_record_opts,
+)
+
+# AAAA records for apex domain (IPv6)
+apex_aaaa_record_opts = pulumi.ResourceOptions(
+    depends_on=[dns_zone],
+    import_=f"{project_id}/ai-dev-oz-ly/ai-dev.oz.ly./AAAA" if env == "dev" else None,
+    ignore_changes=["name", "type"] if env == "dev" else [],
+)
+apex_aaaa_record = gcp.dns.RecordSet(
+    f"dns-apex-aaaa-{env}",
+    project=project_id,
+    managed_zone=dns_zone.name,
+    name=f"{domain_config['domain']}.",
+    type="AAAA",
+    ttl=300,
+    rrdatas=[
+        "2001:4860:4802:32::15",
+        "2001:4860:4802:34::15",
+        "2001:4860:4802:36::15",
+        "2001:4860:4802:38::15",
+    ],
+    opts=apex_aaaa_record_opts,
+)
+
 # WWW subdomain CNAME (required since www. is a subdomain, not apex)
 www_cname_record = gcp.dns.RecordSet(
     f"dns-www-cname-{env}",
@@ -574,16 +622,19 @@ if site_verification_token:
 # Maps the custom domain to Cloud Run service
 # SSL certificates are provisioned automatically by Cloud Run
 #
-# ⚠️ ONE-TIME PREREQUISITE: Domain verification
+# ⚠️ ONE-TIME PREREQUISITE: Domain verification + SA authorization
 #
-# The Site Verification API requires OAuth scopes not available via Workload
-# Identity Federation. Domain verification must be done once manually:
+# The Site Verification API requires OAuth scopes not available via Service Accounts.
+# Domain verification must be done once manually per environment:
 #
 # 1. Go to: https://search.google.com/search-console
-# 2. Add property: "URL prefix" → https://ai-dev.oz.ly (your subdomain)
-# 3. Verify using DNS TXT record method
-# 4. Once verified, set 'domain_verified: true' in Pulumi.{env}.yaml
+# 2. Add property: "URL prefix" → https://ai-{env}.oz.ly (your subdomain)
+# 3. Verify using DNS TXT record method (token is already in stack config)
+# 4. In Search Console Settings → Users and permissions:
+#    Add cloud-build-infra@{project_id}.iam.gserviceaccount.com as OWNER
+# 5. Set 'domain_verified: true' in Pulumi.{env}.yaml
 #
+# Without step 4, SSL provisioning fails with "Caller is not authorized to administer the domain"
 # After verification, domain mapping will be created automatically on next deploy.
 
 # Check if domain has been verified (set in stack config)
