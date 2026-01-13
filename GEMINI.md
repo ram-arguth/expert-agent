@@ -804,3 +804,107 @@ When monitoring Cloud Build:
 
 - **Avoid**: Long `WaitDurationSeconds` values (180+) when polling `command_status`
 - **Prefer**: 30-60 second intervals with multiple checks
+
+---
+
+## 12. Cloud Build Troubleshooting
+
+### 12.1 Regional Builds
+
+Cloud Build Triggers run in a specific region (usually `us-west1` for this project).
+
+```bash
+# List builds in the regional endpoint (where triggers run)
+gcloud builds list --project=expert-ai-dev --region=us-west1 --limit=5
+
+# Describe a regional build
+gcloud builds describe BUILD_ID --project=expert-ai-dev --region=us-west1
+
+# Note: Builds submitted via gcloud from command line go to global endpoint
+gcloud builds list --project=expert-ai-dev --region=global --limit=5
+```
+
+### 12.2 Common Build Errors and Fixes
+
+| Error                                                                     | Cause                                                  | Fix                                        |
+| ------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------ |
+| `key in the template "DATABASE_URL" is not a valid built-in substitution` | Using `${VAR}` where VAR doesn't start with underscore | Use literal values or `_VAR` substitutions |
+| `build step depends on "X", which has not been defined`                   | Step references non-existent step ID                   | Update `waitFor` array to correct step IDs |
+| `Build does not specify logsBucket, unable to stream logs`                | Build failed before logs bucket configured             | Use `gcloud builds describe` instead       |
+
+### 12.3 Substitution Variable Rules
+
+Cloud Build substitutions have strict naming rules:
+
+```yaml
+# ✅ VALID - Built-in variables
+- "${PROJECT_ID}"
+- "${COMMIT_SHA}"
+- "${SHORT_SHA}"
+- "${BUILD_ID}"
+
+# ✅ VALID - User-defined (must start with underscore)
+- "${_ENV}"
+- "${_REGION}"
+- "${_SERVICE_NAME}"
+
+# ❌ INVALID - Will cause build to fail
+- "${DATABASE_URL}"     # No underscore prefix
+- "${MY_VAR}"           # No underscore prefix
+
+# ✅ SOLUTION - Use literal values for env vars
+env:
+  - "DATABASE_URL=file:./test.db"
+  - "NODE_ENV=production"
+```
+
+### 12.4 Parallel Steps and Dependencies
+
+When splitting tests into parallel steps, ensure all `waitFor` references are updated:
+
+```yaml
+# Before (single step)
+- id: "run-tests"
+  ...
+
+- id: "build-image"
+  waitFor: ["build-app", "run-tests"]  # ❌ run-tests no longer exists
+
+# After (parallel steps)
+- id: "test-authz"
+  waitFor: ["install-deps"]
+- id: "test-unit"
+  waitFor: ["install-deps"]
+- id: "test-integration"
+  waitFor: ["install-deps"]
+
+- id: "build-image"
+  waitFor: ["build-app"]  # ✅ Only wait for build
+
+- id: "push-image"
+  waitFor: ["build-image", "test-authz", "test-unit", "test-integration"]  # ✅ Wait for all
+```
+
+---
+
+## 13. Implementation Progress (Updated 2026-01-13)
+
+### Completed
+
+| Phase   | Feature           | Location                            | Status      |
+| ------- | ----------------- | ----------------------------------- | ----------- |
+| 1.7     | Workspace Context | `lib/context/workspace-context.tsx` | ✅ 22 tests |
+| 2.1-2.4 | UX Analyst Agent  | `lib/agents/ux-analyst/`            | ✅ 60 tests |
+| 2.5     | Agent Catalog API | `app/api/agents/`                   | ✅ 8 tests  |
+| 3.1     | File Upload API   | `app/api/upload/route.ts`           | ✅ 26 tests |
+| 3.3     | Query API         | `app/api/query/route.ts`            | ✅ 15 tests |
+| 3.4     | Vertex AI Client  | `lib/vertex/client.ts`              | ✅ 12 tests |
+
+### Test Count: 263 passing
+
+### Dependencies Added
+
+- `@google-cloud/storage` - GCS signed URLs
+- `google-auth-library` - Vertex AI authentication
+- `handlebars` - Prompt templating
+- `uuid` - Unique ID generation

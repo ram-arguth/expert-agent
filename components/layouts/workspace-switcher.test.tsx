@@ -148,20 +148,13 @@ describe('WorkspaceSwitcher', () => {
   });
 
   it('shows loading state while fetching organizations', async () => {
-    // Delay the mock fetch
-    mockFetch.mockImplementationOnce(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                json: async () => ({ organizations: mockOrganizations }),
-              }),
-            100
-          )
-        )
-    );
+    // Create a promise that we can control to simulate slow loading
+    let resolvePromise: (value: unknown) => void;
+    const controlledPromise = new Promise((resolve) => {
+      resolvePromise = resolve;
+    });
+
+    mockFetch.mockImplementationOnce(() => controlledPromise);
 
     const user = userEvent.setup();
     const onSwitch = vi.fn();
@@ -172,8 +165,16 @@ describe('WorkspaceSwitcher', () => {
 
     await user.click(screen.getByRole('combobox'));
 
-    // Should show loading
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    // Should show loading while promise is pending
+    await waitFor(() => {
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
+    });
+
+    // Resolve the promise to clean up
+    resolvePromise!({
+      ok: true,
+      json: async () => ({ organizations: mockOrganizations }),
+    });
   });
 
   it('shows error state when fetch fails', async () => {
