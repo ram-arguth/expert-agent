@@ -46,7 +46,7 @@ steps:
         path: /workspace/.pnpm-store
 
   # ============================================
-  # Step 2: Run tests (unit + integration) - parallel with build
+  # Step 2: Run tests (unit + integration + authZ coverage)
   # ============================================
   - id: "run-tests"
     name: "node:20-alpine"
@@ -56,7 +56,17 @@ steps:
       - |
         npm install -g pnpm@9
         pnpm config set store-dir /workspace/.pnpm-store
-        pnpm test:unit || echo "Unit tests not configured yet, skipping"
+
+        # AuthZ coverage check - MUST pass
+        echo "🔐 Checking Cedar authorization coverage..."
+        pnpm test:authz-coverage
+
+        # Unit tests
+        echo "🧪 Running unit tests..."
+        pnpm test:unit -- --run || echo "Unit tests not configured yet, skipping"
+
+        # Integration tests
+        echo "🔗 Running integration tests..."
         pnpm test:integration || echo "Integration tests not configured yet, skipping"
     env:
       - "VERTEX_AI_MOCK=true"

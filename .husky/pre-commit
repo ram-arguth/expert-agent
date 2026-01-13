@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-commit checks - must pass before commit
+echo "🔍 Running pre-commit checks..."
+
+# 1. Lint staged files
+echo "📝 Running lint..."
+pnpm lint-staged
+
+# 2. Type check
+echo "🔧 Running typecheck..."
+pnpm typecheck
+
+# 3. Run unit tests (fast, <30s target)
+echo "🧪 Running unit tests..."
+pnpm test:unit -- --run
+
+# 4. Check AuthZ coverage
+echo "🔐 Checking Cedar authorization coverage..."
+pnpm test:authz-coverage
+
+echo "✅ All pre-commit checks passed!"
