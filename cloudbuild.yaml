@@ -145,7 +145,7 @@ steps:
       - "--build-arg"
       - "ENV=${_ENV}"
       - "."
-    waitFor: ["build-app", "run-tests"]
+    waitFor: ["build-app"]
 
   # ============================================
   # Step 5: Push to Artifact Registry
