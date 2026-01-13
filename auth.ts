@@ -23,7 +23,7 @@ import Google from 'next-auth/providers/google';
 import Apple from 'next-auth/providers/apple';
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
 
-// Extend session type to include user id
+// Extend session type to include user id and provider
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -31,6 +31,7 @@ declare module 'next-auth' {
       email?: string | null;
       name?: string | null;
       image?: string | null;
+      provider?: string; // The OAuth provider used (google, apple, microsoft-entra-id)
     };
   }
 }
@@ -113,10 +114,13 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
 
-    // Include user ID in the session
+    // Include user ID and provider in the session
     async session({ session, token }): Promise<Session> {
       if (session.user && token.id) {
         session.user.id = token.id as string;
+      }
+      if (session.user && token.provider) {
+        session.user.provider = token.provider as string;
       }
       return session;
     },
