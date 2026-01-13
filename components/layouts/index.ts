@@ -6,3 +6,4 @@ export { AppFooter } from './app-footer';
 export { PageLayout, type PageLayoutProps } from './page-layout';
 export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './breadcrumb';
 export { SkipLink, type SkipLinkProps } from './skip-link';
+export { WorkspaceSwitcher } from './workspace-switcher';
