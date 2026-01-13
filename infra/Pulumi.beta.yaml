@@ -1,0 +1,5 @@
+config:
+  expert-agent-infra:env: beta
+  expert-agent-infra:region: us-west1
+  gcp:project: expert-ai-beta
+  gcp:region: us-west1

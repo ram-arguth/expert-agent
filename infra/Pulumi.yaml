@@ -1,0 +1,9 @@
+name: expert-agent-infra
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Expert Agent Platform Infrastructure
+config:
+  gcp:project: ${pulumi:stack}
+  gcp:region: us-central1

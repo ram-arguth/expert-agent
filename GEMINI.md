@@ -1,6 +1,8 @@
-<!-- File: GEMINI.md -->
+---
+trigger: always_on
+---
 
-# Expert Agent Framework – Workspace Rules
+# Expert Agent Platform – Workspace Rules
 
 This file defines workspace-specific configuration for AI assistants working in this repository.
 
@@ -12,69 +14,281 @@ This file defines workspace-specific configuration for AI assistants working in 
 
 ## 1. Project Overview & Goal
 
-You are working on **Expert Agent**, a generalized AI agent framework for domain-specific expertise.
+You are working on **Expert Agent Platform**, a multi-tenant AI agent platform for domain-specific expertise.
 
 High-level characteristics:
 
-- **Framework Design**: Provides reusable patterns for building expert AI agents
-- **Domain Agnostic**: Not locked to any specific domain (UX, code review, security, etc.)
-- **Gemini 3 Native**: Built exclusively for Gemini 3 Pro capabilities
-- **Multimodal**: Supports images, PDFs, text, and other artifacts
+- **Multi-Tenant SaaS**: Supports Individual, Team, and Enterprise organizations
+- **Domain Agnostic**: Pluggable agent architecture for any domain (Legal, UX, Finance, etc.)
+- **Gemini 3 Native**: Built exclusively for Gemini 3 Pro via Vertex AI Agent Engine
+- **Multimodal**: Supports images, PDFs, text, and structured inputs
 
 Primary value proposition:
 
 - Enable rapid creation of **domain-specific expert agents** by providing:
-  - Configurable prompt templates
-  - Multimodal input handling
-  - Structured output generation
-  - Context caching and session management
+  - Zod-based input/output schemas
+  - Handlebars prompt templating
+  - Structured JSON output with Markdown rendering
+  - Cedar-based fine-grained authorization
+  - Multi-agent chaining (A2A protocol)
+
+**Authoritative Documentation:**
+
+- `docs/DESIGN.md` – The definitive technical design document. All implementation decisions must align with this.
+- `docs/IMPEMENTATION.md` – The prioritized implementation checklist derived from DESIGN.md.
+- `docs/VISION.md` – High-level product vision and goals.
 
 ---
 
-## 2. Technology and Architecture Preferences
+## 2. Technology Stack (MANDATORY)
 
-### 2.1 Stack and Frameworks
+> **⚠️ These are non-negotiable. Do not suggest alternatives.**
 
-Unless the repository clearly uses a different stack:
+| Category              | Technology                          | Notes                                                         |
+| --------------------- | ----------------------------------- | ------------------------------------------------------------- |
+| **Frontend**          | Next.js 15 + React 18 + Radix UI    | SSR/SSG, accessible components                                |
+| **State Management**  | TanStack Query (React Query)        | Server state caching                                          |
+| **Backend**           | Next.js API Routes on Cloud Run     | Serverless Node.js                                            |
+| **Database**          | Cloud SQL for PostgreSQL            | Via Prisma ORM                                                |
+| **File Storage**      | Google Cloud Storage (GCS)          | Signed URLs for direct uploads                                |
+| **AI/LLM**            | Vertex AI Agent Engine + Gemini 3   | `gemini-3-pro-preview`, global endpoint                       |
+| **Authorization**     | Cedar Policy Engine                 | Fine-grained RBAC, default-deny                               |
+| **Schema Validation** | Zod                                 | Input/Output schemas, A2A-compatible via JSON Schema export   |
+| **Prompt Templating** | Handlebars                          | `{{placeholder}}` interpolation                               |
+| **Billing**           | Stripe                              | Checkout, Webhooks, Customer Portal                           |
+| **IaC**               | Pulumi (Python)                     | All infrastructure as code                                    |
+| **CI/CD**             | Cloud Build Triggers                | Sovereign Orchestration: 100% Cloud Build (no GitHub Actions) |
+| **Observability**     | OpenTelemetry → Cloud Logging/Trace | W3C TraceContext propagation                                  |
+| **Default Region**    | `us-west1`                          | Single-region for dev/beta/gamma; multi-region later for prod |
 
-- Prefer **TypeScript** for all new code
-- Consider **Next.js with React** for web interfaces
-- Consider **Python** for CLI tools or standalone agents
-- Default assumption: modern versions with latest stable patterns
+### 2.1 Latest Stable Libraries Mandate
 
-Always state your assumption (e.g., "Assuming Python 3.12; adjust if your version differs.").
+> **⚠️ ALWAYS use the most modern, industry-standard, and latest stable versions of libraries.**
 
-### 2.2 Project Structure
+> [!CAUTION]
+> **PREFER MODERN OVER LEGACY**
+>
+> When selecting or recommending libraries:
+>
+> 1. **Always choose latest stable versions** – Check npm/PyPI for current versions
+> 2. **Prefer modern alternatives** – e.g., pnpm over npm, Vitest over Jest, TanStack Query over Redux
+> 3. **Stay current with frameworks** – Use Next.js 15, React 18, Node.js 20 LTS
+> 4. **Avoid deprecated patterns** – No class components, no legacy Context API patterns
+> 5. **Check maintenance status** – Prefer actively maintained packages with recent commits
+>
+> **Examples:**
+>
+> - ✅ `pnpm@9` (fast, efficient, modern)
+> - ❌ `npm@6` (legacy)
+> - ✅ `vitest` (modern, fast, ESM-first)
+> - ❌ `jest` (legacy, slower)
+> - ✅ `@tanstack/react-query@5` (latest)
+> - ❌ `react-query@3` (outdated)
+>
+> **Why this matters:**
+>
+> - Security patches are in latest versions
+> - Performance improvements compound
+> - Community support is strongest for current versions
+> - Reduces technical debt accumulation
 
-Recommend a clear, maintainable structure:
+---
 
-- `src/` – Core source code
-  - `agents/` – Agent definitions and configurations
-  - `prompts/` – Prompt templates
-  - `lib/` – Shared utilities
-  - `types/` – Shared type definitions
-- `docs/` – Documentation
-- `experiments/` – Validation and testing experiments
-- `examples/` – Example agent implementations
+## 3. Infrastructure & Deployment Rules
 
-Keep **separation of concerns**:
+### 3.1 CI/CD-First Infrastructure Policy (CARDINAL RULE)
 
-- Domain logic vs framework utilities
-- Configuration vs implementation
+> **⚠️ MANDATORY: All infrastructure changes MUST go through CI/CD.**
+>
+> This is the **CARDINAL RULE** of this project. Manual deployments are prohibited except for one-time bootstrap operations.
 
-### 2.3 AI Integration
+> [!CAUTION]
+> **CI/CD-FIRST IS NON-NEGOTIABLE**
+>
+> Every infrastructure change MUST follow this principle:
+>
+> 1. **Define all resources in Pulumi IaC FIRST** – Never create resources manually
+> 2. **Deploy ONLY via CI/CD pipelines** – Cloud Build Triggers (not GitHub Actions)
+> 3. **NEVER run `pulumi up` locally on production stacks** – Use CI/CD
+> 4. **NEVER run ad-hoc `gcloud` commands for deployments** – Define in IaC
+> 5. **NEVER modify production resources via GCP Console** – Causes drift
+>
+> **The ONLY Exception: One-Time Bootstrap Operations**
+>
+> Some operations are foundational and CANNOT be automated because they set up the CI/CD system itself.
+> These are documented in Section 3.2 and run EXACTLY ONCE per project lifetime.
+> After bootstrap, there are NO EXCEPTIONS to the CI/CD-first policy.
 
-#### 2.3.1 Mandatory Gemini 3 Model Requirement
+| Action                    | Allowed Method                                                  | Prohibited                      |
+| ------------------------- | --------------------------------------------------------------- | ------------------------------- |
+| **GCP resource creation** | Pulumi via CI/CD                                                | `gcloud` commands, Console UI   |
+| **Secret updates**        | Pulumi or Secret Manager API via CI                             | Manual console edits            |
+| **Cloud Run deploys**     | Cloud Build triggered by Git tags                               | `gcloud run deploy` locally     |
+| **Database migrations**   | CI/CD pipeline step                                             | Manual `prisma migrate` in prod |
+| **Infra changes**         | PR to `infra/` → CI runs `pulumi preview` → merge → `pulumi up` | Any ad-hoc changes              |
 
-> **HARD REQUIREMENT**: ALL AI operations MUST use Gemini 3 Pro (`gemini-3-pro-preview`).
-> There are **NO EXCEPTIONS** for using older model versions.
+**Why CI/CD-First Matters:**
 
-> [!CAUTION] > **ALWAYS USE GEMINI 3 PRO.**
-> This project uses the latest Gemini 3 model exclusively:
+- **Auditability**: Every change is tracked in Git history
+- **Reproducibility**: Any environment can be recreated from code
+- **Safety**: Automated checks prevent misconfigurations
+- **Collaboration**: Team members review infrastructure changes via PRs
+- **Rollback**: Previous versions can be easily restored
+- **Compliance**: Enterprise customers require full audit trails
+
+### 3.2 One-Time Bootstrap Operations (Manual, Run EXACTLY ONCE)
+
+> These commands establish the foundation for CI/CD itself and CANNOT be automated.
+> They are run EXACTLY ONCE per project lifetime during initial setup.
+> After these complete, ALL subsequent changes MUST go through CI/CD.
+
+**When to run bootstrap:**
+
+- When creating a brand new project/environment from scratch
+- When establishing the root project for shared infrastructure
+
+**Bootstrap operations (run in order):**
+
+```bash
+# 1. Enable billing on projects (Console only - cannot be automated)
+# Go to: https://console.cloud.google.com/billing
+
+# 2. Enable required APIs on root project
+gcloud services enable cloudbuild.googleapis.com artifactregistry.googleapis.com \
+  secretmanager.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com \
+  --project=expert-ai-root
+
+# 3. Create Pulumi state bucket (in root project)
+gcloud storage buckets create gs://expert-ai-pulumi-state \
+  --project=expert-ai-root \
+  --location=us-west1 \
+  --uniform-bucket-level-access \
+  --public-access-prevention
+gcloud storage buckets update gs://expert-ai-pulumi-state --versioning
+
+# 4. Create centralized Pulumi passphrase secret
+PASSPHRASE=$(openssl rand -base64 32)
+echo -n "$PASSPHRASE" | gcloud secrets create pulumi-config-passphrase \
+  --project=expert-ai-root \
+  --data-file=-
+
+# 5. Bootstrap each environment (dev, beta, gamma, prod)
+for PROJECT in expert-ai-dev expert-ai-beta expert-ai-gamma expert-ai-prod-484103; do
+  echo "=== Bootstrapping $PROJECT ==="
+
+  # Create dedicated cloud-build-infra SA
+  gcloud iam service-accounts create cloud-build-infra \
+    --project=$PROJECT \
+    --display-name="Cloud Build Infrastructure Deployer"
+
+  # Grant access to root passphrase secret
+  gcloud secrets add-iam-policy-binding pulumi-config-passphrase \
+    --project=expert-ai-root \
+    --member="serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor" --quiet
+
+  # Grant access to Pulumi state bucket
+  gsutil iam ch serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com:objectAdmin \
+    gs://expert-ai-pulumi-state
+
+  # Grant storage.objectViewer for Cloud Build source bucket
+  gcloud projects add-iam-policy-binding $PROJECT \
+    --member="serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com" \
+    --role="roles/storage.objectViewer" --condition=None --quiet
+
+  # Grant logging.logWriter for build logs
+  gcloud projects add-iam-policy-binding $PROJECT \
+    --member="serviceAccount:cloud-build-infra@${PROJECT}.iam.gserviceaccount.com" \
+    --role="roles/logging.logWriter" --condition=None --quiet
+
+  # Enable required APIs
+  gcloud services enable cloudresourcemanager.googleapis.com --project=$PROJECT --quiet
+
+  echo "✅ $PROJECT bootstrapped"
+done
+
+# 6. Create initial Pulumi stacks (run once per environment)
+cd infra
+pulumi login gs://expert-ai-pulumi-state
+pulumi stack init dev
+pulumi stack init beta
+pulumi stack init gamma
+pulumi stack init prod
+```
+
+**After bootstrap, ALL subsequent changes go through CI/CD. No exceptions.**
+
+### 3.3 Environment Promotion Strategy
+
+```
+dev branch push              → expert-ai-dev (auto-deploy)
+beta-YYYYmmdd-HHMMss tag     → expert-ai-beta (auto-deploy + E2E tests)
+gamma-YYYYmmdd-HHMMss tag    → expert-ai-gamma (auto-deploy + E2E tests)
+prod-YYYYmmdd-HHMMss tag     → expert-ai-prod (manual approval + E2E tests)
+```
+
+### 3.4 Branch and Tag Conventions
+
+- **`main`**: Protected. Squash-merged only. Always deployable.
+- **`dev`**: Active development. Auto-deploys to expert-ai-dev.
+- **`beta-YYYYMMDD`**: Tag format for beta promotion.
+- **`gamma-YYYYMMDD`**: Tag format for gamma promotion.
+- **`prod-YYYYMMDD`**: Tag format for production promotion.
+
+### 3.5 Service Account and Least-Privilege Principles
+
+> **⚠️ HARD REQUIREMENT:** Never use default service accounts. Always use dedicated SAs with least-privilege permissions.
+
+> [!CAUTION]
+> **DEDICATED SERVICE ACCOUNTS ONLY**
+>
+> - **NEVER use** `PROJECT_NUMBER-compute@developer.gserviceaccount.com` (Compute Engine default)
+> - **NEVER use** `PROJECT_NUMBER@cloudbuild.gserviceaccount.com` for production workloads
+> - **ALWAYS create** dedicated service accounts for each workload (e.g., `expert-agent-sa`, `cloud-build-deployer`)
+> - **ALWAYS apply** least-privilege: grant only the minimum permissions required
+> - **ALWAYS define** IAM grants in Pulumi IaC, never via ad-hoc `gcloud` commands
+
+| Workload    | Service Account                                     | Permissions                                      |
+| ----------- | --------------------------------------------------- | ------------------------------------------------ |
+| Cloud Run   | `expert-agent-sa@PROJECT.iam.gserviceaccount.com`   | `run.invoker`, database access, GCS              |
+| App Build   | `PROJECT_NUMBER@cloudbuild.gserviceaccount.com`     | `artifactregistry.writer`, `run.admin`           |
+| Infra Build | `cloud-build-infra@PROJECT.iam.gserviceaccount.com` | `editor`, `projectIamAdmin`, state bucket access |
+
+**Why This Matters:**
+
+- **Security**: Default SAs have over-broad permissions
+- **Auditability**: Know exactly what each service can do
+- **Blast radius**: Compromise of one SA doesn't affect others
+- **Compliance**: Enterprise requirements mandate least-privilege
+
+**IAM Grants in IaC:**
+
+All IAM bindings MUST be defined in `infra/__main__.py`:
+
+```python
+# Example: Grant Cloud Build SA permission to deploy to Cloud Run
+gcp.projects.IAMBinding(
+    "cloud-build-run-admin",
+    project=project_id,
+    role="roles/run.admin",
+    members=[pulumi.Output.concat("serviceAccount:", cloud_build_sa.email)],
+)
+```
+
+---
+
+## 4. Coding Standards
+
+### 4.1 Mandatory Gemini 3 Model Requirement
+
+> **⚠️ HARD REQUIREMENT:** ALL AI operations MUST use Gemini 3 Pro.
+
+> [!CAUTION]
+> **ALWAYS USE GEMINI 3 PRO.**
 >
 > - **Model name**: `gemini-3-pro-preview`
 > - **Flash variant**: `gemini-3-flash-preview` (for lightweight operations only)
-> - **Location**: `global` (NOT `us-central1` - Gemini 3 preview uses global endpoint)
+> - **Location**: `global` (NOT regional endpoints for Gemini 3 preview)
 > - **NEVER use**: Gemini 2.x, Gemini 1.5, or older models
 >
 > **What is NEVER acceptable:**
@@ -92,219 +306,458 @@ Keep **separation of concerns**:
 > - Testing on older models creates false confidence
 > - Regional endpoints return 404 for Gemini 3 preview models
 
-#### 2.3.2 AI Client Design
+### 4.2 Authorization Coverage
 
-Create a focused AI client module that:
+> **⚠️ MANDATORY:** Every API route MUST call Cedar for authorization.
 
-- Encapsulates calls to Gemini APIs via `@google/genai` SDK
-- Uses Application Default Credentials (ADC) for authentication
-- Handles retries and basic error mapping
-- Supports context caching for efficient multi-turn conversations
+- All routes must use `withAuthZ()` wrapper or explicit `cedar.isAuthorized()` call.
+- Public routes must be listed in `authz-exceptions.json`.
+- CI runs `pnpm test:authz-coverage` to enforce this.
 
-```typescript
-// Example AI client initialization
-import { GoogleGenAI } from "@google/genai";
+### 4.3 Shared Component Usage
 
-const client = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GOOGLE_CLOUD_PROJECT,
-  location: "global", // Required for Gemini 3
-});
-```
+- UI components should use shared Radix UI primitives from `packages/ui/`.
+- Avoid raw HTML elements (`<button>`, `<input>`, etc.) in component files.
+- CI runs `pnpm test:component-usage` (warning-only, not blocking).
 
-### 2.4 Non-Functional Requirements
+### 4.4 Production-Ready Code Policy (No Placeholders)
 
-- **Robust error handling**: Clear user-facing messages
-- **Structured logging**: JSON logs without sensitive content
-- **Observability**: Metrics and tracing for performance analysis
+> **⚠️ HARD REQUIREMENT:** No placeholder or stub code allowed.
 
----
-
-## 3. Code Quality Standards
-
-### 3.1 Mandatory Testing Requirements
-
-> **HARD REQUIREMENT**: ALL feature additions and changes MUST include appropriate test coverage.
-
-> [!CAUTION] > **NEVER ship code without tests.**
-> Every feature addition or change requires:
+> [!CAUTION]
+> **NEVER write placeholder or shortcut code.**
 >
-> - **Unit Tests**: Test individual functions and components in isolation
-> - **Integration Tests**: Test API interactions and data flow
-> - **E2E Tests**: Test critical user flows end-to-end
->
-> **What is NEVER acceptable:**
->
-> - Adding features without corresponding tests
-> - Modifying behavior without updating existing tests
-> - Shipping "we'll add tests later" code
-> - Skipping tests because "it's a small change"
+> - Every function must be fully implemented
+> - No `// TODO: implement later` comments
+> - No mocked/stubbed functionality in production code
+> - If a feature is too complex, split into smaller complete pieces
 
-#### Test Types Required
+### 4.5 Mandatory Testing Requirements
 
 | Change Type            | Unit Tests | Integration Tests | E2E Tests      |
 | :--------------------- | :--------- | :---------------- | :------------- |
+| New API route          | Required   | Required          | If user-facing |
 | New agent type         | Required   | Required          | If user-facing |
 | Prompt template change | Required   | Required          | Required       |
 | Library utility        | Required   | If API-related    | -              |
 | Bug fix                | Required   | If API-related    | If UI-related  |
 
----
-
-### 3.2 Production-Ready Code Policy (No Placeholders)
-
-> **HARD REQUIREMENT**: ALL code must be 100% complete and production-ready.
-> There are **NO EXCEPTIONS** for placeholders, stubs, or "TODO" implementations.
-
-> [!CAUTION] > **NEVER write placeholder or shortcut code.**
-> Every feature implementation must be complete and functional:
->
-> - **Fully working functionality**: Every function must do exactly what it claims
-> - **No "will add later" comments**: If mentioned, it must be implemented NOW
-> - **No mocked/stubbed functionality**: No fake implementations
-> - **No placeholder text**: Write the real labels/messages
->
-> **What is NEVER acceptable:**
->
-> - `// TODO: implement this later`
-> - `// For now, mark as completed (actual processing can be added later)`
-> - `return { success: true }; // Fake success for now`
-> - Any comment suggesting "temporary" or "placeholder" code
-
-#### How to Handle Complex Features
-
-If a feature is too complex to implement fully in a single change:
-
-1. **Implement the minimum viable COMPLETE version first** - not a placeholder
-2. **Split into multiple complete pieces** - each piece must be fully functional
-3. **If truly cannot implement now**, ask the user instead of adding a placeholder
+**AI Call Mocking:** All tests MUST mock Vertex AI/Gemini API calls to avoid costs.
 
 ---
 
-## 4. Infrastructure & Deployment
+## 5. Implementation Guide (DESIGN.md → IMPLEMENTATION.md Alignment)
 
-### 4.1 Infrastructure-as-Code Policy
+> This section provides expert guidance for implementing features from `docs/IMPEMENTATION.md`
+> while ensuring alignment with `docs/DESIGN.md`.
 
-> [!CAUTION] > **ALWAYS USE TERRAFORM VIA CI/CD. NEVER RUN MANUAL `terraform apply` OR `gcloud` COMMANDS.**
->
-> For **ANY** infrastructure change:
->
-> 1. **Define it in Terraform FIRST**
-> 2. **Deploy ONLY via CI/CD**
-> 3. **NEVER run `terraform apply` locally**
-> 4. **NEVER run ad-hoc `gcloud` commands**
->
-> This is a **HARD REQUIREMENT** with **NO EXCEPTIONS**.
+### 5.1 Implementation Phase Order
 
-### 4.2 Git Branch Workflow
+**ALWAYS follow this phase order from IMPLEMENTATION.md:**
+
+1. **Phase 0: Infrastructure & CI/CD** – Foundation first
+2. **Phase 1: Identity & AuthZ** – Security before features
+3. **Phase 2: Agent Catalog & Schemas** – Core data model
+4. **Phase 3: Query Flow & File Handling** – AI integration
+5. **Phase 4: Frontend UI** – User experience
+6. **Phase 5: Billing & Subscriptions** – Monetization
+7. **Phase 6: Advanced UX** – Polish
+8. **Phase 7: Testing & Launch** – Production readiness
+
+### 5.2 Agent Architecture Pattern
+
+Every agent follows this structure from DESIGN.md:
+
+```
+packages/agents/{agent-name}/
+├── input-schema.ts      # Zod schema for inputs
+├── output-schema.ts     # Zod schema for outputs
+├── prompt.hbs           # Handlebars prompt template
+├── renderer.ts          # JSON → Markdown renderer
+└── config.ts            # Agent metadata
+```
+
+**Implementation Flow:**
+
+1. Frontend renders dynamic form from `inputSchema` (using react-hook-form + Zod)
+2. Backend validates input with Zod
+3. Files uploaded to GCS, get signed URLs
+4. Handlebars interpolates values into `prompt.hbs`
+5. Vertex AI Agent Engine processes prompt with JSON output mode
+6. Response validated against `outputSchema`
+7. `renderer.ts` converts JSON → Markdown for display
+
+**Example Input Schema (from DESIGN.md):**
+
+```typescript
+// packages/schemas/src/agents/legal-advisor/input.ts
+import { z } from "zod";
+
+export const LegalAdvisorInputSchema = z.object({
+  jurisdiction: z.enum(["US", "UK", "EU"]).describe("Legal jurisdiction"),
+  contractType: z.string().min(1).describe("Type of contract"),
+  primaryContract: z.instanceof(File).describe("Main contract PDF"),
+  supportingDocuments: z.array(z.instanceof(File)).optional(),
+  additionalContext: z.string().optional(),
+});
+```
+
+### 5.3 Cedar Authorization Pattern
+
+Every API route MUST be protected:
+
+```typescript
+// lib/authz/withAuthZ.ts
+export function withAuthZ(action: string) {
+  return async (req: NextRequest, context: { params: Promise<Params> }) => {
+    const session = await getSession();
+    if (!session) return unauthorized();
+
+    const resource = await resolveResource(context);
+    const decision = await cedar.isAuthorized({
+      principal: { type: "User", id: session.userId },
+      action: { type: "Action", id: action },
+      resource: resource,
+    });
+
+    if (!decision.isAuthorized) return forbidden();
+
+    return executeHandler(req, context);
+  };
+}
+
+// Usage in route.ts
+export const GET = withAuthZ("ReadAgent")(async (req, { params }) => {
+  // Handler implementation
+});
+```
+
+### 5.4 Multi-Tenant Data Access Pattern
+
+**ALWAYS filter by tenant context:**
+
+```typescript
+// Every database query MUST include tenant filtering
+const files = await prisma.file.findMany({
+  where: {
+    OR: [{ userId: session.userId }, { orgId: session.activeOrgId }],
+  },
+});
+```
+
+### 5.5 Token Quota Enforcement Pattern
+
+```typescript
+// Pre-query check (before calling AI)
+const hasQuota = await checkTokenQuota(session.userId, estimatedTokens);
+if (!hasQuota)
+  return NextResponse.json({ error: "Quota exceeded" }, { status: 402 });
+
+// Post-query deduction (after AI response)
+await deductTokens(session.userId, response.usage.totalTokens);
+```
+
+### 5.6 Structured Output Pattern (A2A-Compatible)
+
+```typescript
+// 1. Define output schema
+const OutputSchema = z.object({
+  findings: z.array(FindingSchema),
+  recommendations: z.array(RecommendationSchema),
+});
+
+// 2. Configure Gemini for structured output
+const response = await client.generateContent({
+  contents: [{ role: "user", parts: [{ text: assembledPrompt }] }],
+  generationConfig: {
+    responseMimeType: "application/json",
+    responseSchema: zodToJsonSchema(OutputSchema),
+  },
+});
+
+// 3. Validate response
+const parsed = OutputSchema.parse(JSON.parse(response.text()));
+
+// 4. Render to Markdown
+const markdown = renderToMarkdown(parsed);
+```
+
+### 5.7 Prompt Template Pattern (Handlebars)
+
+```handlebars
+{{! packages/agents/legal-advisor/prompt.hbs }}
+You are a legal expert AI specializing in
+{{jurisdiction}}
+contract law. IMPORTANT: You MUST respond with a valid JSON object matching the
+Output Schema. Do NOT include any text outside the JSON object. ## Contract to
+Analyze - **Type:**
+{{contractType}}
+- **Primary Document:**
+{{primaryContract.url}}
+
+{{#if supportingDocuments.length}}
+  ## Supporting Documents
+  {{#each supportingDocuments}}
+    -
+    {{this.filename}}:
+    {{this.url}}
+  {{/each}}
+{{/if}}
+
+{{#if additionalContext}}
+  ## Additional Instructions
+  {{additionalContext}}
+{{/if}}
+
+{{#if orgContext}}
+  ## Organization Context
+  {{orgContext}}
+{{/if}}
+```
+
+---
+
+## 6. Critical Implementation Checklist
+
+When working on this project, verify these are addressed:
+
+### Phase 0: Bootstrap & Infrastructure
+
+- [x] Bootstrap commands run (Section 3.2)
+- [x] Pulumi stacks created for all environments
+- [x] Cloud Build triggers set up (Sovereign Orchestration)
+- [x] Artifact Registry created per environment
+- [ ] Cloud Build Triggers connected to GitHub repo
+- [ ] Rate limiting and circuit breakers configured
+- [ ] CSP headers and input size limits set
+
+### Phase 1: Identity & AuthZ
+
+- [ ] NextAuth configured with Google, Apple, MSA providers
+- [ ] Enterprise SSO (SAML/OIDC) via "BYO Identity" pattern
+- [ ] Cedar policies loaded for all roles
+- [ ] Team invite flow with restricted providers
+- [ ] Domain verification for enterprise orgs
+- [ ] Workspace switcher with context propagation
+
+### Phase 2: Agent Catalog & Schemas
+
+- [ ] Zod schemas for input/output per agent
+- [ ] Handlebars prompt templates
+- [ ] Markdown renderers per output schema
+- [ ] Agent catalog API with Cedar filtering
+- [ ] OmniAgent orchestrator for routing
+- [ ] Multi-agent chaining support
+
+### Phase 3: Query Flow
+
+- [ ] GCS signed URL upload flow
+- [ ] Prompt assembly with Handlebars
+- [ ] Vertex AI Agent Engine integration (global endpoint!)
+- [ ] Response validation and storage
+- [ ] Session management with 14-day retention
+- [ ] Memory summarization job
+
+### Phase 4: Frontend
+
+- [ ] Radix UI component library
+- [ ] Dynamic form from Zod schema
+- [ ] Chat/Document dual-panel UI
+- [ ] Highlight & comment inline feedback
+- [ ] Session history and revision view
+- [ ] Export (PDF/DOCX) and sharing
+
+### Phase 5: Billing
+
+- [ ] Stripe Checkout integration
+- [ ] Webhook handlers for all events
+- [ ] Token quota pre/post enforcement
+- [ ] Customer portal link
+- [ ] Rollover and top-up logic
+
+### Phase 6 & 7: Polish & Launch
+
+- [ ] Admin interfaces (member/context management)
+- [ ] Audit logging for enterprise
+- [ ] Browser extension (MVP)
+- [ ] Security hardening review
+- [ ] Load testing in gamma
+- [ ] Production smoke tests
+
+---
+
+## 7. Observability Requirements
+
+- **All API routes**: Must be traced with OpenTelemetry
+- **AI calls**: Must include `gen_ai.*` span attributes
+- **Logs**: Must include `traceId`, `spanId`, `userId`, `orgId`
+- **Sampling**: 100% in dev/beta, 1% in prod (always sample errors)
+- **W3C TraceContext**: Propagate across frontend → backend → AI services
+
+---
+
+## 8. Security Requirements
+
+- **Cedar default-deny**: No action permitted without explicit policy
+- **Tenant isolation**: All data queries filtered by user/org
+- **CMEK**: Available for enterprise orgs (Cloud KMS)
+- **VPC-SC**: Vertex AI Agent Engine in VPC perimeter
+- **CSP headers**: Strict Content-Security-Policy on all responses
+- **Rate limiting**: Per-user and per-org limits enforced
+- **Circuit breaker**: >$100 spend/hour → auto-suspend + alert
+
+---
+
+## 9. Key Files Reference
+
+| Purpose                  | File                        |
+| ------------------------ | --------------------------- |
+| Technical Design         | `docs/DESIGN.md`            |
+| Implementation Checklist | `docs/IMPEMENTATION.md`     |
+| UX Analysis Rules        | `docs/ux-analysis-rules.md` |
+| Infrastructure Code      | `infra/__main__.py`         |
+| App CI/CD Config         | `cloudbuild.yaml`           |
+| Infra CI/CD Config       | `cloudbuild-infra.yaml`     |
+| AuthZ Exceptions         | `authz-exceptions.json`     |
+
+---
+
+## 10. Git Branch and Deployment Workflow
 
 > **HARD REQUIREMENT**: Keep `main` branch clean with squash-merged commits only.
-> Do NOT merge to `main` without explicit user approval.
+> Tags for stage deployments ALWAYS happen on `main` branch, never on `dev`.
 
-**Workflow for incremental work:**
+### Development Flow
 
-1. **All work on `dev` branch** - commit and push all incremental changes
-2. **Wait for explicit approval** - do NOT move `main` forward until user asks
-3. **Squash merge to `main`** - when requested, with comprehensive commit message
-
-**What is acceptable:**
-
-- ✅ Commit and push to `dev` branch
-- ✅ Multiple incremental commits on `dev`
-
-**What is NOT acceptable:**
-
-- ❌ Merging to `main` without explicit user request
-- ❌ Fast-forward merging `dev` to `main` (use squash merge only)
-
----
-
-## 5. Domain Configuration Pattern
-
-Expert Agent uses a configuration-driven approach to define domain expertise:
-
-### 5.1 Domain Definition Structure
-
-```typescript
-interface DomainConfig {
-  // Identity
-  name: string; // e.g., "UX Analyst", "Code Reviewer"
-  description: string; // Brief description of expertise
-
-  // Expertise
-  systemPrompt: string; // Core prompt defining the expert persona
-  knowledgeBase?: string; // Path to domain knowledge document
-
-  // Evaluation
-  criteria: EvaluationCriterion[]; // What to evaluate
-  severityLevels: SeverityLevel[]; // How to rate issues
-
-  // Output
-  reportSchema: ReportSchema; // Structure of output
-  outputFormat: "markdown" | "json" | "both";
-}
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DEVELOPMENT WORKFLOW                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  feature/* ──┐                                                          │
+│              ├──→ dev branch ──→ (squash-merge) ──→ main ──→ tag ──→ β │
+│  fix/*     ──┘         │                              │                 │
+│                        │                              │                 │
+│                        v                              v                 │
+│                   auto-deploy                   tag-triggered           │
+│                   to expert-ai-dev              deployments             │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 Prompt Template Pattern
+### Branch Rules
 
-All domain prompts should follow this structure:
+| Branch      | Purpose            | Merge Strategy         | Auto-Deploy                |
+| ----------- | ------------------ | ---------------------- | -------------------------- |
+| `feature/*` | New features       | Merge to `dev`         | No                         |
+| `fix/*`     | Bug fixes          | Merge to `dev`         | No                         |
+| `dev`       | Active development | Squash-merge to `main` | → `expert-ai-dev`          |
+| `main`      | Stable, deployable | Protected, squash-only | Tags trigger stage deploys |
 
-1. **Role Definition**: "You are an expert [domain] analyst..."
-2. **Primary Goals**: Clear objectives for the analysis
-3. **Grounding Rules**: How to handle uncertainty and evidence
-4. **Input Sections**: Clearly tagged input blocks (<CONTEXT>, <MATERIALS>, etc.)
-5. **Output Format**: Explicit structure for responses
+### Stage Deployment Workflow
 
----
+**Step 1: Develop in `dev` branch**
 
-## 6. Observability
+- All work happens on `dev` or feature branches
+- Tight iteration cycles with frequent commits
+- Auto-deploys to `expert-ai-dev` on every push
 
-### 6.1 OpenTelemetry Tracing
+**Step 2: Squash-merge to `main` (before stage deployment)**
 
-> **REQUIREMENT**: All significant operations MUST include OpenTelemetry tracing.
-
-What MUST be traced:
-
-| Operation Type  | How to Trace                                  |
-| :-------------- | :-------------------------------------------- |
-| AI/LLM Calls    | Wrap with span, include `gen_ai.*` attributes |
-| File Processing | Wrap with span, track processing time         |
-| External APIs   | Use `SpanKind.CLIENT`                         |
-
-### 6.2 Logging with Trace Correlation
-
-ALL logs at INFO level or above SHOULD include trace context:
-
-```typescript
-logger.info({ traceId, spanId, ... }, 'Operation description');
+```bash
+# On main branch
+git checkout main
+git pull origin main
+git merge --squash dev
+git commit -m "release: [description of changes]"
+git push origin main
 ```
 
+**Step 3: Tag on `main` for stage deployment**
+
+```bash
+# Create tag for target environment (always on main!)
+# Format: {env}-YYYYmmdd-HHMMss (timestamp for uniqueness)
+TAG="beta-$(date +%Y%m%d-%H%M%S)"
+git tag $TAG
+git push origin $TAG   # → deploys to expert-ai-beta
+
+# For gamma:
+TAG="gamma-$(date +%Y%m%d-%H%M%S)"
+git tag $TAG
+git push origin $TAG   # → deploys to expert-ai-gamma
+
+# For prod:
+TAG="prod-$(date +%Y%m%d-%H%M%S)"
+git tag $TAG
+git push origin $TAG   # → deploys to expert-ai-prod (requires approval)
+```
+
+### What is Acceptable
+
+- ✅ Frequent commits to `dev` branch
+- ✅ Feature branches merged to `dev`
+- ✅ Tight iteration development on `dev`
+- ✅ Squash-merge from `dev` to `main` when ready for stage deployment
+- ✅ Tags on `main` branch only
+
+### What is NOT Acceptable
+
+- ❌ Tags on `dev` branch (will not trigger stage deployments)
+- ❌ Fast-forward merge to `main` (always squash)
+- ❌ Direct commits to `main`
+- ❌ Merging to `main` without completing dev testing
+- ❌ Skipping `dev` → deploying directly from feature branch to stages
+
+### Tag Format
+
+| Tag Pattern             | Target Environment | Approval | Example                 |
+| ----------------------- | ------------------ | -------- | ----------------------- |
+| `beta-YYYYmmdd-HHMMss`  | `expert-ai-beta`   | Auto     | `beta-20260112-160000`  |
+| `gamma-YYYYmmdd-HHMMss` | `expert-ai-gamma`  | Auto     | `gamma-20260112-160000` |
+| `prod-YYYYmmdd-HHMMss`  | `expert-ai-prod`   | Manual   | `prod-20260112-160000`  |
+
+### Why This Pattern
+
+1. **Clean History**: `main` has a clear, readable history of releases
+2. **Traceability**: Each tag points to a known-good squashed commit
+3. **Easy Rollback**: Revert to previous tag if issues arise
+4. **Stage Isolation**: Each environment has its own promotion gate
+5. **Audit Trail**: Clear record of what code went to which environment when
+
 ---
 
-## 7. Security
+## 11. Assistant Interaction Preferences
 
-### 7.1 Authentication
+> **⚠️ MANDATORY:** Follow these interaction preferences when working in this repository.
 
-- Use **Application Default Credentials (ADC)** for GCP services
-- Support **SSO** for web interfaces (Google, GitHub providers)
-- **No credentials/passwords** stored in code or config files
+### 11.1 No Browser Usage
 
-### 7.2 Authorization
+- **NEVER use the browser subagent** for GCP console or other web interfaces
+- **ALWAYS use CLI tools** instead:
+  - `gcloud` for GCP operations (Cloud Build, Cloud Run, IAM, etc.)
+  - `pulumi` for infrastructure state queries
+  - `curl` for API testing
+- This ensures reproducibility and keeps all operations scriptable
 
-- **Deny-by-default**: All operations require explicit permission
-- **Audit logging**: All authorization decisions logged
-- **Service accounts**: Use specific SAs with minimal permissions
+### 11.2 CI/CD Status Monitoring
 
----
+When monitoring Cloud Build:
 
-## 8. Example: Creating a New Domain Agent
+- **Use short polling intervals** (30-60 seconds) instead of long waits (180+ seconds)
+- **Check status more frequently** to provide faster feedback to the user
+- **Preferred pattern**:
 
-To create a new domain expert (e.g., "Security Auditor"):
+  ```bash
+  # Quick status check
+  gcloud builds describe BUILD_ID --project=PROJECT_ID --format="value(status)"
 
-1. Create domain config in `src/agents/security-auditor/config.ts`
-2. Create prompt template in `src/prompts/security-auditor.template.md`
-3. Define evaluation criteria and severity levels
-4. Create tests for the new agent
-5. Add example in `examples/security-auditor/`
+  # List recent builds
+  gcloud builds list --project=PROJECT_ID --limit=5 --format="table(id,createTime,status)"
 
-See existing agents for reference patterns.
+  # Stream logs
+  gcloud builds log BUILD_ID --project=PROJECT_ID --stream
+  ```
+
+- **Avoid**: Long `WaitDurationSeconds` values (180+) when polling `command_status`
+- **Prefer**: 30-60 second intervals with multiple checks

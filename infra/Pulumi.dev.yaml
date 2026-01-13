@@ -1,0 +1,7 @@
+config:
+  expert-agent-infra:env: dev
+  expert-agent-infra:region: us-west1
+  expert-agent-infra:site_verification_token: "google-site-verification=O5axhNUO19Hu6k8jfHX1NwcsJVayEJ652wHr9t7OaPE"
+  expert-agent-infra:domain_verified: true
+  gcp:project: expert-ai-dev
+  gcp:region: us-west1
