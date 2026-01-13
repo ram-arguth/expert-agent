@@ -144,7 +144,7 @@ steps:
       - "--set-env-vars=NODE_ENV=production,ENV=${_ENV},NEXTAUTH_URL=https://ai-${_ENV}.oz.ly"
       - "--set-secrets=NEXTAUTH_SECRET=nextauth-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest"
       - "--service-account=${_SERVICE_NAME}-sa@${_PROJECT_ID}.iam.gserviceaccount.com"
-    waitFor: ["build-image"]
+    waitFor: ["push-image"]
 
   # ============================================
   # Step 6: Run database migrations
