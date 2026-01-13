@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-push checks - run integration tests before push
+echo "🔗 Running pre-push checks..."
+
+# 1. Run integration tests
+echo "🔗 Running integration tests..."
+pnpm test:integration -- --run
+
+echo "✅ All pre-push checks passed!"

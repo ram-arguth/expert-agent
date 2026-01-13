@@ -5,7 +5,7 @@
  * Covers all policy rules defined in DESIGN.md and IMPLEMENTATION.md.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   CedarEngine,
   getCedarEngine,
@@ -112,6 +112,117 @@ describe('CedarEngine', () => {
       const decision = isAuthorized(request);
 
       expect(decision.isAuthorized).toBe(false);
+    });
+  });
+
+  describe('Test Principal Security (Defense-in-Depth)', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('BLOCKS test principals in production', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+
+      const principal: CedarPrincipal = {
+        type: 'User',
+        id: 'test-user-1',
+        attributes: {
+          email: 'test@example.com',
+          isTestPrincipal: true, // This is the key flag
+        },
+      };
+      const resource = createAgentResource('agent1', { isPublic: true });
+      const request = createRequest(principal, CedarActions.QueryAgent, resource);
+
+      const decision = isAuthorized(request);
+
+      expect(decision.isAuthorized).toBe(false);
+      expect(decision.diagnostics?.matchedPolicy).toBe('block-test-principals-in-production');
+      expect(decision.reason).toContain('SECURITY');
+    });
+
+    it('allows test principals in development', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+
+      const principal: CedarPrincipal = {
+        type: 'User',
+        id: 'test-user-1',
+        attributes: {
+          email: 'test@example.com',
+          isTestPrincipal: true,
+        },
+      };
+      const resource = createAgentResource('agent1', { isPublic: true });
+      const request = createRequest(principal, CedarActions.QueryAgent, resource);
+
+      const decision = isAuthorized(request);
+
+      // Should be allowed in development (other policies apply normally)
+      expect(decision.isAuthorized).toBe(true);
+    });
+
+    it('allows test principals in test environment', () => {
+      vi.stubEnv('NODE_ENV', 'test');
+
+      const principal: CedarPrincipal = {
+        type: 'User',
+        id: 'test-user-1',
+        attributes: {
+          email: 'test@example.com',
+          isTestPrincipal: true,
+        },
+      };
+      const resource = createAgentResource('agent1', { isPublic: true });
+      const request = createRequest(principal, CedarActions.QueryAgent, resource);
+
+      const decision = isAuthorized(request);
+
+      // Should be allowed in test (other policies apply normally)
+      expect(decision.isAuthorized).toBe(true);
+    });
+
+    it('allows non-test principals in production', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+
+      const principal: CedarPrincipal = {
+        type: 'User',
+        id: 'real-user-1',
+        attributes: {
+          email: 'real@example.com',
+          // No isTestPrincipal flag - this is a real user
+        },
+      };
+      const resource = createAgentResource('agent1', { isPublic: true });
+      const request = createRequest(principal, CedarActions.QueryAgent, resource);
+
+      const decision = isAuthorized(request);
+
+      // Real users should work in production
+      expect(decision.isAuthorized).toBe(true);
+    });
+
+    it('blocks test principals even for normally allowed actions in production', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+
+      const principal: CedarPrincipal = {
+        type: 'User',
+        id: 'test-user-1',
+        attributes: {
+          email: 'test@example.com',
+          orgIds: ['org1'],
+          roles: { org1: 'owner' },
+          isTestPrincipal: true,
+        },
+      };
+      const resource = createOrgResource('org1');
+      
+      // Even owner actions should be blocked for test principals in production
+      const request = createRequest(principal, CedarActions.InviteMember, resource);
+
+      const decision = isAuthorized(request);
+
+      expect(decision.isAuthorized).toBe(false);
+      expect(decision.diagnostics?.matchedPolicy).toBe('block-test-principals-in-production');
     });
   });
 

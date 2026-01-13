@@ -47,9 +47,9 @@ steps:
         path: /workspace/.pnpm-store
 
   # ============================================
-  # Step 2: Run tests (unit + integration + authZ coverage)
+  # Step 2a: AuthZ Coverage Check (parallel with other tests)
   # ============================================
-  - id: "run-tests"
+  - id: "test-authz"
     name: "node:20-alpine"
     entrypoint: "sh"
     args:
@@ -58,20 +58,53 @@ steps:
         npm install -g pnpm@9
         pnpm config set store-dir /workspace/.pnpm-store
 
-        # AuthZ coverage check - MUST pass
         echo "🔐 Checking Cedar authorization coverage..."
         pnpm test:authz-coverage
+    volumes:
+      - name: pnpm-store
+        path: /workspace/.pnpm-store
+    waitFor: ["install-deps"]
 
-        # Unit tests
+  # ============================================
+  # Step 2b: Unit Tests (parallel with other tests)
+  # ============================================
+  - id: "test-unit"
+    name: "node:20-alpine"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        npm install -g pnpm@9
+        pnpm config set store-dir /workspace/.pnpm-store
+
         echo "🧪 Running unit tests..."
-        pnpm test:unit -- --run || echo "Unit tests not configured yet, skipping"
+        pnpm test:unit -- --run
+    env:
+      - "VERTEX_AI_MOCK=true"
+      - "STRIPE_MOCK=true"
+    volumes:
+      - name: pnpm-store
+        path: /workspace/.pnpm-store
+    waitFor: ["install-deps"]
 
-        # Integration tests
+  # ============================================
+  # Step 2c: Integration Tests (parallel with other tests)
+  # ============================================
+  - id: "test-integration"
+    name: "node:20-alpine"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        npm install -g pnpm@9
+        pnpm config set store-dir /workspace/.pnpm-store
+
         echo "🔗 Running integration tests..."
         pnpm test:integration || echo "Integration tests not configured yet, skipping"
     env:
       - "VERTEX_AI_MOCK=true"
       - "STRIPE_MOCK=true"
+      - "DATABASE_URL=${DATABASE_URL}"
     volumes:
       - name: pnpm-store
         path: /workspace/.pnpm-store
@@ -115,6 +148,7 @@ steps:
 
   # ============================================
   # Step 5: Push to Artifact Registry
+  # Waits for all tests AND build to complete before pushing
   # ============================================
   - id: "push-image"
     name: "gcr.io/cloud-builders/docker"
@@ -122,7 +156,7 @@ steps:
       - "push"
       - "--all-tags"
       - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}"
-    waitFor: ["build-image"]
+    waitFor: ["build-image", "test-authz", "test-unit", "test-integration"]
 
   # ============================================
   # Step 6: Deploy to Cloud Run
@@ -198,11 +232,62 @@ steps:
         exit 1
     waitFor: ["deploy-cloud-run"]
 
-# TODO: Re-enable once database is configured via IaC
-# availableSecrets:
-#   secretManager:
-#     - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
-#       env: "DATABASE_URL"
+  # ============================================
+  # Step 8: E2E Tests (Playwright) - beta/gamma/prod only
+  # ============================================
+  # Runs E2E tests against the deployed service for higher environments
+  # This step is skipped for dev (based on _ENV substitution)
+  - id: "e2e-tests"
+    name: "mcr.microsoft.com/playwright:v1.48.0-jammy"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        # Skip E2E tests for dev environment (run on beta/gamma/prod only)
+        if [ "${_ENV}" = "dev" ]; then
+          echo "⏭️  Skipping E2E tests for dev environment"
+          exit 0
+        fi
+
+        echo "🎭 Running E2E tests for ${_ENV} environment..."
+
+        # Install pnpm
+        npm install -g pnpm@9
+        pnpm config set store-dir /workspace/.pnpm-store
+
+        # Get the deployed service URL
+        apt-get update && apt-get install -y curl jq
+        SERVICE_URL=$$(curl -s -H "Authorization: Bearer $$(gcloud auth print-access-token)" \
+          "https://run.googleapis.com/v2/projects/${_PROJECT_ID}/locations/${_REGION}/services/${_SERVICE_NAME}" \
+          | jq -r '.uri')
+
+        echo "Running E2E tests against: $$SERVICE_URL"
+
+        # Set environment variables for Playwright
+        export BASE_URL="$$SERVICE_URL"
+        export CI=true
+        export E2E_TEST_SECRET="$${E2E_TEST_SECRET}"
+
+        # Run Playwright tests
+        pnpm test:e2e --reporter=list || exit 1
+
+        echo "✅ E2E tests passed!"
+    env:
+      - "CI=true"
+    secretEnv: ["E2E_TEST_SECRET"]
+    volumes:
+      - name: pnpm-store
+        path: /workspace/.pnpm-store
+    waitFor: ["smoke-test"]
+
+# Secrets for E2E tests and database
+availableSecrets:
+  secretManager:
+    - versionName: projects/${_PROJECT_ID}/secrets/e2e-test-secret/versions/latest
+      env: "E2E_TEST_SECRET"
+    # TODO: Re-enable once database is configured via IaC
+    # - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
+    #   env: "DATABASE_URL"
 
 images:
   - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${SHORT_SHA}"

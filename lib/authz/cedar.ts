@@ -25,6 +25,12 @@ export interface CedarPrincipal {
     orgIds?: string[];
     roles?: Record<string, string>; // orgId -> role
     authProvider?: string;
+    /**
+     * SECURITY: Flag indicating this is a test principal.
+     * Test principals are created via E2E test injection.
+     * Cedar policies MUST explicitly DENY test principals in production.
+     */
+    isTestPrincipal?: boolean;
   };
 }
 
@@ -158,6 +164,32 @@ class CedarEngine {
    * Load default policies
    */
   private loadDefaultPolicies(): void {
+    // SECURITY: Block test principals in production (HIGHEST PRIORITY)
+    // This is defense-in-depth - even if test principals bypass middleware,
+    // Cedar will explicitly deny them.
+    this.policies.push({
+      id: 'block-test-principals-in-production',
+      effect: 'forbid',
+      priority: 1000, // Highest priority - evaluated first
+      evaluate: (req) => {
+        const isTestPrincipal = req.principal.attributes?.isTestPrincipal === true;
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        if (isTestPrincipal && isProduction) {
+          console.error('[SECURITY ALERT] Test principal blocked by Cedar in production!', {
+            principalId: req.principal.id,
+            action: req.action.id,
+            resource: `${req.resource.type}::${req.resource.id}`,
+          });
+          return {
+            matches: true,
+            reason: 'SECURITY: Test principals are forbidden in production',
+          };
+        }
+        return { matches: false };
+      },
+    });
+
     // Default deny - always evaluated last
     this.policies.push({
       id: 'default-deny',
