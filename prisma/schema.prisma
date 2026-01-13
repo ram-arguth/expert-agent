@@ -1,0 +1,336 @@
+// Expert Agent Platform - Database Schema
+// See docs/DESIGN.md for full data model documentation
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User Identity
+// ============================================
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  name           String?
+  image          String?
+  
+  // OAuth provider info
+  authProvider   String   // "google", "apple", "microsoft", "saml", "oidc"
+  authProviderId String?
+  
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  memberships    Membership[]
+  sessions       Session[]
+  files          File[]
+  invitesSent    Invite[]     @relation("InvitedBy")
+  
+  @@index([email])
+  @@index([authProvider, authProviderId])
+}
+
+// ============================================
+// Organizations (Teams & Enterprises)
+// ============================================
+
+model Org {
+  id                String   @id @default(uuid())
+  name              String
+  slug              String   @unique // URL-friendly identifier
+  
+  // Org type determines capabilities
+  type              OrgType  @default(TEAM)
+  
+  // Enterprise-specific fields
+  domain            String?  @unique // e.g., "acme.com"
+  domainVerified    Boolean  @default(false)
+  verificationToken String?
+  ssoConfig         Json?    // SAML metadata or OIDC config
+  
+  // Billing (Stripe)
+  stripeCustomerId  String?
+  plan              String   @default("free") // "free", "pro", "enterprise"
+  
+  // Token quota
+  tokensRemaining   Int      @default(1000)
+  tokensMonthly     Int      @default(1000)
+  quotaResetDate    DateTime?
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  memberships       Membership[]
+  invites           Invite[]
+  contextFiles      ContextFile[]
+  sessions          Session[]
+  
+  @@index([slug])
+  @@index([domain])
+}
+
+enum OrgType {
+  TEAM       // Self-serve team, invite via email
+  ENTERPRISE // Domain-verified, SSO, compliance features
+}
+
+// ============================================
+// Membership (User ↔ Org relationship)
+// ============================================
+
+model Membership {
+  id        String   @id @default(uuid())
+  userId    String
+  orgId     String
+  role      Role     @default(MEMBER)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, orgId])
+  @@index([userId])
+  @@index([orgId])
+}
+
+enum Role {
+  OWNER          // Full control including billing and deletion
+  ADMIN          // Manage members, context, settings (not billing)
+  MEMBER         // Use agents, view team context
+  AUDITOR        // Read-only access to logs and sessions (enterprise)
+  BILLING_MANAGER // Manage billing only
+}
+
+// ============================================
+// Invites (Team member invitations)
+// ============================================
+
+model Invite {
+  id          String       @id @default(uuid())
+  orgId       String
+  email       String
+  role        Role         @default(MEMBER)
+  token       String       @unique
+  status      InviteStatus @default(PENDING)
+  
+  // Invited by
+  invitedById String
+  
+  // Timestamps
+  createdAt   DateTime     @default(now())
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  
+  // Relations
+  org         Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  invitedBy   User         @relation("InvitedBy", fields: [invitedById], references: [id])
+  
+  @@index([email])
+  @@index([token])
+  @@index([orgId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// ============================================
+// Agent Sessions & Messages
+// ============================================
+
+model Session {
+  id          String   @id @default(uuid())
+  userId      String
+  orgId       String?  // Null = personal session
+  agentId     String   // Reference to agent catalog
+  
+  // Session state
+  archived    Boolean  @default(false)
+  summaryUrl  String?  // GCS path to summary (for archived sessions)
+  
+  // Vertex AI Agent Engine session
+  vertexSessionId String?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org         Org?     @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  messages    Message[]
+  
+  @@index([userId])
+  @@index([orgId])
+  @@index([agentId])
+  @@index([updatedAt]) // For finding stale sessions to archive
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  sessionId   String
+  
+  // Message content
+  role        MessageRole
+  content     String   // Rendered Markdown for display
+  jsonData    Json?    // Structured JSON (for agent responses per Output Schema)
+  
+  // Token usage (for billing)
+  inputTokens  Int?
+  outputTokens Int?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+}
+
+enum MessageRole {
+  USER
+  AGENT
+  SYSTEM
+}
+
+// ============================================
+// Files & Context
+// ============================================
+
+model File {
+  id          String   @id @default(uuid())
+  userId      String
+  
+  // File metadata
+  name        String
+  gcsPath     String
+  mimeType    String
+  sizeBytes   Int
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+// Organization-level shared context files
+model ContextFile {
+  id          String   @id @default(uuid())
+  orgId       String
+  
+  // File metadata
+  name        String
+  gcsPath     String
+  mimeType    String
+  sizeBytes   Int
+  
+  // Scope: which agents can access this context
+  // Empty array = all agents
+  agentIds    String[]
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  uploadedById String?
+  
+  // Relations
+  org         Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  @@index([orgId])
+}
+
+// ============================================
+// Agent Catalog (optional - can also be JSON config)
+// ============================================
+
+model Agent {
+  id                String   @id // e.g., "legal-advisor"
+  displayName       String
+  description       String
+  category          String?
+  iconUrl           String?
+  
+  // Schema paths (relative to packages/schemas/)
+  inputSchemaPath   String
+  outputSchemaPath  String
+  promptTemplatePath String
+  rendererPath      String
+  
+  // Availability
+  isBeta            Boolean  @default(false)
+  isPublic          Boolean  @default(true)
+  allowedOrgIds     String[] // If not public, only these orgs can access
+  
+  // Features
+  supportsGuidedInterview Boolean @default(false)
+  supportsFileUpload      Boolean @default(true)
+  supportsStreaming       Boolean @default(true)
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([category])
+  @@index([isBeta])
+}
+
+// ============================================
+// Billing & Usage
+// ============================================
+
+model UsageRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  orgId       String?
+  sessionId   String?
+  agentId     String
+  
+  // Token usage
+  inputTokens  Int
+  outputTokens Int
+  totalTokens  Int
+  
+  // Cost tracking (in cents)
+  costCents   Int?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([orgId])
+  @@index([createdAt])
+}
+
+model StripeEvent {
+  id            String   @id // Stripe event ID
+  type          String   // e.g., "customer.subscription.updated"
+  data          Json
+  processed     Boolean  @default(false)
+  processedAt   DateTime?
+  error         String?
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([type])
+  @@index([processed])
+}
