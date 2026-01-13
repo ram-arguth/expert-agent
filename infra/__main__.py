@@ -375,8 +375,12 @@ gcp.projects.IAMMember(
 # ============================================
 # Artifact Registry (per project for isolation)
 # ============================================
-# Import existing repository if it exists
+# Only import for dev where repository was created before Pulumi management
 ar_import_id = f"projects/{project_id}/locations/{region}/repositories/expert-agent"
+ar_opts = pulumi.ResourceOptions(
+    import_=ar_import_id if env == "dev" else None,
+    ignore_changes=["repository_id"] if env == "dev" else [],
+)
 
 artifact_registry = gcp.artifactregistry.Repository(
     f"expert-agent-docker-repo-{env}",
@@ -385,10 +389,7 @@ artifact_registry = gcp.artifactregistry.Repository(
     repository_id="expert-agent",
     format="DOCKER",
     description=f"Docker images for Expert Agent Platform ({env})",
-    opts=pulumi.ResourceOptions(
-        import_=ar_import_id,
-        ignore_changes=["repository_id"],
-    ),
+    opts=ar_opts,
 )
 
 # ============================================
@@ -405,8 +406,12 @@ secrets = [
 ]
 
 for secret_name in secrets:
-    # Import if exists from previous deployment
+    # Only import for dev where secrets were created before Pulumi management
     secret_import_id = f"projects/{project_id}/secrets/{secret_name}"
+    secret_opts = pulumi.ResourceOptions(
+        import_=secret_import_id if env == "dev" else None,
+        ignore_changes=["secret_id"] if env == "dev" else [],
+    )
     secret = gcp.secretmanager.Secret(
         f"secret-{secret_name}-{env}",
         project=project_id,
@@ -414,36 +419,35 @@ for secret_name in secrets:
         replication=gcp.secretmanager.SecretReplicationArgs(
             auto=gcp.secretmanager.SecretReplicationAutoArgs(),
         ),
-        opts=pulumi.ResourceOptions(
-            import_=secret_import_id,
-            ignore_changes=["secret_id"],
-        ),
+        opts=secret_opts,
     )
 
 # ============================================
 # Pub/Sub Topics (for async processing)
 # ============================================
 
-# Session summarization topic
+# Session summarization topic - only import for dev
+summarization_topic_opts = pulumi.ResourceOptions(
+    import_=f"projects/{project_id}/topics/session-summarization-{env}" if env == "dev" else None,
+    ignore_changes=["name"] if env == "dev" else [],
+)
 summarization_topic = gcp.pubsub.Topic(
     f"session-summarization-{env}",
     project=project_id,
     name=f"session-summarization-{env}",
-    opts=pulumi.ResourceOptions(
-        import_=f"projects/{project_id}/topics/session-summarization-{env}",
-        ignore_changes=["name"],
-    ),
+    opts=summarization_topic_opts,
 )
 
-# File processing topic
+# File processing topic - only import for dev
+file_processing_topic_opts = pulumi.ResourceOptions(
+    import_=f"projects/{project_id}/topics/file-processing-{env}" if env == "dev" else None,
+    ignore_changes=["name"] if env == "dev" else [],
+)
 file_processing_topic = gcp.pubsub.Topic(
     f"file-processing-{env}",
     project=project_id,
     name=f"file-processing-{env}",
-    opts=pulumi.ResourceOptions(
-        import_=f"projects/{project_id}/topics/file-processing-{env}",
-        ignore_changes=["name"],
-    ),
+    opts=file_processing_topic_opts,
 )
 
 # ============================================
