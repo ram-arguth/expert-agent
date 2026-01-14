@@ -1212,9 +1212,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 4.3 Chat/Document Display
 
-- [ ] **Markdown Renderer:** Use `react-markdown` with `remark-gfm`. Sanitize via `rehype-sanitize`.
-- [ ] **Message List:** Show conversation history (user questions, agent responses).
-- [ ] **Loading State:** Show typing indicator / spinner while awaiting response.
+- [x] **Markdown Renderer:** Use `react-markdown` with `remark-gfm`. Sanitize via `rehype-sanitize`.
+- [x] **Message List:** Show conversation history (user questions, agent responses).
+- [x] **Loading State:** Show typing indicator / spinner while awaiting response.
 - [ ] **Streaming (Optional):** If backend supports SSE, stream response incrementally.
 
 ### 4.4 Highlight & Comment (Inline Follow-up)
@@ -1277,18 +1277,18 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Displays error for oversized file
 - [x] Shows filename after upload
 
-**`components/markdown-display.test.tsx`**
+**`components/chat/markdown-display.test.tsx`**
 
-- [ ] Renders Markdown correctly
-- [ ] Sanitizes XSS attempts
-- [ ] Renders code blocks with syntax highlight
-- [ ] Renders tables and lists
+- [x] Renders Markdown correctly
+- [x] Sanitizes XSS attempts
+- [x] Renders code blocks with language labels
+- [x] Renders tables and lists
 
-**`components/message-list.test.tsx`**
+**`components/chat/message-list.test.tsx`**
 
-- [ ] Renders user and agent messages
-- [ ] Shows loading indicator during query
-- [ ] Scrolls to bottom on new message
+- [x] Renders user and agent messages
+- [x] Shows loading indicator during query
+- [x] Auto-scrolls to bottom on new message
 
 **`components/highlight-comment.test.tsx`**
 

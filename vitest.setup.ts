@@ -15,3 +15,8 @@ Element.prototype.hasPointerCapture = function () {
 };
 Element.prototype.setPointerCapture = function () {};
 Element.prototype.releasePointerCapture = function () {};
+
+// Mock scrollIntoView for JSDOM environment
+// Required by auto-scroll behaviors
+Element.prototype.scrollIntoView = function () {};
+
