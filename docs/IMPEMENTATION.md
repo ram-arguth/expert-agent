@@ -47,8 +47,8 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 > **⚠️ MANDATORY:** All tests (unit, integration, E2E) MUST mock Vertex AI/Gemini API calls to avoid costs.
 
-- [ ] **Create mock fixtures:** Define realistic agent response fixtures in `__fixtures__/agents/`
-- [ ] **Mock implementation:** Use `vitest.mock()` or `msw` to intercept Vertex AI client
+- [x] **Create mock fixtures:** Define realistic agent response fixtures in `__fixtures__/agents/`
+- [x] **Mock implementation:** Use `vitest.mock()` or `msw` to intercept Vertex AI client
 - [ ] **Golden path suite (optional):** Separate test suite (`test:golden`) for live AI calls with budget controls, run manually or weekly in CI
 
 ### E2E Test Principal Security (Defense-in-Depth) ✅
