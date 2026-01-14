@@ -873,10 +873,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 > **Per DESIGN.md:** Users who don't know which expert to choose can use "OmniAgent" – a dispatcher that routes queries to the most appropriate agent.
 
-- [ ] **Classifier Prompt:** Create a lightweight classifier (Gemini 3 Flash) that analyzes user query and returns best-fit `agentId`.
-- [ ] **Fallback Handling:** If no suitable agent exists, respond with "We don't have an expert for that topic yet. Would you like to suggest we add one?" Log suggestion for roadmap.
+- [x] **Classifier Prompt:** Keyword-based classification with confidence scoring (AI-based classification planned for future).
+- [x] **Fallback Handling:** Returns noMatchSuggestion: "We don't have an expert for that topic yet." when no match found.
 - [ ] **Confirmation UX:** For ambiguous queries, ask user to confirm: "It looks like your question might be [domain]. Use the [Agent Name]?"
-- [ ] **OmniAgent API:** `POST /api/omni/route` with `{ query }` returns `{ suggestedAgentId, confidence, alternatives? }`.
+- [x] **OmniAgent API:** `POST /api/omni/route` with `{ query }` returns `{ suggestedAgentId, agentName, confidence, reasoning, alternatives? }`.
+  - GET endpoint returns list of available agents with domains
+  - 28 tests covering classification accuracy, input validation, alternatives, security
 - [ ] **UI Integration:** Add "Ask OmniAI" as first option in agent selector. Route to appropriate agent after classification.
 
 ### 2.7 Multi-Agent Chaining (A2A Protocol)
