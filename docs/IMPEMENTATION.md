@@ -39,7 +39,7 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
   - [x] `pnpm typecheck` – TypeScript compilation check
   - [x] `pnpm test:unit` – Run unit tests (fast, <30s target)
   - [x] `pnpm test:authz-coverage` – Verify all API routes have Cedar calls
-  - [ ] `pnpm test:component-usage` – Check shared component usage (warning-only)
+  - [x] `pnpm test:component-usage` – Check shared component usage (warning-only)
 - [x] **Pre-push checks:**
   - [x] `pnpm test:integration` – Run integration tests (mocked external services)
 
@@ -299,10 +299,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Sensitive field redaction (passwords, tokens, API keys, auth headers)
   - Environment-aware: pretty print in dev, JSON in production
   - 34 tests covering context binding, trace parsing, security redaction
-- [ ] **OpenTelemetry Setup:** Initialize OTEL SDK in Next.js API routes. Configure:
-  - W3C TraceContext propagator (for frontend→backend trace correlation)
-  - Cloud Trace exporter
-  - Sampling: 100% in dev/beta, 1% in prod (always sample errors)
+- [x] **OpenTelemetry Setup:** `lib/observability/tracing.ts`:
+  - W3C TraceContext propagator for frontend→backend trace correlation
+  - Cloud Trace exporter for GCP production environments
+  - OTLP exporter for local development/testing
+  - Environment-aware sampling: 100% in dev/beta, 1% in prod
+  - Span utilities: `withSpan()`, `withSpanSync()`, `setSpanAttributes()`, `addSpanEvent()`
+  - Request tracing helper with `withTracing()` wrapper
+  - `extractTraceContext()` / `injectTraceContext()` for propagation
+  - 33 tests covering configuration, spans, context propagation
 - [ ] **Metrics:** Define key metrics (request latency, tokens used, error count). Emit to Cloud Monitoring.
 - [ ] **Alerting:** Create Cloud Monitoring alert policies (error rate spike, high latency, quota exhaustion).
 

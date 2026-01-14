@@ -18,3 +18,32 @@ export {
 } from './logger';
 
 export type { LogContext, Logger } from './logger';
+
+// OpenTelemetry Tracing
+export {
+  initializeTracing,
+  shutdownTracing,
+  getTracingConfig,
+  getTracer,
+  getCurrentSpan,
+  getCurrentSpanContext,
+  withSpan,
+  withSpanSync,
+  setSpanAttributes,
+  addSpanEvent,
+  recordSpanError,
+  extractTraceContext,
+  injectTraceContext,
+  getTraceparentHeader,
+  withTracing,
+  SpanKind,
+  SpanStatusCode,
+} from './tracing';
+
+export type {
+  TracingConfig,
+  RequestTraceContext,
+  Span,
+  Tracer,
+  SpanContext,
+} from './tracing';
