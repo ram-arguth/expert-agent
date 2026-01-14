@@ -1080,6 +1080,35 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
     ```
   - [x] **Log Security Events:** Security events are auto-logged to console (Cloud Logging ready)
 
+- [x] **Integrate PII Detection (DESIGN.md §Compliance Guardrails):** ✅ Implemented in `app/api/query/route.ts`
+  - [x] **Step 5b - Input PII Check:** After Safety Guard, call `guardInputForPII()`:
+    ```typescript
+    const piiGuard = await guardInputForPII(JSON.stringify(validatedInputs), {
+      userId: session.user.id,
+      agentId,
+    });
+    if (!piiGuard.allowed) {
+      return NextResponse.json(
+        {
+          error: "Privacy Protection",
+          piiTypesDetected: piiGuard.result?.summary,
+        },
+        { status: 400 }
+      );
+    }
+    ```
+  - [x] **Step 12b - Output PII Check:** After AI response, check and redact PII:
+    ```typescript
+    const outputPIIGuard = await guardOutputForPII(
+      JSON.stringify(validatedOutput),
+      { userId, agentId }
+    );
+    const finalOutput = outputPIIGuard.result?.redactedContent
+      ? JSON.parse(outputPIIGuard.result.redactedContent)
+      : validatedOutput;
+    ```
+  - [x] **PII Integration Tests:** 4 tests in `query.test.ts` covering SSN, credit card, combined PII, and legitimate requests
+
 ### 3.4 Vertex AI Client ✅ (NEW)
 
 - [x] **Client Implementation:** `lib/vertex/client.ts`

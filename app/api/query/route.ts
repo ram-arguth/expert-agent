@@ -25,6 +25,8 @@ import {
   guardInput,
   guardOutput,
   getEmbeddedSafetyInstructions,
+  guardInputForPII,
+  guardOutputForPII,
 } from '@/lib/security';
 import Handlebars from 'handlebars';
 
@@ -173,6 +175,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 5b. PII Detection - Check for sensitive personal information
+    // Blocks requests containing critical PII (SSN, credit card, etc.)
+    const piiGuard = await guardInputForPII(
+      JSON.stringify(validatedInputs),
+      {
+        userId: session.user.id,
+        agentId,
+      }
+    );
+
+    if (!piiGuard.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Privacy Protection',
+          message: piiGuard.userMessage || 'Your request contains sensitive personal information that cannot be processed',
+          piiTypesDetected: piiGuard.result?.summary,
+        },
+        { status: 400 }
+      );
+    }
+
     // 6. Check token quota
     const quotaResult = await checkQuota(session.user.id);
     if (!quotaResult.hasQuota) {
@@ -232,8 +255,27 @@ export async function POST(request: NextRequest) {
       console.log('[Safety Guard] Output was sanitized for user:', session.user.id);
     }
 
+    // 12b. PII Detection - Check AI output for accidentally generated PII
+    // Redacts any sensitive information in the output (defensive measure)
+    const outputPIIGuard = await guardOutputForPII(
+      JSON.stringify(validatedOutput),
+      {
+        userId: session.user.id,
+        agentId,
+      }
+    );
+
+    // Use redacted output if PII was found (allows response but with PII masked)
+    const finalOutput = outputPIIGuard.result?.redactedContent
+      ? JSON.parse(outputPIIGuard.result.redactedContent)
+      : validatedOutput;
+
+    if (outputPIIGuard.result?.hasPII) {
+      console.log('[PII Guard] Output contained PII, redacted for user:', session.user.id);
+    }
+
     // 13. Render to Markdown
-    const renderedMarkdown = agent.render(validatedOutput);
+    const renderedMarkdown = agent.render(finalOutput);
 
     // 14. Deduct tokens
     await deductTokens(session.user.id, aiResponse.usage.totalTokens);
@@ -244,7 +286,7 @@ export async function POST(request: NextRequest) {
       agentId,
       sessionId,
       input: validatedInputs,
-      output: validatedOutput,
+      output: finalOutput,
       markdown: renderedMarkdown,
       usage: aiResponse.usage,
     });
@@ -263,7 +305,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       sessionId: agentSession.id,
-      output: validatedOutput,
+      output: finalOutput,
       markdown: renderedMarkdown,
       usage: aiResponse.usage,
       metadata: {

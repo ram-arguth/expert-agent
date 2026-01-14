@@ -538,4 +538,116 @@ describe('POST /api/query', () => {
       expect(data.error).toBe('Safety Check Failed');
     });
   });
+
+  describe('PII Detection Integration', () => {
+    beforeEach(() => {
+      mockAuth.mockResolvedValue({
+        user: { id: 'user-1', email: 'user@example.com' },
+      });
+    });
+
+    it('blocks requests containing SSN', async () => {
+      const request = createRequest({
+        agentId: 'ux-analyst',
+        inputs: {
+          productType: 'web-app',
+          targetAudience: 'My SSN is 123-45-6789, please help me',
+          primaryUserTask: 'Create invoices',
+          screenshots: [
+            {
+              name: 'homepage.png',
+              url: 'https://example.com/homepage.png',
+              mimeType: 'image/png',
+              sizeBytes: 10000,
+            },
+          ],
+        },
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Privacy Protection');
+      expect(data.piiTypesDetected).toBeDefined();
+    });
+
+    it('blocks requests containing credit card numbers', async () => {
+      const request = createRequest({
+        agentId: 'ux-analyst',
+        inputs: {
+          productType: 'web-app',
+          targetAudience: 'Small business owners',
+          primaryUserTask: 'Create invoices',
+          additionalContext: 'My card is 4111111111111111',
+          screenshots: [
+            {
+              name: 'homepage.png',
+              url: 'https://example.com/homepage.png',
+              mimeType: 'image/png',
+              sizeBytes: 10000,
+            },
+          ],
+        },
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Privacy Protection');
+    });
+
+    it('allows requests without PII', async () => {
+      const request = createRequest({
+        agentId: 'ux-analyst',
+        inputs: {
+          productType: 'web-app',
+          targetAudience: 'Small business owners managing invoices',
+          primaryUserTask: 'Create and send invoices to clients',
+          screenshots: [
+            {
+              name: 'homepage.png',
+              url: 'https://example.com/homepage.png',
+              mimeType: 'image/png',
+              sizeBytes: 10000,
+            },
+          ],
+        },
+      });
+
+      const response = await POST(request);
+
+      // Should succeed - no PII detected
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data).toHaveProperty('sessionId');
+    });
+
+    it('blocks multiple types of PII in a single request', async () => {
+      const request = createRequest({
+        agentId: 'ux-analyst',
+        inputs: {
+          productType: 'web-app',
+          targetAudience: 'Call me at 555-123-4567',
+          primaryUserTask: 'Create invoices',
+          additionalContext: 'Send to email john@example.com and SSN 456-78-9012',
+          screenshots: [
+            {
+              name: 'homepage.png',
+              url: 'https://example.com/homepage.png',
+              mimeType: 'image/png',
+              sizeBytes: 10000,
+            },
+          ],
+        },
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Privacy Protection');
+    });
+  });
 });
