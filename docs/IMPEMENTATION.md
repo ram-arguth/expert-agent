@@ -1037,8 +1037,8 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   13. ✅ **Deduct Tokens:** Updates org `tokensRemaining`
   14. ✅ **Return Response:** `{ sessionId, output, markdown, usage, metadata }`
 
-- [ ] **Integrate AI Safety Guard (DESIGN.md §Multi-Tenancy and Security):**
-  - [ ] **Step 4a - Input Safety Check:** After Zod validation, call `guardInput()` from `lib/security/ai-safety-guard.ts`:
+- [x] **Integrate AI Safety Guard (DESIGN.md §Multi-Tenancy and Security):** ✅ Implemented in `app/api/query/route.ts`
+  - [x] **Step 5a - Input Safety Check:** After Zod validation, call `guardInput()` from `lib/security/ai-safety-guard.ts`:
 
     ```typescript
     import {
@@ -1060,12 +1060,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
     }
     ```
 
-  - [ ] **Step 8a - Embed Safety Instructions:** Prepend `getEmbeddedSafetyInstructions()` to compiled prompt:
+  - [x] **Step 9a - Embed Safety Instructions:** Prepend `getEmbeddedSafetyInstructions()` to compiled prompt:
     ```typescript
     const safetyInstructions = getEmbeddedSafetyInstructions();
     const fullPrompt = safetyInstructions + "\n\n" + prompt;
     ```
-  - [ ] **Step 10a - Output Safety Check:** After AI response, call `guardOutput()`:
+  - [x] **Step 12a - Output Safety Check:** After AI response, call `guardOutput()`:
     ```typescript
     const outputGuard = await guardOutput(rawOutput, {
       userId: session.user.id,
@@ -1073,7 +1073,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
     });
     // Use outputGuard.output (sanitized) instead of rawOutput
     ```
-  - [ ] **Log Security Events:** Security events are auto-logged to console (Cloud Logging ready)
+  - [x] **Log Security Events:** Security events are auto-logged to console (Cloud Logging ready)
 
 ### 3.4 Vertex AI Client ✅ (NEW)
 

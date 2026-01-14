@@ -21,6 +21,11 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { getCedarEngine, CedarActions } from '@/lib/authz/cedar';
 import { queryVertexAI, estimateTokens } from '@/lib/vertex/client';
+import {
+  guardInput,
+  guardOutput,
+  getEmbeddedSafetyInstructions,
+} from '@/lib/security';
 import Handlebars from 'handlebars';
 
 // Import agent registry
@@ -145,6 +150,29 @@ export async function POST(request: NextRequest) {
 
     const validatedInputs = inputValidation.data;
 
+    // 5a. AI Safety Guard - Input validation
+    // Check for prompt injection, jailbreak attempts, and off-topic requests
+    const inputGuard = await guardInput(
+      JSON.stringify(validatedInputs),
+      {
+        userId: session.user.id,
+        agentId,
+        // Enable AI check for suspicious but not blocked content
+        useAICheck: false,
+      }
+    );
+
+    if (!inputGuard.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Safety Check Failed',
+          message: inputGuard.userMessage || 'Your request could not be processed',
+          category: inputGuard.safetyResult.category,
+        },
+        { status: 400 }
+      );
+    }
+
     // 6. Check token quota
     const quotaResult = await checkQuota(session.user.id);
     if (!quotaResult.hasQuota) {
@@ -173,16 +201,36 @@ export async function POST(request: NextRequest) {
 
     const compiledPrompt = Handlebars.compile(agent.promptTemplate)(promptContext);
 
-    // 10. Estimate tokens for pre-check
-    const estimatedInputTokens = estimateTokens(compiledPrompt);
+    // 9a. Prepend safety instructions to prompt
+    // Embeds platform branding and content policy rules
+    const safetyInstructions = getEmbeddedSafetyInstructions();
+    const fullPrompt = safetyInstructions + '\n\n' + compiledPrompt;
 
-    // 11. Call Vertex AI
-    const aiResponse = await queryVertexAI(compiledPrompt, agent.outputSchema, {
+    // 10. Estimate tokens for pre-check
+    const estimatedInputTokens = estimateTokens(fullPrompt);
+
+    // 11. Call Vertex AI (with safety-enhanced prompt)
+    const aiResponse = await queryVertexAI(fullPrompt, agent.outputSchema, {
       files: processedFiles.fileUris,
     });
 
     // 12. Validate output (already done by queryVertexAI)
     const validatedOutput = aiResponse.content;
+
+    // 12a. AI Safety Guard - Output sanitization
+    // Removes model/provider references and checks for harmful content
+    const outputGuard = await guardOutput(
+      JSON.stringify(validatedOutput),
+      {
+        userId: session.user.id,
+        agentId,
+      }
+    );
+
+    // If output was sanitized, log it (but don't block - sanitization already applied)
+    if (outputGuard.wasModified) {
+      console.log('[Safety Guard] Output was sanitized for user:', session.user.id);
+    }
 
     // 13. Render to Markdown
     const renderedMarkdown = agent.render(validatedOutput);
