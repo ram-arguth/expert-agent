@@ -314,7 +314,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Per-org daily budget caps with automatic cutoff
   - Real-time cost tracking dashboard for admins
 - [x] **Rate Limiting:** Configure per-user and per-org rate limits (e.g., 100 requests/hour free tier, 1000/hour pro).
-- [ ] **CSP Headers:** Configure strict Content-Security-Policy to mitigate XSS. Disallow inline scripts, allow only trusted CDNs.
+- [x] **CSP Headers:** Configure strict Content-Security-Policy to mitigate XSS. Disallow inline scripts, allow only trusted CDNs.
 - [x] **Input Size Limits:** Enforce file size limits (default 10MB, configurable per plan). Large files route to async processing.
 
 ### 0.7 Phase 0 Test Requirements
@@ -343,9 +343,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`lib/csp-middleware.test.ts`**
 
-- [ ] Sets correct CSP headers
-- [ ] Blocks inline scripts in CSP
-- [ ] Allows trusted CDNs
+- [x] Sets correct CSP headers
+- [x] Blocks inline scripts in CSP
+- [x] Allows trusted CDNs
 
 #### Integration Tests
 

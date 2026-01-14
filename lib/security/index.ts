@@ -43,3 +43,20 @@ export type {
   InputValidationResult,
   FileSizeLimits,
 } from './input-validator';
+
+// CSP Middleware
+export {
+  buildCSPHeader,
+  getCSPDirectives,
+  addNonceToCSP,
+  generateNonce,
+  cspMiddleware,
+  getSecurityHeaders,
+  isTrustedSource,
+  logCSPViolation,
+  DEFAULT_CSP_DIRECTIVES,
+  DEV_CSP_DIRECTIVES,
+  TRUSTED_CDNS,
+  TRUSTED_CONNECT_SOURCES,
+} from './csp-middleware';
+export type { CSPDirectives, CSPViolationReport } from './csp-middleware';
