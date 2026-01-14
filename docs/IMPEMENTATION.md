@@ -90,11 +90,11 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 **`scripts/check-authz-coverage.test.ts`**
 
-- [ ] Detects route without Cedar call
-- [ ] Passes route with `withAuthZ()` wrapper
-- [ ] Passes route with explicit `cedar.isAuthorized()`
-- [ ] Respects exceptions list
-- [ ] Fails CI if any uncovered route found
+- [x] Detects route without Cedar call
+- [x] Passes route with `withAuthZ()` wrapper
+- [x] Passes route with explicit `cedar.isAuthorized()`
+- [x] Respects exceptions list
+- [x] Fails CI if any uncovered route found
 
 ### Shared Component Usage Check
 
@@ -112,10 +112,10 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 **`scripts/check-component-usage.test.ts`**
 
-- [ ] Flags `<button>` usage in component file
-- [ ] Passes `<Button>` from shared library
-- [ ] Flags `<input type="text">` without shared wrapper
-- [ ] Reports count of violations per file
+- [x] Flags `<button>` usage in component file
+- [x] Passes `<Button>` from shared library
+- [x] Flags `<input type="text">` without shared wrapper
+- [x] Reports count of violations per file
 
 ### Test Pyramid & Coverage Targets
 

@@ -12,7 +12,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { join, relative } from 'path';
 
 // Native HTML elements that should use shared components
-const FLAGGED_ELEMENTS = [
+export const FLAGGED_ELEMENTS = [
   { element: '<button', replacement: '<Button> from @/components/ui/button' },
   { element: '<input', replacement: '<Input> from @/components/ui/input' },
   { element: '<select', replacement: '<Select> from @/components/ui/select' },
@@ -21,19 +21,22 @@ const FLAGGED_ELEMENTS = [
 ];
 
 // Directories to skip
-const SKIP_DIRS = ['node_modules', '.next', 'dist', '.git'];
+export const SKIP_DIRS = ['node_modules', '.next', 'dist', '.git'];
 
 // Files to skip (shared component implementations themselves)
-const SKIP_FILES = ['components/ui/'];
+export const SKIP_FILES = ['components/ui/'];
 
-interface Violation {
+export interface Violation {
   file: string;
   line: number;
   element: string;
   replacement: string;
 }
 
-function findComponentFiles(dir: string): string[] {
+/**
+ * Find all component files (.tsx, .jsx) recursively
+ */
+export function findComponentFiles(dir: string): string[] {
   const files: string[] = [];
 
   if (!existsSync(dir)) {
@@ -58,8 +61,11 @@ function findComponentFiles(dir: string): string[] {
   return files;
 }
 
-function checkFile(filePath: string): Violation[] {
-  const relativePath = relative(process.cwd(), filePath);
+/**
+ * Check a file for component violations
+ */
+export function checkFile(filePath: string, basePath: string): Violation[] {
+  const relativePath = relative(basePath, filePath);
 
   // Skip shared component implementations
   if (SKIP_FILES.some((skip) => relativePath.includes(skip))) {
@@ -67,6 +73,13 @@ function checkFile(filePath: string): Violation[] {
   }
 
   const content = readFileSync(filePath, 'utf-8');
+  return checkContent(content, relativePath);
+}
+
+/**
+ * Check content string for violations (for testing)
+ */
+export function checkContent(content: string, filePath: string): Violation[] {
   const lines = content.split('\n');
   const violations: Violation[] = [];
 
@@ -82,7 +95,7 @@ function checkFile(filePath: string): Violation[] {
       // Check for the element usage
       if (line.includes(element)) {
         violations.push({
-          file: relativePath,
+          file: filePath,
           line: i + 1,
           element: element.replace('<', ''),
           replacement,
@@ -94,14 +107,29 @@ function checkFile(filePath: string): Violation[] {
   return violations;
 }
 
-function main() {
+/**
+ * Get violation count by file
+ */
+export function countViolationsByFile(violations: Violation[]): Map<string, number> {
+  const byFile = new Map<string, number>();
+  for (const v of violations) {
+    byFile.set(v.file, (byFile.get(v.file) || 0) + 1);
+  }
+  return byFile;
+}
+
+/**
+ * Main function
+ */
+export function main() {
   console.log('🔍 Checking component usage for shared primitives...\n');
 
+  const basePath = process.cwd();
   const srcDirs = ['app', 'components', 'src'];
   let allFiles: string[] = [];
 
   for (const dir of srcDirs) {
-    const dirPath = join(process.cwd(), dir);
+    const dirPath = join(basePath, dir);
     if (existsSync(dirPath)) {
       allFiles = [...allFiles, ...findComponentFiles(dirPath)];
     }
@@ -115,7 +143,7 @@ function main() {
   const allViolations: Violation[] = [];
 
   for (const file of allFiles) {
-    const violations = checkFile(file);
+    const violations = checkFile(file, basePath);
     allViolations.push(...violations);
   }
 
@@ -155,4 +183,7 @@ function main() {
   process.exit(0);
 }
 
-main();
+// Only run main if this is the entry point
+if (require.main === module) {
+  main();
+}
