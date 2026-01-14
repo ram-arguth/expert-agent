@@ -293,7 +293,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 0.5 Observability Foundation
 
-- [ ] **Structured Logging:** Configure Winston or Pino for JSON logs. Include `traceId`, `spanId`, `userId`, `orgId` in log context.
+- [x] **Structured Logging:** Pino-based JSON logging implemented in `lib/observability/logger.ts`:
+  - Context propagation: `traceId`, `spanId`, `userId`, `orgId`, `agentId`, `sessionId`
+  - W3C TraceContext parsing (`parseTraceContext()`) and generation (`generateTraceContext()`)
+  - Sensitive field redaction (passwords, tokens, API keys, auth headers)
+  - Environment-aware: pretty print in dev, JSON in production
+  - 34 tests covering context binding, trace parsing, security redaction
 - [ ] **OpenTelemetry Setup:** Initialize OTEL SDK in Next.js API routes. Configure:
   - W3C TraceContext propagator (for frontend→backend trace correlation)
   - Cloud Trace exporter
