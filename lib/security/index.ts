@@ -60,3 +60,27 @@ export {
   TRUSTED_CONNECT_SOURCES,
 } from './csp-middleware';
 export type { CSPDirectives, CSPViolationReport } from './csp-middleware';
+
+// Circuit Breaker
+export {
+  recordSpend,
+  isSuspended,
+  getCurrentSpend,
+  getState,
+  setAdminOverride,
+  getAdminOverride,
+  removeAdminOverride,
+  suspendAccount,
+  unsuspendAccount,
+  getAlerts,
+  onAlert,
+  resetCircuitBreaker,
+  estimateCostFromTokens,
+  DEFAULT_THRESHOLDS,
+} from './circuit-breaker';
+export type {
+  SpendThreshold,
+  CircuitBreakerState,
+  AlertRecord,
+  AdminOverride,
+} from './circuit-breaker';

@@ -309,7 +309,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] **VPC Service Controls:** Configure VPC-SC perimeter around Vertex AI Agent Engine to restrict network access to authorized sources only.
 - [ ] **Content Filtering & Safety:** Enable Vertex AI content moderation for agent outputs. Configure safety filters for user inputs (strip malicious patterns).
 - [ ] **Compliance Guardrails:** Implement configurable PII detection layer that can flag sensitive data in inputs/outputs based on org policy.
-- [ ] **Circuit Breaker for Cost:** Implement anomalous usage detection:
+- [x] **Circuit Breaker for Cost:** Implement anomalous usage detection:
   - Threshold: >$100 spend in 1 hour by single user → auto-suspend account + alert admin
   - Per-org daily budget caps with automatic cutoff
   - Real-time cost tracking dashboard for admins
@@ -330,10 +330,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`lib/circuit-breaker.test.ts`**
 
-- [ ] Detects spend over threshold
-- [ ] Triggers alert when threshold exceeded
-- [ ] Suspends account correctly
-- [ ] Admin override works
+- [x] Detects spend over threshold
+- [x] Triggers alert when threshold exceeded
+- [x] Suspends account correctly
+- [x] Admin override works
 
 **`lib/input-validator.test.ts`**
 
