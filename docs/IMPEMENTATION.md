@@ -313,9 +313,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Threshold: >$100 spend in 1 hour by single user → auto-suspend account + alert admin
   - Per-org daily budget caps with automatic cutoff
   - Real-time cost tracking dashboard for admins
-- [ ] **Rate Limiting:** Configure per-user and per-org rate limits (e.g., 100 requests/hour free tier, 1000/hour pro).
+- [x] **Rate Limiting:** Configure per-user and per-org rate limits (e.g., 100 requests/hour free tier, 1000/hour pro).
 - [ ] **CSP Headers:** Configure strict Content-Security-Policy to mitigate XSS. Disallow inline scripts, allow only trusted CDNs.
-- [ ] **Input Size Limits:** Enforce file size limits (default 10MB, configurable per plan). Large files route to async processing.
+- [x] **Input Size Limits:** Enforce file size limits (default 10MB, configurable per plan). Large files route to async processing.
 
 ### 0.7 Phase 0 Test Requirements
 
@@ -323,10 +323,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`lib/rate-limiter.test.ts`**
 
-- [ ] Allows requests under limit
-- [ ] Blocks requests over limit
-- [ ] Resets after time window
-- [ ] Applies correct limits per tier (free/pro)
+- [x] Allows requests under limit
+- [x] Blocks requests over limit
+- [x] Resets after time window
+- [x] Applies correct limits per tier (free/pro)
 
 **`lib/circuit-breaker.test.ts`**
 
@@ -337,9 +337,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`lib/input-validator.test.ts`**
 
-- [ ] Accepts files under size limit
-- [ ] Rejects files over size limit
-- [ ] Returns appropriate error message
+- [x] Accepts files under size limit
+- [x] Rejects files over size limit
+- [x] Returns appropriate error message
 
 **`lib/csp-middleware.test.ts`**
 
