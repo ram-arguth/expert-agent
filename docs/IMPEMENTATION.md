@@ -526,7 +526,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Login UI:** `SocialAuthButtons` component shows available providers. Buttons auto-hide when provider not configured.
 - [x] **Route Handler:** `/api/auth/[...nextauth]/route.ts` exports NextAuth handlers.
 - [x] **Secret Manager Integration:** `cloudbuild.yaml` injects `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` into Cloud Run.
-- [ ] **Test:** Verify new user creation, existing user login, session persistence.
+- [x] **Test:** Integration tests in `lib/__tests__/auth.integration.test.ts` covering user creation (all 3 providers), session tracking, provider restrictions (12 tests).
 
 ### 1.3 Enterprise SSO (BYO SAML/OIDC)
 
@@ -554,7 +554,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] **Send Invite Email:** Deferred to email service integration (SendGrid/SES).
 - [ ] **Invite UI:** Team admin page with "Invite Member" form, pending invites list.
 - [x] **Unit Tests:** 34 tests covering org creation, listing, invite CRUD, and acceptance flows.
-- [ ] **Integration Tests:** Full invite flow with database.
+- [x] **Integration Tests:** `lib/__tests__/org.integration.test.ts` covers invite creation, acceptance, revocation with database (8+ tests).
 - [ ] **E2E Tests:** Playwright tests for invite UI flow.
 
 ### 1.5 Enterprise Domain Verification
@@ -756,6 +756,40 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Clause analysis table with favorability indicators
   - Compliance status and negotiation strategy sections
 - [x] **Legal Advisor Tests:** 43 tests covering input/output schemas, prompt compilation, rendering
+
+- [x] **Define Input Schema per Agent (Finance Planner):** `lib/agents/finance-planner/input-schema.ts`:
+  - 11 service types (budget, investment, retirement, tax optimization, etc.)
+  - 6 client types (individual, family, business, startup, enterprise, nonprofit)
+  - Financial inputs (income, expenses, assets, liabilities, savings rate)
+  - File upload for financial statements (PDF, Excel, CSV)
+  - Analysis preferences (projections, tax, risk)
+  - Form configuration for dynamic UI generation
+
+- [x] **Define Output Schema per Agent (Finance Planner):** `lib/agents/finance-planner/output-schema.ts`:
+  - Financial health assessment with score (0-100)
+  - Budget analysis with expense breakdown
+  - Investment recommendations with allocation percentages
+  - Action plan with priority, impact, and timeline
+  - Financial projections (conservative/moderate/optimistic scenarios)
+  - Tax optimization suggestions
+  - Risk assessment with mitigation strategies
+  - Goal analysis with feasibility and milestones
+
+- [x] **Create Prompt Template (Finance Planner):** `lib/agents/finance-planner/prompt-template.ts`:
+  - Handlebars template with currency formatting
+  - Service-type conditional sections
+  - Comprehensive JSON output schema
+  - Financial disclaimers embedded
+
+- [x] **Create Markdown Renderer (Finance Planner):** `lib/agents/finance-planner/renderer.ts`:
+  - Health score visualization
+  - Budget breakdown tables
+  - Investment allocation charts
+  - Action items grouped by priority
+  - Multi-scenario projections
+  - Tax and risk sections
+
+- [x] **Finance Planner Tests:** 49 tests covering input/output schemas, prompt compilation, rendering
 
 ### 2.3 Prompt Templates (Handlebars)
 
