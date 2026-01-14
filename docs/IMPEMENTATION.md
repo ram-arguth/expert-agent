@@ -146,7 +146,7 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 ### 0.1 Repository & Tooling Setup
 
-- [ ] **Initialize Monorepo:** Create repository with structure:
+- [x] **Initialize Monorepo:** Create repository with structure:
   ```
   /
   ├── apps/
@@ -159,9 +159,9 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
   ├── docs/                 # DESIGN.md, IMPLEMENTATION.md, etc.
   └── cloudbuild.yaml       # CI/CD (Cloud Build)
   ```
-- [ ] **Branch Strategy:** `main` (squash-merged only), `dev` (active development). Tags: `beta-*`, `gamma-*`, `prod-*` for promotions.
-- [ ] **Tooling:** Configure ESLint, Prettier, Husky pre-commit hooks. Add `turbo` or `nx` for monorepo task orchestration.
-- [ ] **Dependencies:** Install core packages:
+- [x] **Branch Strategy:** `main` (squash-merged only), `dev` (active development). Tags: `beta-*`, `gamma-*`, `prod-*` for promotions.
+- [x] **Tooling:** Configure ESLint, Prettier, Husky pre-commit hooks. Add `turbo` or `nx` for monorepo task orchestration.
+- [x] **Dependencies:** Install core packages:
   - `zod`, `@hookform/resolvers`, `react-hook-form` (schema-driven forms)
   - `handlebars` (prompt templating)
   - `@tanstack/react-query` (server state)
