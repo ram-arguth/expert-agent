@@ -1227,7 +1227,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 4.5 Session History & Revision
 
-- [ ] **Session Selector:** Dropdown or sidebar list of past sessions.
+- [x] **Session Selector:** Dropdown or sidebar list of past sessions.
 - [ ] **Revision History:** If session has multiple agent responses, show version selector or timeline.
 - [ ] **Diff View (Stretch):** Highlight changes between versions.
 
@@ -1297,11 +1297,14 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Pre-fills selected text
 - [x] Calls `onSubmit` with follow-up
 
-**`components/session-history.test.tsx`**
+**`components/sessions/session-history.test.tsx`**
 
-- [ ] Renders session list
-- [ ] Shows agent name and timestamp
-- [ ] Calls `onSelect` when clicked
+- [x] Renders session list from API
+- [x] Shows agent name and timestamp
+- [x] Calls `onSelectSession` when clicked
+- [x] Shows loading and error states
+- [x] Supports search filtering
+- [x] Handles pagination
 
 **`components/export-share.test.tsx`**
 
