@@ -729,7 +729,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Create Schema Package:** `lib/agents/` (using lib instead of packages for Next.js compatibility)
 - [x] **Define Input Schema:** `lib/agents/ux-analyst/input-schema.ts` - File upload, product context, analysis options
 - [x] **Define Output Schema:** `lib/agents/ux-analyst/output-schema.ts` - Findings, recommendations, scores, accessibility
-- [x] **JSON Schema Export:** Uses `zod-to-json-schema` in `/api/agents/[agentId]` for form generation
+- [x] **JSON Schema Export:** `lib/schemas/zod-to-json-schema.ts` - A2A protocol compatible schema export:
+  - `zodSchemaToJsonSchema()` - Convert Zod to JSON Schema 7
+  - `generateAgentCard()` - Generate A2A Agent Cards with input/output schemas
+  - `exportAgentCatalogManifest()` - Export full agent catalog as JSON
+  - Schema introspection: `extractFieldDescriptions()`, `getRequiredFields()`, `isA2ACompatible()`
+  - Basic validation: `validateAgainstSchema()`
+  - 33 tests covering export, agent cards, validation, introspection
 - [x] **Define Input Schema per Agent (Legal Advisor):** `lib/agents/legal-advisor/input-schema.ts`:
   - 12 jurisdictions (US, UK, EU, CA, AU, SG + US/EU state variants)
   - 12 contract types (employment, NDA, service agreement, license, etc.)
@@ -924,12 +930,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Accepts empty `findings` array
 - [ ] Validates nested recommendation structure
 
-**`schemas/zod-to-json-schema.test.ts`**
+**`schemas/zod-to-json-schema.test.ts`** ✅
 
-- [ ] Exports valid JSON Schema from Zod
-- [ ] Preserves `.describe()` as descriptions
-- [ ] Handles enum types correctly
-- [ ] Handles array types correctly
+- [x] Exports valid JSON Schema from Zod
+- [x] Preserves `.describe()` as descriptions
+- [x] Handles enum types correctly
+- [x] Handles array types correctly
 
 **`agents/prompt-template.test.ts`**
 
