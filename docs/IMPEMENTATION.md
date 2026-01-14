@@ -319,7 +319,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Security event logging (Cloud Logging integration ready)
   - Embedded safety instructions for agent prompts (platform branding enforcement)
   - 98 tests covering all safety patterns, false positive prevention, and edge cases
-- [ ] **Compliance Guardrails:** Implement configurable PII detection layer that can flag sensitive data in inputs/outputs based on org policy.
+- [x] **Compliance Guardrails (PII Detection):** `lib/security/pii-detector.ts`:
+  - Pattern-based detection: SSN, credit card, email, phone, IP, passport, bank account, medical ID, address
+  - Luhn algorithm validation for credit cards
+  - Configurable policies: DEFAULT (block critical), STRICT (block all), LENIENT (flag only)
+  - Priority-based overlap handling (e.g., medical_id > ssn for MRN:123456789)
+  - Audit logging for compliance tracking
+  - `guardInputForPII()` and `guardOutputForPII()` for query pipeline integration
+  - Redaction support for output sanitization
+  - 69 tests covering all PII types, validation, policies, and edge cases
 - [x] **Circuit Breaker for Cost:** Implement anomalous usage detection:
   - Threshold: >$100 spend in 1 hour by single user → auto-suspend account + alert admin
   - Per-org daily budget caps with automatic cutoff

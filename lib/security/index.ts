@@ -117,3 +117,28 @@ export type {
   SecurityEvent,
   AISafetyCheckRequest,
 } from './ai-safety-guard';
+
+// PII Detection & Compliance Guardrails
+export {
+  scanForPII,
+  containsPII,
+  redactPII,
+  guardInputForPII,
+  guardOutputForPII,
+  logPIIDetection,
+  getAuditLog,
+  clearAuditLog,
+  hashContent,
+  DEFAULT_PII_POLICY,
+  STRICT_PII_POLICY,
+  LENIENT_PII_POLICY,
+} from './pii-detector';
+export type {
+  PIIType,
+  PIISeverity,
+  PIIAction,
+  PIIMatch,
+  PIIPolicy,
+  PIIDetectionResult,
+  PIIAuditEntry,
+} from './pii-detector';
