@@ -385,10 +385,11 @@ export function DynamicForm<T extends ZodRawShape>({
       .filter((field): field is FieldMeta => field !== null);
   }, [schema]);
 
-  // Set up form
-  const form = useForm<z.infer<typeof schema>>({
+  // Set up form with loose typing for dynamic schema handling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const form = useForm<any>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues as z.infer<typeof schema>,
+    defaultValues: defaultValues as Record<string, unknown>,
   });
 
   const {
@@ -404,9 +405,14 @@ export function DynamicForm<T extends ZodRawShape>({
     return error?.message as string | undefined;
   };
 
+  // Handle form submission with proper typing
+  const onFormSubmit = handleSubmit((data) => {
+    return onSubmit(data as z.infer<ZodObject<T>>);
+  });
+
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={onFormSubmit}
       className={cn('space-y-6', className)}
       data-testid="dynamic-form"
     >
