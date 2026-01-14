@@ -1243,11 +1243,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 4.7 Export & Share
 
-- [ ] **Export PDF:** Button triggers `renderToMarkdown` → `md-to-pdf` or Puppeteer server-side. Return download link.
-- [ ] **Export DOCX:** Optional Word export for enterprise users.
-- [ ] **Share Link:** `POST /api/share` creates shared artifact with UUID. Return link. Recipient can view (login required for MVP).
-- [ ] **Share to Team/Org:** Option to share with entire team/org (changes artifact ACL).
-- [ ] **Artifact Favorites/Pinning:** Users can pin/favorite artifacts for quick access. Show in "Favorites" section.
+- [x] **Export PDF:** Button triggers `renderToMarkdown` → `md-to-pdf` or Puppeteer server-side. Return download link.
+- [x] **Export DOCX:** Optional Word export for enterprise users.
+- [x] **Share Link:** `POST /api/share` creates shared artifact with UUID. Return link. Recipient can view (login required for MVP).
+- [x] **Share to Team/Org:** Option to share with entire team/org (changes artifact ACL).
+- [x] **Artifact Favorites/Pinning:** Users can pin/favorite artifacts for quick access. Show in "Favorites" section.
 - [ ] **Artifact List View:** `GET /api/artifacts` returns user's artifacts. Filter by: favorites, recent, shared-with-me.
 
 ### 4.7 Phase 4 Test Requirements
@@ -1306,11 +1306,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Supports search filtering
 - [x] Handles pagination
 
-**`components/export-share.test.tsx`**
+**`components/artifacts/export-share.test.tsx`**
 
-- [ ] Export button triggers API call
-- [ ] Share button opens modal
-- [ ] Copy link button works
+- [x] Export button triggers API call
+- [x] Share button opens modal
+- [x] Copy link button works
+- [x] Favorite toggle button works
+- [x] Link revoke functionality
 
 **`hooks/useAgents.test.ts`**
 
