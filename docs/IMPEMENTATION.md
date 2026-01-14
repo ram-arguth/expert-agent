@@ -730,53 +730,32 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Define Input Schema:** `lib/agents/ux-analyst/input-schema.ts` - File upload, product context, analysis options
 - [x] **Define Output Schema:** `lib/agents/ux-analyst/output-schema.ts` - Findings, recommendations, scores, accessibility
 - [x] **JSON Schema Export:** Uses `zod-to-json-schema` in `/api/agents/[agentId]` for form generation
-- [ ] **Define Input Schema per Agent:**
+- [x] **Define Input Schema per Agent (Legal Advisor):** `lib/agents/legal-advisor/input-schema.ts`:
+  - 12 jurisdictions (US, UK, EU, CA, AU, SG + US/EU state variants)
+  - 12 contract types (employment, NDA, service agreement, license, etc.)
+  - File upload with supporting documents (max 10)
+  - Review priority, deal value, analysis options
+  - Form configuration for dynamic UI generation
 
-  ```typescript
-  // packages/schemas/src/agents/legal-advisor/input.ts
-  import { z } from "zod";
-
-  export const LegalAdvisorInputSchema = z.object({
-    jurisdiction: z.enum(["US", "UK", "EU"]).describe("Legal jurisdiction"),
-    contractType: z.string().min(1).describe("Type of contract"),
-    primaryContract: z.instanceof(File).describe("Main contract PDF"),
-    supportingDocuments: z.array(z.instanceof(File)).optional(),
-    additionalContext: z.string().optional(),
-  });
-
-  export type LegalAdvisorInput = z.infer<typeof LegalAdvisorInputSchema>;
-  ```
-
-- [ ] **Define Output Schema per Agent:**
-
-  ```typescript
-  // packages/schemas/src/agents/legal-advisor/output.ts
-  import { z } from "zod";
-
-  export const LegalAdvisorOutputSchema = z.object({
-    executiveSummary: z.string(),
-    findings: z.array(
-      z.object({
-        title: z.string(),
-        severity: z.enum(["critical", "high", "medium", "low"]),
-        description: z.string(),
-        clauseReference: z.string().optional(),
-      })
-    ),
-    recommendations: z.array(
-      z.object({
-        action: z.string(),
-        priority: z.enum(["immediate", "short-term", "long-term"]),
-        rationale: z.string(),
-      })
-    ),
-    appendix: z.string().optional(),
-  });
-
-  export type LegalAdvisorOutput = z.infer<typeof LegalAdvisorOutputSchema>;
-  ```
-
-- [ ] **Export to JSON Schema:** Use `zod-to-json-schema` to generate A2A-compatible Agent Cards.
+- [x] **Define Output Schema per Agent (Legal Advisor):** `lib/agents/legal-advisor/output-schema.ts`:
+  - Contract metadata extraction (parties, dates, governing law)
+  - Risk assessment with score (0-100) and category breakdown
+  - Findings with severity, category, clause references, risk explanation
+  - Recommendations with priority, suggested language, negotiation tips
+  - Clause summaries with favorability and market comparison
+  - Compliance checks, negotiation strategy, key dates
+  - Confidence score and legal disclaimers
+- [x] **Create Prompt Template (Legal Advisor):** `lib/agents/legal-advisor/prompt-template.ts`:
+  - Handlebars template with jurisdiction and contract type labels
+  - JSON output schema instructions for structured responses
+  - Conditional sections for supporting docs, concerns, org context
+- [x] **Create Markdown Renderer (Legal Advisor):** `lib/agents/legal-advisor/renderer.ts`:
+  - Risk score visualization with color-coded bars
+  - Findings grouped by severity with badges
+  - Recommendations by priority with suggested language
+  - Clause analysis table with favorability indicators
+  - Compliance status and negotiation strategy sections
+- [x] **Legal Advisor Tests:** 43 tests covering input/output schemas, prompt compilation, rendering
 
 ### 2.3 Prompt Templates (Handlebars)
 
