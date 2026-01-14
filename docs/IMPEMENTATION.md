@@ -856,7 +856,16 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **List Agents:** `GET /api/agents` returns agents visible to current user (Cedar filtering by `isBeta` and `allowedOrgIds`).
 - [x] **Get Agent:** `GET /api/agents/[agentId]` returns agent config + JSON Schema from Zod (for dynamic form rendering).
 - [x] **Agent API Tests:** 8 tests covering anonymous/authenticated access, security (no internal paths exposed).
-- [ ] **Agent Landing Pages:** Create SSG pages at `/agents/[agentId]` with description, example use cases, "Try Now" CTA.
+- [x] **Agent Landing Pages:** SSG pages at `/agents/[agentId]` with:
+  - Hero section with agent name, tagline, description, and CTAs
+  - Features grid with checkmarks
+  - Capabilities section with icons
+  - Use cases with examples
+  - FAQ section
+  - Final CTA with tier requirements
+  - SEO metadata and OpenGraph tags for all agents
+  - Not-found handler for invalid agents
+  - 23 unit tests covering SSG, metadata, rendering
 - [ ] **A/B Testing for Landing Pages:** Implement variant selection (randomized or via query param). Track conversion metrics (CTA clicks, signups) per variant.
 - [ ] **Localization Support:** Agent catalog supports `localeVariants` field mapping locale → context file overrides (e.g., "Tax Advisor" → US/UK/Japan regulatory docs).
 
