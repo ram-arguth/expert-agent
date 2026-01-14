@@ -308,7 +308,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Request tracing helper with `withTracing()` wrapper
   - `extractTraceContext()` / `injectTraceContext()` for propagation
   - 33 tests covering configuration, spans, context propagation
-- [ ] **Metrics:** Define key metrics (request latency, tokens used, error count). Emit to Cloud Monitoring.
+- [x] **Metrics:** `lib/observability/metrics.ts`:
+  - 16 pre-defined metrics: request (latency, count, error), AI (tokens, latency, error),
+    session (active, created), security (blocked, pii_detected), cost, query duration
+  - Metric types: counter, gauge, histogram with bucket boundaries
+  - High-level helpers: `recordRequest()`, `recordTokenUsage()`, `recordAILatency()`,
+    `recordSecurityBlock()`, `recordPIIDetection()`, `recordCost()`
+  - Duration measurement: `measureDuration()`, `measureDurationSync()`
+  - In-memory storage for dev/test, Cloud Monitoring integration for production
+  - 37 tests covering all metric types, helpers, and edge cases
 - [ ] **Alerting:** Create Cloud Monitoring alert policies (error rate spike, high latency, quota exhaustion).
 
 ### 0.6 Security & Cost Protection Infrastructure

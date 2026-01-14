@@ -47,3 +47,41 @@ export type {
   Tracer,
   SpanContext,
 } from './tracing';
+
+// Application Metrics
+export {
+  // Core metric functions
+  incrementCounter,
+  setGauge,
+  recordHistogram,
+  measureDuration,
+  measureDurationSync,
+  // High-level helpers
+  recordRequest,
+  recordTokenUsage,
+  recordAILatency,
+  recordAIError,
+  recordSecurityBlock,
+  recordPIIDetection,
+  recordRateLimitExceeded,
+  recordCost,
+  recordSessionCreated,
+  setActiveSessionCount,
+  recordQueryDuration,
+  // Access functions
+  getCounterValue,
+  getGaugeValue,
+  getHistogramStats,
+  getAllMetrics,
+  clearMetrics,
+  getMetricDefinitions,
+  METRIC_DEFINITIONS,
+} from './metrics';
+
+export type {
+  MetricType,
+  MetricLabels,
+  MetricDefinition,
+  MetricValue,
+  HistogramBuckets,
+} from './metrics';
