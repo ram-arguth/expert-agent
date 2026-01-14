@@ -9,3 +9,7 @@ export type { MarkdownDisplayProps } from './markdown-display';
 
 export { MessageList } from './message-list';
 export type { Message, MessageRole, MessageListProps } from './message-list';
+
+export { HighlightComment } from './highlight-comment';
+export type { HighlightCommentProps, FollowUpData } from './highlight-comment';
+

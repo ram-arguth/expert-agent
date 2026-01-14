@@ -1219,10 +1219,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 4.4 Highlight & Comment (Inline Follow-up)
 
-- [ ] **Text Selection:** On mouseup in agent response, detect selection.
-- [ ] **Tooltip:** Show "Ask about this" button near selection.
-- [ ] **Follow-up Input:** Open popover with text area. Pre-fill with quoted text.
-- [ ] **Submit:** Send as new query with context: `"Regarding: '{selectedText}'\n\nUser asks: {followUpQuestion}"`.
+- [x] **Text Selection:** On mouseup in agent response, detect selection.
+- [x] **Tooltip:** Show "Ask about this" button near selection.
+- [x] **Follow-up Input:** Open popover with text area. Pre-fill with quoted text.
+- [x] **Submit:** Send as new query with context: `"Regarding: '{selectedText}'\n\nUser asks: {followUpQuestion}"`.
 - [ ] **Display:** Show follow-up Q&A in threaded view or inline.
 
 ### 4.5 Session History & Revision
@@ -1290,12 +1290,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Shows loading indicator during query
 - [x] Auto-scrolls to bottom on new message
 
-**`components/highlight-comment.test.tsx`**
+**`components/chat/highlight-comment.test.tsx`**
 
-- [ ] Shows tooltip on text selection
-- [ ] Opens popover on click
-- [ ] Pre-fills selected text
-- [ ] Calls `onSubmit` with follow-up
+- [x] Shows tooltip on text selection
+- [x] Opens popover on click
+- [x] Pre-fills selected text
+- [x] Calls `onSubmit` with follow-up
 
 **`components/session-history.test.tsx`**
 
