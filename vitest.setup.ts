@@ -7,3 +7,11 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 };
+
+// Mock pointer capture methods for JSDOM environment
+// Required by Radix UI Select and other pointer-based components
+Element.prototype.hasPointerCapture = function () {
+  return false;
+};
+Element.prototype.setPointerCapture = function () {};
+Element.prototype.releasePointerCapture = function () {};

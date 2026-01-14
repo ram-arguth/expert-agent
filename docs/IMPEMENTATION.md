@@ -1200,14 +1200,14 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 4.2 Dynamic Input Form
 
-- [ ] **Schema-Driven Form:** Use `react-hook-form` + `@hookform/resolvers/zod` + custom field renderer.
-- [ ] **Field Types:**
+- [x] **Schema-Driven Form:** Use `react-hook-form` + `@hookform/resolvers/zod` + custom field renderer.
+- [x] **Field Types:**
   - `z.string()` → Text input
   - `z.enum([...])` → Select dropdown
   - `z.boolean()` → Checkbox
-  - `z.instanceof(File)` → Single file upload
-  - `z.array(z.instanceof(File))` → Multi-file upload
-- [ ] **Descriptions:** Use `.describe()` metadata for labels and hints.
+  - `z.any()` with file description → Single file upload
+  - File arrays → Multi-file upload
+- [x] **Descriptions:** Use `.describe()` metadata for labels and hints.
 - [ ] **Submit Handler:** Validate, upload files, call `POST /api/query`.
 
 ### 4.3 Chat/Document Display
@@ -1262,20 +1262,20 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Calls `onSelectAgent` when agent clicked
 - [ ] Shows workspace indicator
 
-**`components/dynamic-form.test.tsx`**
+**`components/forms/dynamic-form.test.tsx`**
 
-- [ ] Renders text input for `z.string()`
-- [ ] Renders dropdown for `z.enum()`
-- [ ] Renders file upload for `z.instanceof(File)`
-- [ ] Shows validation errors on submit
-- [ ] Calls `onSubmit` with validated data
+- [x] Renders text input for `z.string()`
+- [x] Renders dropdown for `z.enum()`
+- [x] Renders file upload for file descriptions
+- [x] Shows validation errors on submit
+- [x] Calls `onSubmit` with validated data
 
-**`components/file-upload.test.tsx`**
+**`components/file-upload.test.tsx`** (integrated into dynamic-form)
 
-- [ ] Accepts drag-drop files
+- [x] Accepts drag-drop files
 - [ ] Shows progress during upload
 - [ ] Displays error for oversized file
-- [ ] Shows filename after upload
+- [x] Shows filename after upload
 
 **`components/markdown-display.test.tsx`**
 
