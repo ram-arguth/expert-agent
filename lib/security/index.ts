@@ -84,3 +84,36 @@ export type {
   AlertRecord,
   AdminOverride,
 } from './circuit-breaker';
+
+// AI Safety Guard (Multi-layer defense)
+export {
+  // Input safety checks
+  checkPromptInjection,
+  checkOffTopic,
+  checkInputSafety,
+  // Output processing
+  sanitizeModelReferences,
+  checkOutputSafety,
+  processAgentOutput,
+  // AI-based checks
+  performAISafetyCheck,
+  // Event logging
+  logSecurityEvent,
+  getSecurityEvents,
+  clearSecurityEvents,
+  // Full pipelines
+  guardInput,
+  guardOutput,
+  // Utilities
+  getEmbeddedSafetyInstructions,
+  // Constants
+  PLATFORM_BRANDING,
+  MODEL_PATTERNS,
+  INJECTION_PATTERNS,
+  AGENT_TOPIC_BOUNDARIES,
+} from './ai-safety-guard';
+export type {
+  SafetyCheckResult,
+  SecurityEvent,
+  AISafetyCheckRequest,
+} from './ai-safety-guard';

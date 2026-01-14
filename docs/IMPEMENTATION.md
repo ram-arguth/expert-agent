@@ -307,7 +307,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [ ] **CMEK (Customer-Managed Encryption Keys):** For enterprise orgs requiring it, configure Cloud KMS key rings and enable CMEK for GCS buckets.
 - [ ] **VPC Service Controls:** Configure VPC-SC perimeter around Vertex AI Agent Engine to restrict network access to authorized sources only.
-- [ ] **Content Filtering & Safety:** Enable Vertex AI content moderation for agent outputs. Configure safety filters for user inputs (strip malicious patterns).
+- [x] **Content Filtering & Safety (AI Safety Guard):** Multi-layer defense system implemented in `lib/security/ai-safety-guard.ts`:
+  - Layer 1: Pattern-based input validation (prompt injection, jailbreak, delimiter injection detection)
+  - Layer 2: Output sanitization (model/provider name scrubbing, harmful content filtering)
+  - Layer 3: AI-based deep analysis using Gemini 3 Flash (optional, for complex cases)
+  - Security event logging (Cloud Logging integration ready)
+  - Embedded safety instructions for agent prompts (platform branding enforcement)
+  - 98 tests covering all safety patterns, false positive prevention, and edge cases
 - [ ] **Compliance Guardrails:** Implement configurable PII detection layer that can flag sensitive data in inputs/outputs based on org policy.
 - [x] **Circuit Breaker for Cost:** Implement anomalous usage detection:
   - Threshold: >$100 spend in 1 hour by single user → auto-suspend account + alert admin
@@ -346,6 +352,24 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Sets correct CSP headers
 - [x] Blocks inline scripts in CSP
 - [x] Allows trusted CDNs
+
+**`lib/security/ai-safety-guard.test.ts`**
+
+- [x] Detects role override injection attempts (7 patterns)
+- [x] Detects jailbreak attempts (8 patterns)
+- [x] Detects prompt extraction attempts (7 patterns)
+- [x] Detects delimiter injection attempts (6 patterns)
+- [x] Allows legitimate requests without false positives (7 test cases)
+- [x] Detects off-topic requests per agent domain
+- [x] Allows on-topic requests for defined agents
+- [x] Sanitizes Google/Gemini model references (5 patterns)
+- [x] Sanitizes competitor AI references (GPT, Claude, Anthropic)
+- [x] Detects and blocks harmful output content
+- [x] Logs security events with proper truncation
+- [x] AI-based safety check with mock mode and fallback
+- [x] Handles case variations and obfuscation attempts
+- [x] Generates embedded safety instructions for prompts
+- [x] Full input/output guard pipeline integration
 
 #### Integration Tests
 
@@ -1012,6 +1036,44 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   12. ✅ **Store Message:** Session and Message records created
   13. ✅ **Deduct Tokens:** Updates org `tokensRemaining`
   14. ✅ **Return Response:** `{ sessionId, output, markdown, usage, metadata }`
+
+- [ ] **Integrate AI Safety Guard (DESIGN.md §Multi-Tenancy and Security):**
+  - [ ] **Step 4a - Input Safety Check:** After Zod validation, call `guardInput()` from `lib/security/ai-safety-guard.ts`:
+
+    ```typescript
+    import {
+      guardInput,
+      guardOutput,
+      getEmbeddedSafetyInstructions,
+    } from "@/lib/security";
+
+    const inputGuard = await guardInput(userQuery, {
+      userId: session.user.id,
+      agentId: agent.id,
+      useAICheck: false, // Enable for deep analysis
+    });
+    if (!inputGuard.allowed) {
+      return NextResponse.json(
+        { error: inputGuard.userMessage },
+        { status: 400 }
+      );
+    }
+    ```
+
+  - [ ] **Step 8a - Embed Safety Instructions:** Prepend `getEmbeddedSafetyInstructions()` to compiled prompt:
+    ```typescript
+    const safetyInstructions = getEmbeddedSafetyInstructions();
+    const fullPrompt = safetyInstructions + "\n\n" + prompt;
+    ```
+  - [ ] **Step 10a - Output Safety Check:** After AI response, call `guardOutput()`:
+    ```typescript
+    const outputGuard = await guardOutput(rawOutput, {
+      userId: session.user.id,
+      agentId: agent.id,
+    });
+    // Use outputGuard.output (sanitized) instead of rawOutput
+    ```
+  - [ ] **Log Security Events:** Security events are auto-logged to console (Cloud Logging ready)
 
 ### 3.4 Vertex AI Client ✅ (NEW)
 
