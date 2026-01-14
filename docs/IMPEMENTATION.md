@@ -1235,10 +1235,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 > **Per DESIGN.md:** Two-panel UX: Document panel (main) for structured output + Chat panel (side) for unstructured Q&A.
 
-- [ ] **Collapsible Chat Sidebar:** Right-side panel for free-form follow-up questions.
-- [ ] **Chat vs Report Separation:** Chat is for clarifying discussion; Report is the polished structured output.
-- [ ] **"Incorporate into Report" Button:** User can request agent to produce new report version incorporating chat discussion.
-- [ ] **Chat History:** Persist chat separately from report revisions. Show user questions + agent replies in conversational format.
+- [x] **Collapsible Chat Sidebar:** Right-side panel for free-form follow-up questions.
+- [x] **Chat vs Report Separation:** Chat is for clarifying discussion; Report is the polished structured output.
+- [x] **"Incorporate into Report" Button:** User can request agent to produce new report version incorporating chat discussion.
+- [x] **Chat History:** Persist chat separately from report revisions. Show user questions + agent replies in conversational format.
 - [ ] **Sync State:** When chat updates report, mark in chat "✓ Incorporated into v3".
 
 ### 4.7 Export & Share
