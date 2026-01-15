@@ -2,5 +2,9 @@
   "app/api/health/route.ts",
   "app/api/auth/[...nextauth]/route.ts",
   "app/api/stripe/webhook/route.ts",
-  "app/api/invite/accept/route.ts"
+  "app/api/invite/accept/route.ts",
+  "app/api/billing/checkout/route.ts",
+  "app/api/billing/portal/route.ts",
+  "app/api/agents/[agentId]/interview/route.ts",
+  "app/api/omni/route/route.ts"
 ]
