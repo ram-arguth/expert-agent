@@ -189,7 +189,7 @@ steps:
       - "--cpu=1"
       - "--min-instances=0"
       - "--max-instances=10"
-      - "--set-env-vars=NODE_ENV=production,ENV=${_ENV},NEXTAUTH_URL=https://ai-${_ENV}.oz.ly"
+      - "--set-env-vars=NODE_ENV=production,ENV=${_ENV},NEXTAUTH_URL=https://ai-${_ENV}.oz.ly,ALLOW_E2E_TEST_MODE=true"
       - "--set-secrets=NEXTAUTH_SECRET=nextauth-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest"
       - "--service-account=${_SERVICE_NAME}-sa@${_PROJECT_ID}.iam.gserviceaccount.com"
     waitFor: ["push-image"]
@@ -248,29 +248,62 @@ steps:
   # ============================================
   # Step 8: E2E Tests (Playwright) - all environments
   # ============================================
-  # TODO: Enable E2E tests once Test Principal Injection middleware is implemented
-  # The E2E tests require a root middleware.ts that uses extractTestSession()
-  # from lib/test-utils/e2e-middleware.ts to process X-E2E-Test-Principal headers.
-  # See: IMPLEMENTATION.md Phase 7 - E2E Test Infrastructure
+  # Uses Test Principal Injection via middleware.ts for authenticated test flows
+  # See: lib/test-utils/e2e-middleware.ts for security documentation
   - id: "e2e-tests"
-    name: "alpine:latest"
+    name: "mcr.microsoft.com/playwright:v1.48.0-jammy"
     entrypoint: "sh"
     args:
       - "-c"
       - |
-        echo "⏭️  Skipping E2E tests - Test Principal Injection middleware not yet implemented"
-        echo "TODO: Create middleware.ts in project root that uses extractTestSession()"
-        echo "See: lib/test-utils/e2e-middleware.ts"
+        echo "🎭 Running E2E tests for ${_ENV} environment..."
+
+        # Install gcloud CLI for getting service URL
+        apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg curl
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        apt-get update && apt-get install -y google-cloud-cli
+
+        # Get the deployed service URL using gcloud
+        SERVICE_URL=$$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')
+
+        if [ -z "$$SERVICE_URL" ] || [ "$$SERVICE_URL" = "null" ]; then
+          echo "❌ Could not get service URL. Skipping E2E tests."
+          exit 1
+        fi
+
+        echo "Running E2E tests against: $$SERVICE_URL"
+
+        # Install pnpm
+        npm install -g pnpm@9
+        pnpm config set store-dir /workspace/.pnpm-store
+
+        # Set environment variables for Playwright
+        export BASE_URL="$$SERVICE_URL"
+        export CI=true
+        export E2E_TEST_SECRET="$${E2E_TEST_SECRET}"
+        export ALLOW_E2E_TEST_MODE="true"
+
+        # Run Playwright tests
+        pnpm test:e2e --reporter=list || exit 1
+
+        echo "✅ E2E tests passed!"
+    env:
+      - "CI=true"
+    secretEnv: ["E2E_TEST_SECRET"]
+    volumes:
+      - name: pnpm-store
+        path: /workspace/.pnpm-store
     waitFor: ["smoke-test"]
 
 # Secrets for E2E tests and database
-# TODO: Uncomment when E2E tests are enabled
-# availableSecrets:
-#   secretManager:
-#     - versionName: projects/${_PROJECT_ID}/secrets/e2e-test-secret/versions/latest
-#       env: "E2E_TEST_SECRET"
-#     - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
-#       env: "DATABASE_URL"
+availableSecrets:
+  secretManager:
+    - versionName: projects/${_PROJECT_ID}/secrets/e2e-test-secret/versions/latest
+      env: "E2E_TEST_SECRET"
+    # TODO: Re-enable once database is configured via IaC
+    # - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
+    #   env: "DATABASE_URL"
 
 images:
   - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${SHORT_SHA}"

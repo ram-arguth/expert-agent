@@ -73,6 +73,8 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 - [x] `lib/test-utils/e2e-middleware.test.ts` - Security tests (all passing)
 - [x] Cedar policy `block-test-principals-in-production` - Defense-in-depth
 - [x] `lib/authz/cedar.test.ts` - Cedar security tests (5 test principal tests)
+- [x] `middleware.ts` - Root Next.js middleware integrating test principal injection
+- [x] `__tests__/middleware.test.ts` - Middleware tests (18 tests)
 
 ### Authorization Coverage Check
 
