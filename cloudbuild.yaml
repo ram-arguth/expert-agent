@@ -246,22 +246,15 @@ steps:
     waitFor: ["deploy-cloud-run"]
 
   # ============================================
-  # Step 8: E2E Tests (Playwright) - beta/gamma/prod only
+  # Step 8: E2E Tests (Playwright) - all environments
   # ============================================
-  # Runs E2E tests against the deployed service for higher environments
-  # This step is skipped for dev (based on _ENV substitution)
+  # Runs E2E tests against the deployed service
   - id: "e2e-tests"
     name: "mcr.microsoft.com/playwright:v1.48.0-jammy"
     entrypoint: "sh"
     args:
       - "-c"
       - |
-        # Skip E2E tests for dev environment (run on beta/gamma/prod only)
-        if [ "${_ENV}" = "dev" ]; then
-          echo "⏭️  Skipping E2E tests for dev environment"
-          exit 0
-        fi
-
         echo "🎭 Running E2E tests for ${_ENV} environment..."
 
         # Install pnpm
