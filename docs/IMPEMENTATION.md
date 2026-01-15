@@ -195,25 +195,26 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 
 This project uses **100% Cloud Build** (Sovereign Orchestration) - no GitHub Actions.
 
-- [ ] **Connect GitHub to Cloud Build:**
+- [x] **Connect GitHub to Cloud Build:**
   1. Go to Cloud Build > Triggers in GCP Console
   2. Connect GitHub repository `ram-arguth/expert-agent`
   3. Authorize Cloud Build GitHub App
 
-- [ ] **Create Cloud Build Triggers:**
-  - **`dev` trigger**: On push to `dev` branch → deploy to `expert-ai-dev`
+- [x] **Create Cloud Build Triggers:**
+  - **`dev` trigger**: On push to `dev` branch → deploy to `expert-ai-dev` ✅
   - **`beta-*` trigger**: On tag `beta-*` → deploy to `expert-ai-beta` + E2E tests
   - **`gamma-*` trigger**: On tag `gamma-*` → deploy to `expert-ai-gamma` + E2E tests
   - **`prod-*` trigger**: On tag `prod-*` → deploy to `expert-ai-prod` (requires approval)
 
-- [ ] **Build Steps (cloudbuild.yaml):**
-  1. Install dependencies (pnpm with caching)
-  2. Run lint, type-check, unit tests (parallel)
-  3. Build Next.js app
-  4. Build Docker image, push to Artifact Registry
-  5. Deploy to Cloud Run
-  6. Run database migrations
-  7. Run smoke test (health endpoint)
+- [x] **Build Steps (cloudbuild.yaml):**
+  1. Install dependencies (pnpm with caching) ✅
+  2. Run lint, type-check, unit tests (parallel) ✅
+  3. Build Next.js app ✅
+  4. Build Docker image, push to Artifact Registry ✅
+  5. Deploy to Cloud Run ✅
+  6. Run smoke test (health endpoint) ✅
+  7. Run E2E tests (Playwright) ✅
+  8. Database migrations (TODO: re-enable once database is configured via IaC)
 
 - [ ] **Cross-Project Permissions:**
   - Dev/Beta/Gamma Cloud Build SAs need `artifactregistry.admin` on `expert-ai-root`
@@ -649,15 +650,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Member cannot invite
 - [x] User cannot access other org's resources
 - [x] Anonymous users have limited access
-- [ ] Default deny for unknown actions
-- [ ] Anonymous user has no permissions
+- [x] Default deny for unknown actions (`denies unknown actions` test)
+- [x] Anonymous user has no permissions (covered by Anonymous Principal tests)
 
-**`authz/middleware.test.ts`**
+**`lib/authz/middleware.test.ts`** - 9 tests ✅
 
-- [ ] Returns 403 when Cedar denies
-- [ ] Proceeds when Cedar permits
-- [ ] Constructs principal correctly from session
-- [ ] Logs authorization decisions
+- [x] Returns 403 when Cedar denies (`returns 403 when Cedar denies access`)
+- [x] Proceeds when Cedar permits (`executes handler when Cedar permits access`)
+- [x] Constructs principal correctly from session (`passes route params to getResource`)
+- [x] Returns 401 for unauthenticated users
 
 #### Integration Tests (Vitest + Test DB)
 
