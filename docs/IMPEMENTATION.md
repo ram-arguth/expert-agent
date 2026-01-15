@@ -905,10 +905,17 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 > **Per DESIGN.md:** Agents with `guidedInterview: true` enter interactive Q&A to gather context before main analysis.
 
-- [ ] **Schema Flag:** Add `guidedInterview: boolean` to Input Template Schema.
-- [ ] **Interview Steps Config:** Define interview flow in agent config (question sequence, conditional branches).
-- [ ] **Interview API:** `POST /api/agents/:agentId/interview` manages multi-turn context gathering. Returns `{ currentQuestion, progress, isComplete }`.
-- [ ] **State Machine:** Backend tracks interview state per session. Completes when all required context gathered.
+- [x] **Schema Flag:** Add `supportsGuidedInterview: boolean` to agent config (exists in UX Analyst, Legal Advisor, Finance Planner).
+- [x] **Interview Steps Config:** Define interview flow in agent config (question sequence, types, validation, conditional branches).
+- [x] **Interview API:** `POST /api/agents/:agentId/interview` manages multi-turn context gathering:
+  - Creates/resumes sessions with sessionId
+  - Returns `{ sessionId, currentStep, totalSteps, progress, isComplete, currentQuestion, answers, canStartAnalysis, nextAction }`
+  - GET endpoint returns interview config and step metadata
+  - Question types: text, textarea, select, multiselect, file, boolean
+  - Answer validation: required, minLength, maxLength
+  - Skip optional questions with `skipQuestion: true`
+  - 22 tests covering session management, validation, progress, security
+- [x] **State Machine:** Backend tracks interview state per session. Completes when all required context gathered.
 - [ ] **UI Integration:** Interview mode shows one question at a time with progress indicator. "Start Analysis" button enabled when complete.
 
 ### 2.9 Vertex AI Search Integration (Massive RAG)
