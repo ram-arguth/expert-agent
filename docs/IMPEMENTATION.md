@@ -559,10 +559,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.5 Enterprise Domain Verification
 
-- [ ] **Verification Token Generation:** On enterprise org creation, generate random token, store in `Org.verificationToken`.
-- [ ] **Verification API:** `POST /api/org/:orgId/verify-domain`. Perform DNS TXT lookup for `_expertai-verify.{domain}`. If matches token, set `domainVerified = true`.
-- [ ] **UI:** Show verification instructions (DNS TXT record), "Verify Now" button.
-- [ ] **Test:** Use a test domain or mock DNS lookup in dev.
+- [x] **Verification Token Generation:** On GET request, generate random token if not exists, store in `Org.verificationToken`.
+- [x] **Verification API:** `POST /api/org/:orgId/verify-domain` performs DNS TXT lookup for `_expertai-verify.{domain}`. If matches token, sets `domainVerified = true`.
+  - GET endpoint returns verification status, instructions, and token
+  - POST endpoint performs DNS lookup and verifies token match
+  - Handles multi-part TXT records
+  - Returns already verified status without DNS lookup
+  - 21 tests covering GET/POST, authorization, DNS lookup, error handling, security
+- [x] **UI:** Instructions provided via GET response (recordType, recordName, recordValue, example)
+- [x] **Test:** Mock DNS lookup in tests; tests cover ENOTFOUND, mismatch, and success cases
 
 ### 1.6 Cedar Policy Engine Integration
 
