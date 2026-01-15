@@ -1580,7 +1580,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 5.1 Stripe Checkout Integration
 
-- [ ] **Checkout API:** `POST /api/billing/checkout` with `{ priceId, orgId? }`. Create Stripe Checkout Session. Return `sessionId`.
+- [x] **Checkout API:** `POST /api/billing/checkout` with `{ priceId, orgId? }` creates Stripe Checkout Session. Returns `sessionId` and `url`.
+  - Creates/retrieves Stripe customer for user or org
+  - Validates priceId in production against known prices
+  - Org billing requires ADMIN/OWNER membership
+  - Sets metadata with userId and orgId for webhook processing
+  - 17 tests covering session creation, price validation, URLs, auth, org billing, metadata, errors
 - [ ] **Frontend:** Redirect to Stripe Checkout using `stripe.redirectToCheckout({ sessionId })`.
 - [ ] **Success/Cancel URLs:** Redirect back to app with status.
 
@@ -1609,12 +1614,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Unit Tests (Vitest/Jest)
 
-**`billing/checkout.test.ts`**
+**`billing/checkout.test.ts`** ✅ (in `app/api/billing/checkout/__tests__/route.test.ts` - 17 tests)
 
-- [ ] Creates Stripe Checkout session
-- [ ] Links to correct priceId
-- [ ] Sets success/cancel URLs
-- [ ] Returns 401 for unauthenticated
+- [x] Creates Stripe Checkout session
+- [x] Links to correct priceId
+- [x] Sets success/cancel URLs
+- [x] Returns 401 for unauthenticated
 
 **`billing/webhook-signature.test.ts`**
 
