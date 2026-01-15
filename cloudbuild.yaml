@@ -257,17 +257,25 @@ steps:
       - |
         echo "🎭 Running E2E tests for ${_ENV} environment..."
 
+        # Install gcloud CLI for getting service URL
+        apt-get update && apt-get install -y apt-transport-https ca-certificates gnupg curl
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        apt-get update && apt-get install -y google-cloud-cli
+
+        # Get the deployed service URL using gcloud
+        SERVICE_URL=$$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')
+
+        if [ -z "$$SERVICE_URL" ] || [ "$$SERVICE_URL" = "null" ]; then
+          echo "❌ Could not get service URL. Skipping E2E tests."
+          exit 1
+        fi
+
+        echo "Running E2E tests against: $$SERVICE_URL"
+
         # Install pnpm
         npm install -g pnpm@9
         pnpm config set store-dir /workspace/.pnpm-store
-
-        # Get the deployed service URL
-        apt-get update && apt-get install -y curl jq
-        SERVICE_URL=$$(curl -s -H "Authorization: Bearer $$(gcloud auth print-access-token)" \
-          "https://run.googleapis.com/v2/projects/${_PROJECT_ID}/locations/${_REGION}/services/${_SERVICE_NAME}" \
-          | jq -r '.uri')
-
-        echo "Running E2E tests against: $$SERVICE_URL"
 
         # Set environment variables for Playwright
         export BASE_URL="$$SERVICE_URL"
