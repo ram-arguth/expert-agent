@@ -22,3 +22,4 @@ Element.prototype.scrollIntoView = function () {};
 
 // Set test environment variables needed by some modules at load time
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';
+process.env.STRIPE_SECRET_KEY = 'sk_test_secret';

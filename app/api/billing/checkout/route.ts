@@ -23,10 +23,21 @@ import Stripe from 'stripe';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 
-// Initialize Stripe client
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
-});
+// Lazy initialization of Stripe client to prevent build-time errors
+let stripeInstance: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    if (!apiKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    stripeInstance = new Stripe(apiKey, {
+      apiVersion: '2025-02-24.acacia',
+    });
+  }
+  return stripeInstance;
+}
 
 // Stripe Price IDs (from environment or constants)
 const VALID_PRICE_IDS = [
@@ -105,7 +116,7 @@ export async function POST(request: NextRequest) {
       stripeCustomerId = org.stripeCustomerId;
     } else {
       // Create new Stripe customer for org
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: session.user.email || undefined,
         name: org.name || `Organization ${orgId}`,
         metadata: {
@@ -128,7 +139,7 @@ export async function POST(request: NextRequest) {
     const cancelUrl = `${baseUrl}/billing/cancel`;
 
     // Create Stripe Checkout Session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const checkoutSession = await getStripe().checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'subscription', // Use 'payment' for one-time purchases
       payment_method_types: ['card'],

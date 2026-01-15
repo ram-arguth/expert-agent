@@ -20,10 +20,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/db';
 
-// Initialize Stripe client
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
-});
+// Lazy initialization of Stripe client to prevent build-time errors
+let stripeInstance: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    if (!apiKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    stripeInstance = new Stripe(apiKey, {
+      apiVersion: '2025-02-24.acacia',
+    });
+  }
+  return stripeInstance;
+}
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
@@ -59,7 +70,7 @@ export async function POST(request: NextRequest) {
     // Verify webhook signature
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
       console.error('Webhook signature verification failed:', err);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
@@ -153,7 +164,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   let plan = 'pro'; // Default
   if (subscription && typeof subscription === 'string') {
     try {
-      const sub = await stripe.subscriptions.retrieve(subscription);
+      const sub = await getStripe().subscriptions.retrieve(subscription);
       const priceId = sub.items.data[0]?.price.id;
       if (priceId && PRICE_TO_PLAN[priceId]) {
         plan = PRICE_TO_PLAN[priceId];

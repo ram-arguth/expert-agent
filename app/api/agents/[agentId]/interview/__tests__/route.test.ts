@@ -249,7 +249,7 @@ describe('Guided Interview API', () => {
     it('sets canStartAnalysis when all required answered', async () => {
       const startRequest = createRequest({});
       const startResponse = await POST(startRequest, createParams('ux-analyst'));
-      let { sessionId, canStartAnalysis } = await startResponse.json();
+      const { sessionId, canStartAnalysis } = await startResponse.json();
 
       expect(canStartAnalysis).toBe(false);
 
@@ -266,7 +266,7 @@ describe('Guided Interview API', () => {
     it('marks isComplete when all questions answered', async () => {
       const startRequest = createRequest({});
       const startResponse = await POST(startRequest, createParams('ux-analyst'));
-      let { sessionId } = await startResponse.json();
+      const { sessionId } = await startResponse.json();
 
       // Answer all questions
       await POST(createRequest({ sessionId, answer: 'web-app' }), createParams('ux-analyst'));
