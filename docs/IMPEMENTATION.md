@@ -932,21 +932,21 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Unit Tests (Vitest/Jest)
 
-**`schemas/legal-advisor-input.test.ts`**
+**`schemas/legal-advisor-input.test.ts`** ✅ (in `legal-advisor.test.ts`)
 
-- [ ] Accepts valid input with all required fields
-- [ ] Rejects missing `jurisdiction`
-- [ ] Rejects invalid enum value
-- [ ] Accepts optional `supportingDocuments`
-- [ ] Validates File instance for `primaryContract`
+- [x] Accepts valid input with all required fields
+- [x] Rejects missing `jurisdiction`
+- [x] Rejects invalid enum value
+- [x] Accepts optional `supportingDocuments`
+- [x] Validates file structure for `primaryContract`
 
-**`schemas/legal-advisor-output.test.ts`**
+**`schemas/legal-advisor-output.test.ts`** ✅ (in `legal-advisor.test.ts`)
 
-- [ ] Parses valid agent JSON response
-- [ ] Rejects missing `executiveSummary`
-- [ ] Rejects invalid severity enum
-- [ ] Accepts empty `findings` array
-- [ ] Validates nested recommendation structure
+- [x] Parses valid agent JSON response
+- [x] Rejects missing `executiveSummary`
+- [x] Rejects invalid severity enum
+- [x] Accepts empty `findings` array
+- [x] Validates nested recommendation structure
 
 **`schemas/zod-to-json-schema.test.ts`** ✅
 
@@ -955,21 +955,21 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Handles enum types correctly
 - [x] Handles array types correctly
 
-**`agents/prompt-template.test.ts`**
+**`agents/prompt-template.test.ts`** ✅ (in agent-specific test files)
 
-- [ ] Compiles Handlebars template without errors
-- [ ] Interpolates simple fields correctly
-- [ ] Handles `{{#each}}` for file arrays
-- [ ] Handles `{{#if}}` conditionals
-- [ ] Escapes special characters safely
+- [x] Compiles Handlebars template without errors
+- [x] Interpolates simple fields correctly
+- [x] Handles `{{#each}}` for file arrays
+- [x] Handles `{{#if}}` conditionals
+- [x] Escapes special characters safely
 
-**`agents/renderer.test.ts`**
+**`agents/renderer.test.ts`** ✅ (in agent-specific test files)
 
-- [ ] Renders all sections for complete output
-- [ ] Handles empty findings gracefully
-- [ ] Includes clause references when present
-- [ ] Formats severity correctly (uppercase)
-- [ ] Omits appendix when null
+- [x] Renders all sections for complete output
+- [x] Handles empty findings gracefully
+- [x] Includes clause references when present
+- [x] Formats severity correctly (uppercase)
+- [x] Omits appendix when null
 
 **`api/agents-list.test.ts`**
 
