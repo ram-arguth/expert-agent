@@ -879,7 +879,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **OmniAgent API:** `POST /api/omni/route` with `{ query }` returns `{ suggestedAgentId, agentName, confidence, reasoning, alternatives? }`.
   - GET endpoint returns list of available agents with domains
   - 28 tests covering classification accuracy, input validation, alternatives, security
-- [ ] **UI Integration:** Add "Ask OmniAI" as first option in agent selector. Route to appropriate agent after classification.
+- [x] **UI Integration:** OmniAgentSelector component added (`components/agents/omni-agent-selector.tsx`):
+  - "Ask OmniAI" as first dropdown option
+  - Optional search input for query classification
+  - Live classification with confidence badge
+  - Grouped agents by category
+  - Beta badges for beta agents
+  - 12 tests covering rendering, props, search, integration
 
 ### 2.7 Multi-Agent Chaining (A2A Protocol)
 
@@ -978,11 +984,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Includes beta agents for allowed orgs
 - [ ] Returns 401 for unauthenticated
 
-**`api/agents-get.test.ts`**
+**`api/agents-get.test.ts`** ✅
 
-- [ ] Returns full config for valid agentId
-- [ ] Returns 404 for unknown agentId
-- [ ] Returns 403 for unauthorized beta agent
+- [x] Returns full config for valid agentId
+- [x] Returns 404 for unknown agentId
+- [x] Returns 403 for unauthorized beta agent
 
 #### Integration Tests
 
