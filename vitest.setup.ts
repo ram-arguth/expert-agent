@@ -20,3 +20,5 @@ Element.prototype.releasePointerCapture = function () {};
 // Required by auto-scroll behaviors
 Element.prototype.scrollIntoView = function () {};
 
+// Set test environment variables needed by some modules at load time
+process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_secret';

@@ -2,15 +2,18 @@
  * Stripe Checkout API
  *
  * POST /api/billing/checkout
- * Creates a Stripe Checkout Session for subscription or one-time purchase.
+ * Creates a Stripe Checkout Session for organization subscription.
  *
  * Request body:
  * - priceId: Stripe Price ID
- * - orgId: Optional organization ID for team/enterprise plans
+ * - orgId: Organization ID (required - billing is org-level only)
  *
  * Returns:
  * - sessionId: Stripe Checkout Session ID
  * - url: Redirect URL for checkout
+ *
+ * Note: Individual user billing is not supported. Users must be part of
+ * an organization to have a paid subscription.
  *
  * @see docs/DESIGN.md - Billing Integration section
  */
@@ -22,7 +25,7 @@ import { prisma } from '@/lib/db';
 
 // Initialize Stripe client
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 // Stripe Price IDs (from environment or constants)
@@ -36,7 +39,7 @@ const VALID_PRICE_IDS = [
 
 interface CheckoutRequestBody {
   priceId: string;
-  orgId?: string;
+  orgId: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -55,6 +58,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'priceId is required' }, { status: 400 });
     }
 
+    // orgId is required - individual billing is not supported
+    if (!orgId) {
+      return NextResponse.json(
+        { error: 'orgId is required. Individual billing is not supported.' },
+        { status: 400 }
+      );
+    }
+
     // In production, validate priceId against known prices
     if (process.env.NODE_ENV === 'production' && VALID_PRICE_IDS.length > 0) {
       if (!VALID_PRICE_IDS.includes(priceId)) {
@@ -62,80 +73,53 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If orgId provided, verify membership and permissions
-    if (orgId) {
-      const membership = await prisma.membership.findFirst({
-        where: {
-          userId: session.user.id,
-          orgId,
-          role: { in: ['ADMIN', 'OWNER'] },
-        },
-      });
+    // Verify membership and permissions
+    const membership = await prisma.membership.findFirst({
+      where: {
+        userId: session.user.id,
+        orgId,
+        role: { in: ['ADMIN', 'OWNER'] },
+      },
+    });
 
-      if (!membership) {
-        return NextResponse.json(
-          { error: 'Not authorized to manage billing for this organization' },
-          { status: 403 }
-        );
-      }
+    if (!membership) {
+      return NextResponse.json(
+        { error: 'Not authorized to manage billing for this organization' },
+        { status: 403 }
+      );
     }
 
-    // Get or create Stripe customer
+    // Get or create Stripe customer for org
+    const org = await prisma.org.findUnique({
+      where: { id: orgId },
+      select: { stripeCustomerId: true, name: true },
+    });
+
+    if (!org) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
     let stripeCustomerId: string;
 
-    if (orgId) {
-      // Organization billing
-      const org = await prisma.org.findUnique({
-        where: { id: orgId },
-        select: { stripeCustomerId: true, name: true },
-      });
-
-      if (org?.stripeCustomerId) {
-        stripeCustomerId = org.stripeCustomerId;
-      } else {
-        // Create new Stripe customer for org
-        const customer = await stripe.customers.create({
-          email: session.user.email || undefined,
-          name: org?.name || `Organization ${orgId}`,
-          metadata: {
-            orgId,
-            userId: session.user.id,
-          },
-        });
-        stripeCustomerId = customer.id;
-
-        // Update org with Stripe customer ID
-        await prisma.org.update({
-          where: { id: orgId },
-          data: { stripeCustomerId: customer.id },
-        });
-      }
+    if (org.stripeCustomerId) {
+      stripeCustomerId = org.stripeCustomerId;
     } else {
-      // Individual billing
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { stripeCustomerId: true, email: true, name: true },
+      // Create new Stripe customer for org
+      const customer = await stripe.customers.create({
+        email: session.user.email || undefined,
+        name: org.name || `Organization ${orgId}`,
+        metadata: {
+          orgId,
+          createdBy: session.user.id,
+        },
       });
+      stripeCustomerId = customer.id;
 
-      if (user?.stripeCustomerId) {
-        stripeCustomerId = user.stripeCustomerId;
-      } else {
-        // Create new Stripe customer for user
-        const customer = await stripe.customers.create({
-          email: session.user.email || user?.email || undefined,
-          name: session.user.name || user?.name || undefined,
-          metadata: {
-            userId: session.user.id,
-          },
-        });
-        stripeCustomerId = customer.id;
-
-        // Update user with Stripe customer ID
-        await prisma.user.update({
-          where: { id: session.user.id },
-          data: { stripeCustomerId: customer.id },
-        });
-      }
+      // Update org with Stripe customer ID
+      await prisma.org.update({
+        where: { id: orgId },
+        data: { stripeCustomerId: customer.id },
+      });
     }
 
     // Build success and cancel URLs
@@ -158,12 +142,12 @@ export async function POST(request: NextRequest) {
       cancel_url: cancelUrl,
       metadata: {
         userId: session.user.id,
-        orgId: orgId || '',
+        orgId,
       },
       subscription_data: {
         metadata: {
           userId: session.user.id,
-          orgId: orgId || '',
+          orgId,
         },
       },
     });
@@ -192,4 +176,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

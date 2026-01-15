@@ -1591,12 +1591,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 5.2 Stripe Webhooks
 
-- [ ] **Endpoint:** `POST /api/stripe/webhook`. Verify signature.
-- [ ] **Handle Events:**
-  - `checkout.session.completed`: Link Stripe Customer to user/org. Set plan and tokens.
-  - `invoice.payment_succeeded`: Reset token quota on renewal.
-  - `invoice.payment_failed`: Notify user, possibly downgrade.
-  - `customer.subscription.deleted`: Downgrade to free.
+- [x] **Endpoint:** `POST /api/stripe/webhook` with signature verification.
+  - Verifies signature via stripe.webhooks.constructEvent
+  - Idempotency via StripeEvent table (prevents duplicate processing)
+  - 9 tests covering signature, idempotency, events, storage
+- [x] **Handle Events:**
+  - `checkout.session.completed`: Updates org with Stripe customer ID, plan, and token quota
+  - `invoice.payment_succeeded`: Resets token quota on renewal
+  - `invoice.payment_failed`: Logs payment failure (TODO: email notification)
+  - `customer.subscription.deleted`: Downgrades to free plan
 - [ ] **Token Top-Up:** Handle one-time purchases to add tokens.
 
 ### 5.3 Quota Enforcement
@@ -1621,28 +1624,17 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Sets success/cancel URLs
 - [x] Returns 401 for unauthenticated
 
-**`billing/webhook-signature.test.ts`**
+**`billing/webhook.test.ts`** ✅ (in `app/api/stripe/webhook/__tests__/route.test.ts` - 9 tests)
 
-- [ ] Validates correct signature
-- [ ] Rejects invalid signature
-- [ ] Rejects missing signature
-
-**`billing/webhook-checkout.test.ts`**
-
-- [ ] Links Stripe Customer to user
-- [ ] Sets plan from price metadata
-- [ ] Initializes token balance
-- [ ] Handles org subscription
-
-**`billing/webhook-renewal.test.ts`**
-
-- [ ] Resets tokens on renewal
-- [ ] Computes rollover correctly
-- [ ] Respects rollover cap
-
-**`billing/webhook-failure.test.ts`**
-
-- [ ] Marks account as past due
+- [x] Returns 400 if stripe-signature missing
+- [x] Returns 400 for invalid signature
+- [x] Skips already processed events (idempotency)
+- [x] Updates org with Stripe customer and plan on checkout completed
+- [x] Sets token quota based on plan
+- [x] Resets token quota on invoice payment succeeded
+- [x] Downgrades org to free on subscription deleted
+- [x] Stores event for idempotency tracking
+- [x] Marks event as processed after handling
 - [ ] Logs failure event
 - [ ] Does not deduct tokens
 

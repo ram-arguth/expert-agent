@@ -2,12 +2,13 @@
  * Stripe Checkout API Tests
  *
  * Tests for the checkout session creation:
- * - Session creation
+ * - Session creation (org-level only)
  * - priceId validation
+ * - orgId validation
  * - Success/cancel URLs
  * - Authentication
- * - Organization billing
- * - Security
+ * - Authorization
+ * - Error handling
  */
 
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
@@ -20,10 +21,6 @@ vi.mock('@/auth', () => ({
 
 vi.mock('@/lib/db', () => ({
   prisma: {
-    user: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
     org: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -55,8 +52,6 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 
 const mockAuth = auth as Mock;
-const mockUserFindUnique = prisma.user.findUnique as Mock;
-const mockUserUpdate = prisma.user.update as Mock;
 const mockOrgFindUnique = prisma.org.findUnique as Mock;
 const mockOrgUpdate = prisma.org.update as Mock;
 const mockMembershipFindFirst = prisma.membership.findFirst as Mock;
@@ -84,17 +79,19 @@ describe('POST /api/billing/checkout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue(authenticatedSession);
-    mockUserFindUnique.mockResolvedValue({
-      stripeCustomerId: 'cus_existing',
-      email: 'user@example.com',
-      name: 'Test User',
+    mockMembershipFindFirst.mockResolvedValue({ role: 'ADMIN' });
+    mockOrgFindUnique.mockResolvedValue({
+      stripeCustomerId: 'cus_org',
+      name: 'Test Org',
     });
     mockCheckoutCreate.mockResolvedValue(mockCheckoutSession);
   });
 
   describe('Session Creation', () => {
-    it('creates Stripe Checkout session', async () => {
-      const response = await POST(createRequest({ priceId: 'price_pro_monthly' }));
+    it('creates Stripe Checkout session for org', async () => {
+      const response = await POST(
+        createRequest({ priceId: 'price_pro_monthly', orgId: 'org-1' })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -103,45 +100,54 @@ describe('POST /api/billing/checkout', () => {
     });
 
     it('uses existing Stripe customer ID', async () => {
-      await POST(createRequest({ priceId: 'price_pro_monthly' }));
+      await POST(createRequest({ priceId: 'price_pro_monthly', orgId: 'org-1' }));
 
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          customer: 'cus_existing',
+          customer: 'cus_org',
         })
       );
     });
 
     it('creates new Stripe customer if none exists', async () => {
-      mockUserFindUnique.mockResolvedValue({
+      mockOrgFindUnique.mockResolvedValue({
         stripeCustomerId: null,
-        email: 'user@example.com',
-        name: 'Test User',
+        name: 'Test Org',
       });
       mockCustomersCreate.mockResolvedValue({ id: 'cus_new' });
-      mockUserUpdate.mockResolvedValue({});
+      mockOrgUpdate.mockResolvedValue({});
 
-      await POST(createRequest({ priceId: 'price_pro_monthly' }));
+      await POST(createRequest({ priceId: 'price_pro_monthly', orgId: 'org-1' }));
 
       expect(mockCustomersCreate).toHaveBeenCalled();
-      expect(mockUserUpdate).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
+      expect(mockOrgUpdate).toHaveBeenCalledWith({
+        where: { id: 'org-1' },
         data: { stripeCustomerId: 'cus_new' },
       });
     });
   });
 
-  describe('Price Validation', () => {
+  describe('Validation', () => {
     it('returns 400 if priceId is missing', async () => {
-      const response = await POST(createRequest({}));
+      const response = await POST(createRequest({ orgId: 'org-1' }));
 
       expect(response.status).toBe(400);
       const data = await response.json();
       expect(data.error).toContain('priceId');
     });
 
-    it('accepts valid priceId', async () => {
-      const response = await POST(createRequest({ priceId: 'price_test_123' }));
+    it('returns 400 if orgId is missing', async () => {
+      const response = await POST(createRequest({ priceId: 'price_pro' }));
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('orgId');
+    });
+
+    it('accepts valid priceId and orgId', async () => {
+      const response = await POST(
+        createRequest({ priceId: 'price_test_123', orgId: 'org-1' })
+      );
 
       expect(response.status).toBe(200);
     });
@@ -149,7 +155,7 @@ describe('POST /api/billing/checkout', () => {
 
   describe('Success/Cancel URLs', () => {
     it('sets success URL with session ID placeholder', async () => {
-      await POST(createRequest({ priceId: 'price_pro_monthly' }));
+      await POST(createRequest({ priceId: 'price_pro_monthly', orgId: 'org-1' }));
 
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -159,7 +165,7 @@ describe('POST /api/billing/checkout', () => {
     });
 
     it('sets cancel URL', async () => {
-      await POST(createRequest({ priceId: 'price_pro_monthly' }));
+      await POST(createRequest({ priceId: 'price_pro_monthly', orgId: 'org-1' }));
 
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -173,7 +179,9 @@ describe('POST /api/billing/checkout', () => {
     it('returns 401 for unauthenticated users', async () => {
       mockAuth.mockResolvedValue(null);
 
-      const response = await POST(createRequest({ priceId: 'price_pro' }));
+      const response = await POST(
+        createRequest({ priceId: 'price_pro', orgId: 'org-1' })
+      );
 
       expect(response.status).toBe(401);
     });
@@ -181,38 +189,27 @@ describe('POST /api/billing/checkout', () => {
     it('returns 401 for session without user ID', async () => {
       mockAuth.mockResolvedValue({ user: { email: 'test@example.com' } });
 
-      const response = await POST(createRequest({ priceId: 'price_pro' }));
+      const response = await POST(
+        createRequest({ priceId: 'price_pro', orgId: 'org-1' })
+      );
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('Organization Billing', () => {
-    it('allows org admin to create checkout for org', async () => {
+  describe('Authorization', () => {
+    it('allows org admin to create checkout', async () => {
       mockMembershipFindFirst.mockResolvedValue({ role: 'ADMIN' });
-      mockOrgFindUnique.mockResolvedValue({
-        stripeCustomerId: 'cus_org',
-        name: 'Test Org',
-      });
 
       const response = await POST(
         createRequest({ priceId: 'price_enterprise', orgId: 'org-1' })
       );
 
       expect(response.status).toBe(200);
-      expect(mockCheckoutCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customer: 'cus_org',
-        })
-      );
     });
 
-    it('allows org owner to create checkout for org', async () => {
+    it('allows org owner to create checkout', async () => {
       mockMembershipFindFirst.mockResolvedValue({ role: 'OWNER' });
-      mockOrgFindUnique.mockResolvedValue({
-        stripeCustomerId: 'cus_org',
-        name: 'Test Org',
-      });
 
       const response = await POST(
         createRequest({ priceId: 'price_enterprise', orgId: 'org-1' })
@@ -233,28 +230,20 @@ describe('POST /api/billing/checkout', () => {
       expect(data.error).toContain('Not authorized');
     });
 
-    it('creates new Stripe customer for org if none exists', async () => {
-      mockMembershipFindFirst.mockResolvedValue({ role: 'ADMIN' });
-      mockOrgFindUnique.mockResolvedValue({
-        stripeCustomerId: null,
-        name: 'Test Org',
-      });
-      mockCustomersCreate.mockResolvedValue({ id: 'cus_new_org' });
-      mockOrgUpdate.mockResolvedValue({});
+    it('returns 404 for non-existent org', async () => {
+      mockOrgFindUnique.mockResolvedValue(null);
 
-      await POST(createRequest({ priceId: 'price_enterprise', orgId: 'org-1' }));
+      const response = await POST(
+        createRequest({ priceId: 'price_enterprise', orgId: 'org-1' })
+      );
 
-      expect(mockCustomersCreate).toHaveBeenCalled();
-      expect(mockOrgUpdate).toHaveBeenCalledWith({
-        where: { id: 'org-1' },
-        data: { stripeCustomerId: 'cus_new_org' },
-      });
+      expect(response.status).toBe(404);
     });
   });
 
   describe('Metadata', () => {
     it('includes userId in checkout metadata', async () => {
-      await POST(createRequest({ priceId: 'price_pro_monthly' }));
+      await POST(createRequest({ priceId: 'price_pro_monthly', orgId: 'org-1' }));
 
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -265,13 +254,7 @@ describe('POST /api/billing/checkout', () => {
       );
     });
 
-    it('includes orgId in checkout metadata when provided', async () => {
-      mockMembershipFindFirst.mockResolvedValue({ role: 'ADMIN' });
-      mockOrgFindUnique.mockResolvedValue({
-        stripeCustomerId: 'cus_org',
-        name: 'Test Org',
-      });
-
+    it('includes orgId in checkout metadata', async () => {
       await POST(createRequest({ priceId: 'price_enterprise', orgId: 'org-1' }));
 
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
@@ -286,20 +269,26 @@ describe('POST /api/billing/checkout', () => {
 
   describe('Error Handling', () => {
     it('handles Stripe API errors', async () => {
-      const stripeError = new Error('Stripe error') as Error & { statusCode?: number };
+      const stripeError = new Error('Stripe error') as Error & { type: string; statusCode?: number };
+      stripeError.type = 'StripeCardError';
       stripeError.statusCode = 400;
       mockCheckoutCreate.mockRejectedValue(stripeError);
 
-      const response = await POST(createRequest({ priceId: 'price_pro' }));
+      const response = await POST(
+        createRequest({ priceId: 'price_pro', orgId: 'org-1' })
+      );
 
-      // Generic error handling since we can't use instanceof with mocked Stripe
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Stripe error');
     });
 
     it('handles database errors gracefully', async () => {
-      mockUserFindUnique.mockRejectedValue(new Error('DB error'));
+      mockMembershipFindFirst.mockRejectedValue(new Error('DB error'));
 
-      const response = await POST(createRequest({ priceId: 'price_pro' }));
+      const response = await POST(
+        createRequest({ priceId: 'price_pro', orgId: 'org-1' })
+      );
 
       expect(response.status).toBe(500);
     });
