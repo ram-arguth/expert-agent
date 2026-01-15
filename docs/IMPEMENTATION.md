@@ -1021,21 +1021,21 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Beta badge visible on beta agents
 - [x] Agent landing page renders correctly
 
-**`e2e/dynamic-form.spec.ts`**
+**`e2e/dynamic-form.spec.ts`** ✅
 
-- [ ] Form renders from schema
-- [ ] Dropdown shows enum options
-- [ ] File upload field accepts files
-- [ ] Validation errors display on submit
+- [x] Form renders from schema
+- [x] Dropdown shows enum options
+- [x] File upload field accepts files
+- [x] Validation errors display on submit
 
 #### Additional Tests for New Features
 
-**`api/omni-agent.test.ts`** _(OmniAgent Orchestrator)_
+**`api/omni-agent.test.ts`** _(OmniAgent Orchestrator)_ ✅ (in `app/api/omni/route/__tests__/route.test.ts` - 28 tests)
 
-- [ ] Classifies legal question to legal-advisor agent
-- [ ] Classifies ambiguous query and returns multiple alternatives
-- [ ] Returns "no suitable agent" for unsupported domain
-- [ ] Logs feature suggestions when fallback triggered
+- [x] Classifies legal question to legal-advisor agent
+- [x] Classifies ambiguous query and returns multiple alternatives
+- [x] Returns "no suitable agent" for unsupported domain
+- [x] Logs feature suggestions when fallback triggered
 
 **`api/agent-chaining.test.ts`** _(Multi-Agent Chaining)_ _(Vertex AI mocked)_
 
@@ -1044,24 +1044,24 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Fails chain if intermediate validation fails
 - [ ] Returns combined result with source attribution
 
-**`api/guided-interview.test.ts`** _(Guided Interview Mode)_
+**`api/guided-interview.test.ts`** _(Guided Interview Mode)_ ✅ (in `app/api/agents/[agentId]/interview/__tests__/route.test.ts` - 22 tests)
 
-- [ ] Returns first question on interview start
-- [ ] Advances to next question on valid answer
-- [ ] Completes interview when all required context gathered
-- [ ] Persists interview state per session
+- [x] Returns first question on interview start
+- [x] Advances to next question on valid answer
+- [x] Completes interview when all required context gathered
+- [x] Persists interview state per session
 
-**`e2e/omni-agent.spec.ts`** _(AI response mocked)_
+**`e2e/omni-agent.spec.ts`** _(AI response mocked)_ ✅
 
-- [ ] "Ask OmniAI" appears first in agent selector
-- [ ] User types query → appropriate agent suggested
-- [ ] User confirms → redirected to agent chat
+- [x] "Ask OmniAI" appears first in agent selector
+- [x] User types query → appropriate agent suggested
+- [x] User confirms → redirected to agent chat
 
-**`e2e/guided-interview.spec.ts`** _(AI response mocked)_
+**`e2e/guided-interview.spec.ts`** _(AI response mocked)_ ✅
 
-- [ ] Interview mode shows one question at a time
-- [ ] Progress indicator updates
-- [ ] "Start Analysis" enabled when complete
+- [x] Interview mode shows one question at a time
+- [x] Progress indicator updates
+- [x] "Start Analysis" enabled when complete
 
 ---
 
