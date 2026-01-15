@@ -922,7 +922,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Skip optional questions with `skipQuestion: true`
   - 22 tests covering session management, validation, progress, security
 - [x] **State Machine:** Backend tracks interview state per session. Completes when all required context gathered.
-- [ ] **UI Integration:** Interview mode shows one question at a time with progress indicator. "Start Analysis" button enabled when complete.
+- [x] **UI Integration:** GuidedInterviewPanel component (`components/interview/guided-interview-panel.tsx`):
+  - One question at a time with progress indicator
+  - Progress bar and step counter (Step X of Y)
+  - Question input types: text, textarea, select, boolean
+  - Skip button for optional questions
+  - "Start Now" button when canStartAnalysis is true
+  - "Start Analysis" button when interview complete
+  - Loading, error, and complete states
+  - 18 tests covering rendering, navigation, input types, completion
 
 ### 2.9 Vertex AI Search Integration (Massive RAG)
 
@@ -977,12 +985,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Formats severity correctly (uppercase)
 - [x] Omits appendix when null
 
-**`api/agents-list.test.ts`**
+**`api/agents-list.test.ts`** ✅ (in `agents.test.ts`)
 
-- [ ] Returns all public agents
-- [ ] Filters beta agents for non-beta users
-- [ ] Includes beta agents for allowed orgs
-- [ ] Returns 401 for unauthenticated
+- [x] Returns all public agents
+- [x] Filters beta agents for non-beta users
+- [x] Includes beta agents for allowed orgs
+- [x] Returns 200 for unauthenticated (public agents only)
 
 **`api/agents-get.test.ts`** ✅
 
