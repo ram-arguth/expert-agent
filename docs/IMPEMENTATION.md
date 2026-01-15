@@ -1014,12 +1014,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### E2E Tests (Playwright)
 
-**`e2e/agent-catalog.spec.ts`**
+**`e2e/agent-catalog.spec.ts`** ✅
 
-- [ ] Sidebar shows agent list
-- [ ] Clicking agent navigates to chat UI
-- [ ] Beta badge visible on beta agents
-- [ ] Agent landing page renders correctly
+- [x] Sidebar shows agent list
+- [x] Clicking agent navigates to chat UI
+- [x] Beta badge visible on beta agents
+- [x] Agent landing page renders correctly
 
 **`e2e/dynamic-form.spec.ts`**
 
