@@ -1610,7 +1610,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 5.4 Customer Portal
 
-- [ ] **Portal API:** `POST /api/billing/portal` creates Stripe Customer Portal session. Return URL.
+- [x] **Portal API:** `POST /api/billing/portal` creates Stripe Customer Portal session. Returns URL.
+  - Requires ADMIN, OWNER, or BILLING_MANAGER role
+  - Validates org has Stripe customer ID
+  - 13 tests covering session creation, auth, authorization, errors
 - [ ] **UI:** "Manage Subscription" button opens portal in new tab.
 
 ### 5.5 Phase 5 Test Requirements
