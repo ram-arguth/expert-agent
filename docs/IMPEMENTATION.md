@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1561    | ✅ Passing                     |
+| Unit Tests             | ~1586    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1561** | ✅ All passing in CI           |
+| **Total**              | **1586** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1670,8 +1670,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Org billing requires ADMIN/OWNER membership
   - Sets metadata with userId and orgId for webhook processing
   - 17 tests covering session creation, price validation, URLs, auth, org billing, metadata, errors
-- [ ] **Frontend:** Redirect to Stripe Checkout using `stripe.redirectToCheckout({ sessionId })`.
-- [ ] **Success/Cancel URLs:** Redirect back to app with status.
+- [x] **Frontend:** `components/billing/upgrade-button.tsx`
+  - Calls `/api/billing/checkout` with priceId and optional orgId
+  - Redirects to Stripe-hosted checkout page
+  - Shows loading state, handles errors
+  - 12 unit tests
+- [x] **Success/Cancel URLs:** Configured in Checkout API to redirect back to app.
 
 ### 5.2 Stripe Webhooks
 
@@ -1713,7 +1717,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Requires ADMIN, OWNER, or BILLING_MANAGER role
   - Validates org has Stripe customer ID
   - 13 tests covering session creation, auth, authorization, errors
-- [ ] **UI:** "Manage Subscription" button opens portal in new tab.
+- [x] **UI:** `components/billing/manage-subscription-button.tsx`
+  - Calls `/api/billing/portal` with orgId
+  - Opens Stripe Customer Portal in new tab
+  - Shows loading state, handles errors
+  - 13 unit tests
 
 ### 5.5 Phase 5 Test Requirements
 
