@@ -33,12 +33,12 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 > **Last Updated:** 2026-01-16
 
-| Test Type              | Count    | Status                      |
-| ---------------------- | -------- | --------------------------- |
-| Unit Tests             | ~1354    | ✅ Passing                  |
-| Integration Tests      | ~24      | ✅ Passing                  |
-| E2E Tests (Playwright) | ~250     | ✅ Passing (Blocking in CI) |
-| **Total**              | **1354** | ✅ All passing in CI        |
+| Test Type              | Count    | Status                         |
+| ---------------------- | -------- | ------------------------------ |
+| Unit Tests             | ~1368    | ✅ Passing                     |
+| Integration Tests      | ~24      | ✅ Passing                     |
+| E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
+| **Total**              | **1368** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -580,18 +580,22 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.4 Team Org Creation & Invites
 
-> **Implementation Status:** API routes **COMPLETE**. Email sending and UI deferred.
+> **Implementation Status:** API routes + UI integration **COMPLETE**. Email sending deferred.
 
 - [x] **Create Team API:** `POST /api/org` with `{ name, slug?, type: "TEAM" }`. Creator becomes `OWNER`. Validates identity from Google, Apple, or Microsoft only.
 - [x] **List Orgs API:** `GET /api/org` returns user's organizations with roles.
+- [x] **Members API:** `GET /api/org/:orgId/members` returns all org members with user details in org page.
 - [x] **Invite API:** `POST /api/org/:orgId/invite` with `{ email, role }`. Generates secure token, stores Invite record, sets 7-day expiry. Owner/Admin only (Cedar + direct check).
 - [x] **List Invites API:** `GET /api/org/:orgId/invite` returns pending invites with expiry status.
 - [x] **Revoke Invite API:** `DELETE /api/org/:orgId/invite?inviteId=...` marks invite as revoked.
 - [x] **Accept Invite API:** `POST /api/invite/accept` with `{ token }`. Validates token, email match, provider. Creates Membership in transaction.
 - [x] **Get Invite Info:** `GET /api/invite/accept?token=...` returns public invite details (no auth required).
 - [ ] **Send Invite Email:** Deferred to email service integration (SendGrid/SES).
-- [x] **Invite UI:** Team admin page with "Invite Member" form, pending invites list (`components/team/` - InviteForm, TeamMembersList, PendingInvitesList).
-- [x] **Unit Tests:** 34 tests covering org creation, listing, invite CRUD, and acceptance flows.
+- [x] **Invite UI:** Organization page integrates MembersTab with real API data (`app/(app)/organization/`).
+  - InviteForm: Role-based visibility (owner/admin only)
+  - TeamMembersList: Shows all members with role management
+  - PendingInvitesList: Shows pending invites with revoke functionality
+- [x] **Unit Tests:** 48 tests covering org creation, listing, members API, invite CRUD, and UI components.
 - [x] **Integration Tests:** `lib/__tests__/org.integration.test.ts` covers invite creation, acceptance, revocation with database (8+ tests).
 - [ ] **E2E Tests:** Playwright tests for invite UI flow.
 
