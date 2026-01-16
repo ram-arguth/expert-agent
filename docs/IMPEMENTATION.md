@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1410    | ✅ Passing                     |
+| Unit Tests             | ~1442    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1410** | ✅ All passing in CI           |
+| **Total**              | **1442** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1135,8 +1135,14 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **MIME Type Validation:** Allows PDF, Word, Excel, images, text files. Rejects executables, scripts, HTML.
 - [x] **Size Limits by Purpose:** query=10MB, context=50MB, avatar=1MB
 - [x] **Security:** Filename sanitization prevents path traversal and XSS. User ID isolation in GCS paths.
-- [ ] **Frontend Upload:** Use `fetch` with PUT to signed URL. Show progress indicator.
-- [ ] **Confirm Upload:** Optionally call `POST /api/upload/confirm` to mark file ready.
+- [x] **Frontend Upload with Progress:** `lib/hooks/use-file-upload.ts` hook + `FileUploadProgress` component:
+  - XMLHttpRequest for progress tracking during GCS upload
+  - Concurrent upload support (up to 3 files)
+  - Abort/cancel support
+  - Retry failed uploads
+  - FileUploadProgress component shows per-file progress, previews, status icons
+  - 32 tests covering hook state management and component rendering
+- [x] **Confirm Upload:** Optional `autoConfirm` option in hook calls `POST /api/upload/confirm`
 - [ ] **Virus Scanning:** Cloud Function on GCS finalize (future enhancement).
 
 ### 3.2 Org Context Files
