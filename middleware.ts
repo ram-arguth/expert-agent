@@ -29,25 +29,25 @@ import { generateTraceContext } from '@/lib/observability/logger';
 export const E2E_SESSION_HEADER = 'x-e2e-session';
 
 export async function middleware(request: NextRequest) {
-  // Clone the response headers
-  const response = NextResponse.next();
-
   // SECURITY: Production guard - reject any test headers in production
   const guardResponse = createProductionGuardMiddleware()(request);
   if (guardResponse) {
     return guardResponse;
   }
 
+  // Create new request headers (we'll forward modified headers to downstream handlers)
+  const requestHeaders = new Headers(request.headers);
+
   // E2E Test Principal Injection (non-production only)
   if (isE2ETestModeAllowed()) {
     const testSession = extractTestSession(request);
     if (testSession) {
-      // Store test session in a header for downstream handlers to use
+      // Store test session in request headers for downstream handlers to use
       // This is safe because:
       // 1. The header is set by our middleware, not the client
       // 2. We've already validated the test secret
       // 3. The session is tagged with isTestPrincipal: true
-      response.headers.set(E2E_SESSION_HEADER, JSON.stringify(testSession));
+      requestHeaders.set(E2E_SESSION_HEADER, JSON.stringify(testSession));
     }
   }
 
@@ -55,8 +55,31 @@ export async function middleware(request: NextRequest) {
   const existingTraceParent = request.headers.get('traceparent');
   if (!existingTraceParent) {
     const trace = generateTraceContext();
-    response.headers.set('x-trace-id', trace.traceId);
-    response.headers.set('x-span-id', trace.spanId);
+    requestHeaders.set('x-trace-id', trace.traceId);
+    requestHeaders.set('x-span-id', trace.spanId);
+  }
+
+  // Create response with modified request headers passed to downstream
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Copy E2E session to response headers (for testing and debugging)
+  const e2eSession = requestHeaders.get(E2E_SESSION_HEADER);
+  if (e2eSession) {
+    response.headers.set(E2E_SESSION_HEADER, e2eSession);
+  }
+
+  // Copy trace context to response headers (for observability)
+  const traceId = requestHeaders.get('x-trace-id');
+  const spanId = requestHeaders.get('x-span-id');
+  if (traceId) {
+    response.headers.set('x-trace-id', traceId);
+  }
+  if (spanId) {
+    response.headers.set('x-span-id', spanId);
   }
 
   // CSP Headers (basic - see lib/middleware/csp-middleware.ts for full implementation)
@@ -99,3 +122,4 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)',
   ],
 };
+
