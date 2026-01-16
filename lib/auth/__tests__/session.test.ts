@@ -15,7 +15,7 @@ vi.mock('next/headers', () => ({
 // Mock NextAuth
 const mockNextAuth = vi.fn();
 vi.mock('@/auth', () => ({
-  auth: () => mockNextAuth(),
+  nextAuthRaw: () => mockNextAuth(),
 }));
 
 // Mock e2e-middleware

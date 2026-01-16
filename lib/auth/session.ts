@@ -14,7 +14,7 @@
  */
 
 import { headers } from 'next/headers';
-import { auth as nextAuth, type Session } from '@/auth';
+import { nextAuthRaw, type Session } from '@/auth';
 import { E2E_SESSION_HEADER } from '@/middleware';
 import { isE2ETestModeAllowed, type TestAwareSession } from '@/lib/test-utils/e2e-middleware';
 
@@ -54,7 +54,7 @@ export async function getAuthSession(): Promise<AuthSession | null> {
   }
 
   // Fall back to NextAuth session
-  const session = await nextAuth();
+  const session = await nextAuthRaw();
   return session;
 }
 
@@ -136,6 +136,3 @@ export async function requireAuth(): Promise<AuthSession> {
   }
   return session;
 }
-
-// Re-export the raw NextAuth auth for cases that need it directly
-export { auth as nextAuthRaw } from '@/auth';

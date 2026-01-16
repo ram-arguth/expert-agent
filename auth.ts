@@ -148,5 +148,32 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
 };
 
-// Export auth utilities
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+// Create base NextAuth utilities
+const nextAuthExports = NextAuth(authConfig);
+
+// Re-export handlers, signIn, signOut directly
+export const { handlers, signIn, signOut } = nextAuthExports;
+
+// Export the raw NextAuth auth for internal use
+export const nextAuthRaw = nextAuthExports.auth;
+
+/**
+ * Enhanced auth function with E2E test principal support.
+ *
+ * This function checks for an E2E test session injected by middleware first,
+ * then falls back to the normal NextAuth session.
+ *
+ * SECURITY: E2E mode is only allowed when:
+ * - NODE_ENV !== 'production' OR ALLOW_E2E_TEST_MODE=true
+ * - E2E_TEST_SECRET header matches configured secret
+ *
+ * @returns The current session, or null if not authenticated
+ */
+export async function auth(): Promise<Session | null> {
+  // Import dynamically to avoid circular dependency
+  const { getAuthSession } = await import('@/lib/auth/session');
+  return getAuthSession();
+}
+
+// Re-export Session type
+export type { Session } from 'next-auth';
