@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1586    | ✅ Passing                     |
+| Unit Tests             | ~1600    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1586** | ✅ All passing in CI           |
+| **Total**              | **1600** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1571,18 +1571,18 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Favorite toggle button works
 - [x] Link revoke functionality
 
-**`hooks/useAgents.test.ts`**
+**`hooks/useAgents.test.ts`** ✅ (in `hooks/__tests__/use-agents.test.ts` - 7 tests)
 
-- [ ] Fetches agents from API
-- [ ] Returns loading state
-- [ ] Returns error on failure
-- [ ] Caches with TanStack Query
+- [x] Fetches agents from API
+- [x] Returns loading state
+- [x] Returns error on failure
+- [x] Caches with TanStack Query
 
-**`hooks/useQuery.test.ts`**
+**`hooks/useQuery.test.ts`** ✅ (in `hooks/__tests__/use-query.test.ts` - 7 tests)
 
-- [ ] Sends query to API
-- [ ] Returns loading/success/error states
-- [ ] Invalidates cache on success
+- [x] Sends query to API
+- [x] Returns loading/success/error states
+- [x] Invalidates cache on success
 
 #### E2E Tests (Playwright + **Mocked AI Backend**)
 
