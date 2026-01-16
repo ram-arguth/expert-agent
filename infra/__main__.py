@@ -341,6 +341,17 @@ gcp.projects.IAMMember(
     member=f"serviceAccount:{cloud_build_sa_email}",
 )
 
+# Grant Cloud Build SA access to e2e-test-secret for E2E tests in CI
+# This is required for the E2E test step in cloudbuild.yaml to access
+# the test principal injection secret
+gcp.secretmanager.SecretIamMember(
+    f"cloud-build-e2e-secret-access-{env}",
+    project=project_id,
+    secret_id="e2e-test-secret",
+    role="roles/secretmanager.secretAccessor",
+    member=f"serviceAccount:{cloud_build_sa_email}",
+)
+
 # ============================================
 # Cloud Build Infrastructure SA (Dedicated)
 # ============================================
@@ -434,6 +445,8 @@ secrets = [
     # Stripe billing
     "stripe-secret-key",
     "stripe-webhook-secret",
+    # E2E testing
+    "e2e-test-secret",          # Secret for E2E test principal injection
 ]
 
 for secret_name in secrets:
