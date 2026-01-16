@@ -1,9 +1,18 @@
 #!/usr/bin/env sh
 
-# Pre-push checks - run integration tests before push only if database is available
+# Pre-push checks - ensures code passes CI checks before pushing
 echo "🔗 Running pre-push checks..."
 
-# 1. Run integration tests (skip if no database available)
+# 1. Run a production build to catch build errors
+# This is the most important check to prevent Cloud Build failures
+echo "🏗️  Running production build..."
+if ! pnpm build 2>&1 | tail -20; then
+  echo "❌ Build failed! Please fix build errors before pushing."
+  exit 1
+fi
+echo "✅ Build passed!"
+
+# 2. Run integration tests (skip if no database available)
 echo "🔗 Running integration tests..."
 # Integration tests require PostgreSQL - skip if not running
 # The tests will fully run in CI where database is available
