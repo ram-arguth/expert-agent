@@ -352,6 +352,16 @@ gcp.secretmanager.SecretIamMember(
     member=f"serviceAccount:{cloud_build_sa_email}",
 )
 
+# Also grant Compute Engine default SA access to e2e-test-secret
+# Cloud Build uses this SA for some step operations including secret injection
+gcp.secretmanager.SecretIamMember(
+    f"compute-e2e-secret-access-{env}",
+    project=project_id,
+    secret_id="e2e-test-secret",
+    role="roles/secretmanager.secretAccessor",
+    member=f"serviceAccount:{compute_sa_email}",
+)
+
 # ============================================
 # Cloud Build Infrastructure SA (Dedicated)
 # ============================================
