@@ -14,6 +14,9 @@ import { Separator } from "@/components/ui/separator";
 import { Building2, Users, Settings, Shield } from "lucide-react";
 import { MembersTab } from "./members-tab";
 
+// Force dynamic rendering since this page requires auth context
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Organization - Expert AI",
   description: "Manage your organization settings and team members",
