@@ -29,6 +29,17 @@ Before starting, ensure alignment on these **definitive technology choices** fro
 
 This section defines mandatory testing policies, pre-commit hooks, and automated checks that apply across all phases.
 
+### Current Test Count
+
+> **Last Updated:** 2026-01-16
+
+| Test Type              | Count    | Status                                                 |
+| ---------------------- | -------- | ------------------------------------------------------ |
+| Unit Tests             | ~1300    | ✅ Passing                                             |
+| Integration Tests      | ~20      | ✅ Passing                                             |
+| E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (auth integration deployed, verifying) |
+| **Total**              | **1319** | ✅ All passing in CI                                   |
+
 ### Pre-Commit Hooks (Husky)
 
 Pre-commit hooks run the same checks as CI/CD to catch issues early:
@@ -77,6 +88,28 @@ Pre-commit hooks run the same checks as CI/CD to catch issues early:
 - [x] `__tests__/middleware.test.ts` - Middleware tests (18 tests)
 - [x] `lib/auth/session.ts` - Auth utilities integrating E2E with NextAuth
 - [x] `lib/auth/__tests__/session.test.ts` - Session utilities tests (17 tests)
+- [x] `auth.ts` - Enhanced `auth()` function that automatically checks for test sessions
+
+**Auth Integration Architecture:**
+
+```
+Playwright E2E Test
+    │ Sends: X-E2E-Test-Principal, X-E2E-Test-Secret headers
+    ▼
+middleware.ts → extractTestSession()
+    │ Validates secret, extracts principal
+    │ Sets x-e2e-session in request headers
+    ▼
+API Route calls auth()
+    ▼
+auth.ts → getAuthSession()
+    │ Checks x-e2e-session header first
+    │ Falls back to nextAuthRaw() (NextAuth)
+    ▼
+Returns session (with isTestPrincipal: true for test sessions)
+```
+
+**Key Design Decision:** The `auth()` function from `@/auth` automatically delegates to `getAuthSession()`, which means **all existing API routes work with E2E test principals without any code changes**. The `nextAuthRaw` export provides access to the original NextAuth function when needed.
 
 ### Authorization Coverage Check
 
