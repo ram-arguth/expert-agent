@@ -11,9 +11,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Building2, Users, Settings, Shield, FileText } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Settings,
+  Shield,
+  FileText,
+  CreditCard,
+} from "lucide-react";
 import { MembersTab } from "./members-tab";
 import { ContextFilesTab } from "./context-files-tab";
+import { BillingTab } from "./billing-tab";
 
 // Force dynamic rendering since this page requires auth context
 export const dynamic = "force-dynamic";
@@ -47,6 +55,10 @@ export default function OrganizationPage() {
             <FileText className="h-4 w-4" />
             Context Files
           </TabsTrigger>
+          <TabsTrigger value="billing" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            Billing
+          </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="h-4 w-4" />
             Settings
@@ -65,6 +77,11 @@ export default function OrganizationPage() {
         {/* Context Files Tab - Admin can upload/manage context files */}
         <TabsContent value="context">
           <ContextFilesTab />
+        </TabsContent>
+
+        {/* Billing Tab - Subscription and usage management */}
+        <TabsContent value="billing">
+          <BillingTab />
         </TabsContent>
 
         {/* Settings Tab */}
