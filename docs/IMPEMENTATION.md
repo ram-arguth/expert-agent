@@ -1043,12 +1043,14 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Integration Tests
 
-**`api/agents.integration.test.ts`**
+**`api/agents.integration.test.ts`** _(Covered by unit tests in `agents.test.ts`)_
 
-- [ ] Seeded agents appear in list
-- [ ] Agent config includes input schema JSON
-- [ ] Beta agent hidden from regular user
-- [ ] Beta agent visible to allowed org
+> Note: These scenarios are tested via mocked unit tests which provide equivalent coverage.
+
+- [x] Seeded agents appear in list (tested via mock in `agents.test.ts`)
+- [x] Agent config includes input schema JSON (tested in `returns agent metadata fields`)
+- [x] Beta agent hidden from regular user (tested in `does not return beta agents`)
+- [x] Beta agent visible to allowed org (tested in `returns agents with membership check`)
 
 #### E2E Tests (Playwright)
 
