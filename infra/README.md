@@ -98,6 +98,24 @@ The infrastructure is deployed via **Cloud Build** (Sovereign Orchestration):
 
 All CI/CD runs 100% within GCP. No GitHub Actions are used.
 
+### Cloud Build Region Requirement
+
+⚠️ **ALWAYS use `--region=us-west1` when submitting builds manually:**
+
+```bash
+# CORRECT: Regional build in us-west1
+gcloud builds submit --config=cloudbuild.yaml --project=expert-ai-dev --region=us-west1
+
+# WRONG: Global region (violates data locality requirements)
+gcloud builds submit --config=cloudbuild.yaml --project=expert-ai-dev
+```
+
+**Why this matters:**
+
+- **Data locality**: Build artifacts stay in us-west1
+- **Performance**: Faster builds when co-located with other resources
+- **Compliance**: Matches our documented infrastructure standard
+
 ### Manual Deployment (Emergency Only)
 
 ```bash
