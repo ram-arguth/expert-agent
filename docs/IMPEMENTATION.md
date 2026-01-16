@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1492    | ✅ Passing                     |
+| Unit Tests             | ~1532    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1492** | ✅ All passing in CI           |
+| **Total**              | **1532** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -946,25 +946,26 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - `showConfirmDialog` prop to enable confirmation flow
   - 15 tests covering rendering, props, search, integration, and dialog
 
-### 2.7 Multi-Agent Chaining (A2A Protocol)
+### 2.7 Multi-Agent Chaining (A2A Protocol) ✅
 
 > **Per DESIGN.md:** Structured output from Agent A can directly feed Agent B if schemas are compatible.
 
-- [ ] **Define Mapper Functions:** For agents with compatible output→input schemas, create explicit mapper functions:
-  ```typescript
-  // lib/mappers/legal-to-risk.ts
-  function mapLegalToRisk(legal: LegalAdvisorOutput): RiskAssessmentInput {
-    return {
-      findingsToAssess: legal.findings.map((f) => ({
-        issue: f.title,
-        severity: f.severity,
-        context: f.description,
-      })),
-    };
-  }
-  ```
-- [ ] **Chain API:** `POST /api/agents/:agentId/chain` orchestrates multi-agent pipeline. Validates output at each step.
-- [ ] **Agent Catalog:** Add `chainable` flag and `compatibleOutputsTo: string[]` field for agents supporting chaining.
+- [x] **Define Mapper Functions:** `lib/agents/chaining/mapper-registry.ts`
+  - ux-to-legal: UX findings → Legal compliance review
+  - ux-to-finance: UX recommendations → Budget/ROI analysis
+  - legal-to-finance: Legal findings → Risk assessment
+  - finance-to-legal: Financial projections → Regulatory review
+  - 29 mapper tests covering all transformations
+- [x] **Chain API:** `POST /api/agents/:agentId/chain`
+  - GET endpoint returns chainable targets
+  - POST executes multi-agent pipeline
+  - Step-by-step results with token tracking
+  - Cedar authorization on chain execution
+  - 11 API tests
+- [x] **Types:** `lib/agents/chaining/types.ts`
+  - ChainExecutionRequest/Result schemas
+  - MapperRegistry interface
+  - ChainValidationResult for error handling
 
 ### 2.8 Guided Interview Mode
 
