@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                      |
 | ---------------------- | -------- | --------------------------- |
-| Unit Tests             | ~1300    | ✅ Passing                  |
-| Integration Tests      | ~20      | ✅ Passing                  |
+| Unit Tests             | ~1354    | ✅ Passing                  |
+| Integration Tests      | ~24      | ✅ Passing                  |
 | E2E Tests (Playwright) | ~250     | ✅ Passing (Blocking in CI) |
-| **Total**              | **1319** | ✅ All passing in CI        |
+| **Total**              | **1354** | ✅ All passing in CI        |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -590,7 +590,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Accept Invite API:** `POST /api/invite/accept` with `{ token }`. Validates token, email match, provider. Creates Membership in transaction.
 - [x] **Get Invite Info:** `GET /api/invite/accept?token=...` returns public invite details (no auth required).
 - [ ] **Send Invite Email:** Deferred to email service integration (SendGrid/SES).
-- [ ] **Invite UI:** Team admin page with "Invite Member" form, pending invites list.
+- [x] **Invite UI:** Team admin page with "Invite Member" form, pending invites list (`components/team/` - InviteForm, TeamMembersList, PendingInvitesList).
 - [x] **Unit Tests:** 34 tests covering org creation, listing, invite CRUD, and acceptance flows.
 - [x] **Integration Tests:** `lib/__tests__/org.integration.test.ts` covers invite creation, acceptance, revocation with database (8+ tests).
 - [ ] **E2E Tests:** Playwright tests for invite UI flow.
