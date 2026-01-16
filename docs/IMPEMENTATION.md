@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1461    | ✅ Passing                     |
+| Unit Tests             | ~1471    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1461** | ✅ All passing in CI           |
+| **Total**              | **1471** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1164,7 +1164,14 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Removes from GCS and database
   - Cross-org deletion prevention
   - 8 tests covering auth, authorization, security
-- [ ] **UI:** Admin page section for context file management.
+- [x] **UI:** Admin page section for context file management
+  - Implemented in `app/(app)/organization/context-files-tab.tsx`
+  - New "Context Files" tab in organization settings
+  - Upload with progress tracking
+  - File list with type icons, size, date, agent filters
+  - Delete with confirmation
+  - Admin-only upload/delete controls
+  - 10 tests for ContextFilesTab component
 
 ### 3.3 Query Orchestration API ✅
 
