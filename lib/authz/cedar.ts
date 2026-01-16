@@ -8,7 +8,7 @@
  * @see docs/IMPLEMENTATION.md - Phase 1.6 Cedar Policy Engine Integration
  */
 
-import type { Session } from 'next-auth';
+import type { Session } from "next-auth";
 
 // ============================================
 // Types
@@ -18,7 +18,7 @@ import type { Session } from 'next-auth';
  * Represents a Cedar principal (the actor making the request)
  */
 export interface CedarPrincipal {
-  type: 'User' | 'Anonymous' | 'Service';
+  type: "User" | "Anonymous" | "Service";
   id: string;
   attributes?: {
     email?: string;
@@ -38,7 +38,7 @@ export interface CedarPrincipal {
  * Represents a Cedar action (what the actor wants to do)
  */
 export interface CedarAction {
-  type: 'Action';
+  type: "Action";
   id: string;
 }
 
@@ -46,7 +46,15 @@ export interface CedarAction {
  * Represents a Cedar resource (what the actor wants to access)
  */
 export interface CedarResource {
-  type: 'Agent' | 'Org' | 'File' | 'Session' | 'Message' | 'User' | 'Invite' | 'Report';
+  type:
+    | "Agent"
+    | "Org"
+    | "File"
+    | "Session"
+    | "Message"
+    | "User"
+    | "Invite"
+    | "Report";
   id: string;
   attributes?: {
     orgId?: string;
@@ -100,46 +108,47 @@ export interface AuthorizationDecision {
  */
 export const CedarActions = {
   // Agent actions
-  ListAgents: 'ListAgents',
-  GetAgent: 'GetAgent',
-  QueryAgent: 'QueryAgent',
+  ListAgents: "ListAgents",
+  GetAgent: "GetAgent",
+  QueryAgent: "QueryAgent",
 
   // Organization actions
-  CreateOrg: 'CreateOrg',
-  GetOrg: 'GetOrg',
-  UpdateOrg: 'UpdateOrg',
-  DeleteOrg: 'DeleteOrg',
-  InviteMember: 'InviteMember',
-  RemoveMember: 'RemoveMember',
-  UpdateMemberRole: 'UpdateMemberRole',
-  ConfigureSSO: 'ConfigureSSO',
-  VerifyDomain: 'VerifyDomain',
+  CreateOrg: "CreateOrg",
+  GetOrg: "GetOrg",
+  UpdateOrg: "UpdateOrg",
+  DeleteOrg: "DeleteOrg",
+  InviteMember: "InviteMember",
+  RemoveMember: "RemoveMember",
+  UpdateMemberRole: "UpdateMemberRole",
+  ConfigureSSO: "ConfigureSSO",
+  VerifyDomain: "VerifyDomain",
+  ManageContextFiles: "ManageContextFiles", // Upload/delete org context files
 
   // User actions
-  GetProfile: 'GetProfile',
-  UpdateProfile: 'UpdateProfile',
-  GetMemberships: 'GetMemberships',
+  GetProfile: "GetProfile",
+  UpdateProfile: "UpdateProfile",
+  GetMemberships: "GetMemberships",
 
   // Session/Conversation actions
-  CreateSession: 'CreateSession',
-  GetSession: 'GetSession',
-  ListSessions: 'ListSessions',
-  DeleteSession: 'DeleteSession',
+  CreateSession: "CreateSession",
+  GetSession: "GetSession",
+  ListSessions: "ListSessions",
+  DeleteSession: "DeleteSession",
 
   // File actions
-  UploadFile: 'UploadFile',
-  GetFile: 'GetFile',
-  DeleteFile: 'DeleteFile',
-  ListFiles: 'ListFiles',
+  UploadFile: "UploadFile",
+  GetFile: "GetFile",
+  DeleteFile: "DeleteFile",
+  ListFiles: "ListFiles",
 
   // Billing actions
-  ViewBilling: 'ViewBilling',
-  ManageBilling: 'ManageBilling',
-  ViewUsage: 'ViewUsage',
+  ViewBilling: "ViewBilling",
+  ManageBilling: "ManageBilling",
+  ViewUsage: "ViewUsage",
 
   // Admin actions
-  ViewAuditLog: 'ViewAuditLog',
-  ManageSettings: 'ManageSettings',
+  ViewAuditLog: "ViewAuditLog",
+  ManageSettings: "ManageSettings",
 } as const;
 
 export type CedarActionType = (typeof CedarActions)[keyof typeof CedarActions];
@@ -169,22 +178,26 @@ class CedarEngine {
     // This is defense-in-depth - even if test principals bypass middleware,
     // Cedar will explicitly deny them.
     this.policies.push({
-      id: 'block-test-principals-in-production',
-      effect: 'forbid',
+      id: "block-test-principals-in-production",
+      effect: "forbid",
       priority: 1000, // Highest priority - evaluated first
       evaluate: (req) => {
-        const isTestPrincipal = req.principal.attributes?.isTestPrincipal === true;
-        const isProduction = process.env.NODE_ENV === 'production';
+        const isTestPrincipal =
+          req.principal.attributes?.isTestPrincipal === true;
+        const isProduction = process.env.NODE_ENV === "production";
 
         if (isTestPrincipal && isProduction) {
-          console.error('[SECURITY ALERT] Test principal blocked by Cedar in production!', {
-            principalId: req.principal.id,
-            action: req.action.id,
-            resource: `${req.resource.type}::${req.resource.id}`,
-          });
+          console.error(
+            "[SECURITY ALERT] Test principal blocked by Cedar in production!",
+            {
+              principalId: req.principal.id,
+              action: req.action.id,
+              resource: `${req.resource.type}::${req.resource.id}`,
+            },
+          );
           return {
             matches: true,
-            reason: 'SECURITY: Test principals are forbidden in production',
+            reason: "SECURITY: Test principals are forbidden in production",
           };
         }
         return { matches: false };
@@ -193,23 +206,32 @@ class CedarEngine {
 
     // Default deny - always evaluated last
     this.policies.push({
-      id: 'default-deny',
-      effect: 'forbid',
+      id: "default-deny",
+      effect: "forbid",
       priority: 0,
-      evaluate: () => ({ matches: true, reason: 'Default deny - no policy matched' }),
+      evaluate: () => ({
+        matches: true,
+        reason: "Default deny - no policy matched",
+      }),
     });
 
     // Anonymous can only access public resources
     this.policies.push({
-      id: 'anonymous-public-only',
-      effect: 'permit',
+      id: "anonymous-public-only",
+      effect: "permit",
       priority: 100,
       evaluate: (req) => {
-        if (req.principal.type === 'Anonymous') {
+        if (req.principal.type === "Anonymous") {
           const action = req.action.id;
           // Anonymous can list public agents
-          if (action === CedarActions.ListAgents && req.resource.attributes?.isPublic) {
-            return { matches: true, reason: 'Anonymous can list public agents' };
+          if (
+            action === CedarActions.ListAgents &&
+            req.resource.attributes?.isPublic
+          ) {
+            return {
+              matches: true,
+              reason: "Anonymous can list public agents",
+            };
           }
           return { matches: false };
         }
@@ -219,19 +241,20 @@ class CedarEngine {
 
     // Authenticated users can access their own profile
     this.policies.push({
-      id: 'user-own-profile',
-      effect: 'permit',
+      id: "user-own-profile",
+      effect: "permit",
       priority: 90,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         const action = req.action.id;
         if (
-          (action === CedarActions.GetProfile || action === CedarActions.UpdateProfile) &&
-          req.resource.type === 'User' &&
+          (action === CedarActions.GetProfile ||
+            action === CedarActions.UpdateProfile) &&
+          req.resource.type === "User" &&
           req.resource.id === req.principal.id
         ) {
-          return { matches: true, reason: 'User can access own profile' };
+          return { matches: true, reason: "User can access own profile" };
         }
         return { matches: false };
       },
@@ -239,14 +262,14 @@ class CedarEngine {
 
     // Authenticated users can list their memberships
     this.policies.push({
-      id: 'user-list-memberships',
-      effect: 'permit',
+      id: "user-list-memberships",
+      effect: "permit",
       priority: 90,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         if (req.action.id === CedarActions.GetMemberships) {
-          return { matches: true, reason: 'User can list own memberships' };
+          return { matches: true, reason: "User can list own memberships" };
         }
         return { matches: false };
       },
@@ -254,25 +277,28 @@ class CedarEngine {
 
     // Authenticated users can list agents
     this.policies.push({
-      id: 'user-list-agents',
-      effect: 'permit',
+      id: "user-list-agents",
+      effect: "permit",
       priority: 80,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         const action = req.action.id;
-        if (action === CedarActions.ListAgents || action === CedarActions.GetAgent) {
+        if (
+          action === CedarActions.ListAgents ||
+          action === CedarActions.GetAgent
+        ) {
           // Check if agent is public or user's org is in allowedOrgIds
           const isPublic = req.resource.attributes?.isPublic;
           const allowedOrgs = req.resource.attributes?.allowedOrgIds || [];
           const userOrgs = req.principal.attributes?.orgIds || [];
 
           if (isPublic || allowedOrgs.length === 0) {
-            return { matches: true, reason: 'Agent is public or unrestricted' };
+            return { matches: true, reason: "Agent is public or unrestricted" };
           }
 
           if (userOrgs.some((orgId) => allowedOrgs.includes(orgId))) {
-            return { matches: true, reason: 'User org is in allowed list' };
+            return { matches: true, reason: "User org is in allowed list" };
           }
         }
         return { matches: false };
@@ -281,11 +307,11 @@ class CedarEngine {
 
     // Authenticated users can query agents
     this.policies.push({
-      id: 'user-query-agent',
-      effect: 'permit',
+      id: "user-query-agent",
+      effect: "permit",
       priority: 80,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         if (req.action.id === CedarActions.QueryAgent) {
           // User must have quota (checked separately) and agent must be accessible
@@ -294,11 +320,17 @@ class CedarEngine {
           const userOrgs = req.principal.attributes?.orgIds || [];
 
           if (isPublic || allowedOrgs.length === 0) {
-            return { matches: true, reason: 'Can query public/unrestricted agent' };
+            return {
+              matches: true,
+              reason: "Can query public/unrestricted agent",
+            };
           }
 
           if (userOrgs.some((orgId) => allowedOrgs.includes(orgId))) {
-            return { matches: true, reason: 'Can query agent allowed for user org' };
+            return {
+              matches: true,
+              reason: "Can query agent allowed for user org",
+            };
           }
         }
         return { matches: false };
@@ -307,18 +339,21 @@ class CedarEngine {
 
     // Org owner/admin can invite members
     this.policies.push({
-      id: 'org-admin-invite',
-      effect: 'permit',
+      id: "org-admin-invite",
+      effect: "permit",
       priority: 70,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
-        if (req.action.id === CedarActions.InviteMember && req.resource.type === 'Org') {
+        if (
+          req.action.id === CedarActions.InviteMember &&
+          req.resource.type === "Org"
+        ) {
           const roles = req.principal.attributes?.roles || {};
           const orgRole = roles[req.resource.id];
 
-          if (orgRole === 'owner' || orgRole === 'admin') {
-            return { matches: true, reason: 'Owner/admin can invite members' };
+          if (orgRole === "owner" || orgRole === "admin") {
+            return { matches: true, reason: "Owner/admin can invite members" };
           }
         }
         return { matches: false };
@@ -327,11 +362,11 @@ class CedarEngine {
 
     // Org owner can manage org settings
     this.policies.push({
-      id: 'org-owner-manage',
-      effect: 'permit',
+      id: "org-owner-manage",
+      effect: "permit",
       priority: 70,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         const ownerActions: readonly string[] = [
           CedarActions.UpdateOrg,
@@ -342,15 +377,21 @@ class CedarEngine {
           CedarActions.UpdateMemberRole,
         ];
 
-        if (ownerActions.includes(req.action.id) && req.resource.type === 'Org') {
+        if (
+          ownerActions.includes(req.action.id) &&
+          req.resource.type === "Org"
+        ) {
           const roles = req.principal.attributes?.roles || {};
           const orgRole = roles[req.resource.id];
 
-          if (orgRole === 'owner') {
-            return { matches: true, reason: 'Owner can manage org' };
+          if (orgRole === "owner") {
+            return { matches: true, reason: "Owner can manage org" };
           }
-          if (orgRole === 'admin' && req.action.id !== CedarActions.DeleteOrg) {
-            return { matches: true, reason: 'Admin can manage org (except delete)' };
+          if (orgRole === "admin" && req.action.id !== CedarActions.DeleteOrg) {
+            return {
+              matches: true,
+              reason: "Admin can manage org (except delete)",
+            };
           }
         }
         return { matches: false };
@@ -359,16 +400,19 @@ class CedarEngine {
 
     // Org members can view org details
     this.policies.push({
-      id: 'org-member-view',
-      effect: 'permit',
+      id: "org-member-view",
+      effect: "permit",
       priority: 60,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
-        if (req.action.id === CedarActions.GetOrg && req.resource.type === 'Org') {
+        if (
+          req.action.id === CedarActions.GetOrg &&
+          req.resource.type === "Org"
+        ) {
           const roles = req.principal.attributes?.roles || {};
           if (roles[req.resource.id]) {
-            return { matches: true, reason: 'Org member can view org' };
+            return { matches: true, reason: "Org member can view org" };
           }
         }
         return { matches: false };
@@ -377,14 +421,17 @@ class CedarEngine {
 
     // Users can create orgs
     this.policies.push({
-      id: 'user-create-org',
-      effect: 'permit',
+      id: "user-create-org",
+      effect: "permit",
       priority: 60,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         if (req.action.id === CedarActions.CreateOrg) {
-          return { matches: true, reason: 'Authenticated users can create orgs' };
+          return {
+            matches: true,
+            reason: "Authenticated users can create orgs",
+          };
         }
         return { matches: false };
       },
@@ -392,11 +439,11 @@ class CedarEngine {
 
     // Users can manage their sessions
     this.policies.push({
-      id: 'user-manage-sessions',
-      effect: 'permit',
+      id: "user-manage-sessions",
+      effect: "permit",
       priority: 60,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         const sessionActions: readonly string[] = [
           CedarActions.CreateSession,
@@ -407,13 +454,19 @@ class CedarEngine {
 
         if (sessionActions.includes(req.action.id)) {
           // CreateSession and ListSessions are always allowed for authenticated users
-          if (req.action.id === CedarActions.CreateSession || req.action.id === CedarActions.ListSessions) {
-            return { matches: true, reason: 'User can create/list sessions' };
+          if (
+            req.action.id === CedarActions.CreateSession ||
+            req.action.id === CedarActions.ListSessions
+          ) {
+            return { matches: true, reason: "User can create/list sessions" };
           }
 
           // For GetSession and DeleteSession, must own the session
-          if (req.resource.type === 'Session' && req.resource.attributes?.ownerId === req.principal.id) {
-            return { matches: true, reason: 'User can manage own sessions' };
+          if (
+            req.resource.type === "Session" &&
+            req.resource.attributes?.ownerId === req.principal.id
+          ) {
+            return { matches: true, reason: "User can manage own sessions" };
           }
         }
         return { matches: false };
@@ -422,11 +475,11 @@ class CedarEngine {
 
     // Users can manage their files
     this.policies.push({
-      id: 'user-manage-files',
-      effect: 'permit',
+      id: "user-manage-files",
+      effect: "permit",
       priority: 60,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         const fileActions: readonly string[] = [
           CedarActions.UploadFile,
@@ -436,16 +489,19 @@ class CedarEngine {
         ];
 
         if (fileActions.includes(req.action.id)) {
-          if (req.action.id === CedarActions.UploadFile || req.action.id === CedarActions.ListFiles) {
-            return { matches: true, reason: 'User can upload/list files' };
+          if (
+            req.action.id === CedarActions.UploadFile ||
+            req.action.id === CedarActions.ListFiles
+          ) {
+            return { matches: true, reason: "User can upload/list files" };
           }
           if (req.resource.attributes?.ownerId === req.principal.id) {
-            return { matches: true, reason: 'User can manage own files' };
+            return { matches: true, reason: "User can manage own files" };
           }
           // Org files - check membership
           const orgId = req.resource.attributes?.orgId;
           if (orgId && req.principal.attributes?.orgIds?.includes(orgId)) {
-            return { matches: true, reason: 'User can access org files' };
+            return { matches: true, reason: "User can access org files" };
           }
         }
         return { matches: false };
@@ -454,31 +510,40 @@ class CedarEngine {
 
     // Billing managers and owners can view/manage billing
     this.policies.push({
-      id: 'billing-access',
-      effect: 'permit',
+      id: "billing-access",
+      effect: "permit",
       priority: 60,
       evaluate: (req) => {
-        if (req.principal.type !== 'User') return { matches: false };
+        if (req.principal.type !== "User") return { matches: false };
 
         if (
           (req.action.id === CedarActions.ViewBilling ||
             req.action.id === CedarActions.ManageBilling ||
             req.action.id === CedarActions.ViewUsage) &&
-          req.resource.type === 'Org'
+          req.resource.type === "Org"
         ) {
           const roles = req.principal.attributes?.roles || {};
           const orgRole = roles[req.resource.id];
 
-          if (req.action.id === CedarActions.ViewBilling || req.action.id === CedarActions.ViewUsage) {
+          if (
+            req.action.id === CedarActions.ViewBilling ||
+            req.action.id === CedarActions.ViewUsage
+          ) {
             // Any member can view
             if (orgRole) {
-              return { matches: true, reason: 'Org member can view billing/usage' };
+              return {
+                matches: true,
+                reason: "Org member can view billing/usage",
+              };
             }
           }
 
           if (req.action.id === CedarActions.ManageBilling) {
-            if (orgRole === 'owner' || orgRole === 'billing_manager') {
-              return { matches: true, reason: 'Owner/billing_manager can manage billing' };
+            if (orgRole === "owner" || orgRole === "billing_manager") {
+              return {
+                matches: true,
+                reason: "Owner/billing_manager can manage billing",
+              };
             }
           }
         }
@@ -502,7 +567,7 @@ class CedarEngine {
 
       if (result.matches) {
         return {
-          isAuthorized: policy.effect === 'permit',
+          isAuthorized: policy.effect === "permit",
           reason: result.reason,
           diagnostics: {
             policiesEvaluated,
@@ -515,7 +580,7 @@ class CedarEngine {
     // Should never reach here due to default deny
     return {
       isAuthorized: false,
-      reason: 'No policy matched',
+      reason: "No policy matched",
       diagnostics: { policiesEvaluated },
     };
   }
@@ -531,9 +596,12 @@ class CedarEngine {
 
 interface Policy {
   id: string;
-  effect: 'permit' | 'forbid';
+  effect: "permit" | "forbid";
   priority: number; // Higher = evaluated first
-  evaluate: (request: AuthorizationRequest) => { matches: boolean; reason?: string };
+  evaluate: (request: AuthorizationRequest) => {
+    matches: boolean;
+    reason?: string;
+  };
 }
 
 // ============================================
@@ -558,12 +626,12 @@ export function getCedarEngine(): CedarEngine {
  */
 export function buildPrincipalFromSession(
   session: Session | null,
-  memberships?: Array<{ orgId: string; role: string }>
+  memberships?: Array<{ orgId: string; role: string }>,
 ): CedarPrincipal {
   if (!session?.user) {
     return {
-      type: 'Anonymous',
-      id: 'anonymous',
+      type: "Anonymous",
+      id: "anonymous",
     };
   }
 
@@ -578,8 +646,8 @@ export function buildPrincipalFromSession(
   }
 
   return {
-    type: 'User',
-    id: session.user.id || session.user.email || 'unknown',
+    type: "User",
+    id: session.user.id || session.user.email || "unknown",
     attributes: {
       email: session.user.email || undefined,
       orgIds,
@@ -591,17 +659,19 @@ export function buildPrincipalFromSession(
 /**
  * Check authorization
  */
-export function isAuthorized(request: AuthorizationRequest): AuthorizationDecision {
+export function isAuthorized(
+  request: AuthorizationRequest,
+): AuthorizationDecision {
   const engine = getCedarEngine();
   const decision = engine.isAuthorized(request);
 
   // Log authorization decision for audit trail
-  if (process.env.NODE_ENV !== 'test') {
-    console.log('[Cedar AuthZ]', {
+  if (process.env.NODE_ENV !== "test") {
+    console.log("[Cedar AuthZ]", {
       principal: `${request.principal.type}::${request.principal.id}`,
       action: request.action.id,
       resource: `${request.resource.type}::${request.resource.id}`,
-      decision: decision.isAuthorized ? 'PERMIT' : 'DENY',
+      decision: decision.isAuthorized ? "PERMIT" : "DENY",
       reason: decision.reason,
       policy: decision.diagnostics?.matchedPolicy,
     });

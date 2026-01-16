@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1442    | ✅ Passing                     |
+| Unit Tests             | ~1461    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1442** | ✅ All passing in CI           |
+| **Total**              | **1461** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1145,11 +1145,25 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Confirm Upload:** Optional `autoConfirm` option in hook calls `POST /api/upload/confirm`
 - [ ] **Virus Scanning:** Cloud Function on GCS finalize (future enhancement).
 
-### 3.2 Org Context Files
+### 3.2 Org Context Files ✅
 
-- [ ] **Upload Context:** `POST /api/org/:orgId/context` (admin only). Similar to user upload but stored with `orgId` and optional `agentIds` filter.
-- [ ] **List Context:** `GET /api/org/:orgId/context` returns context files.
-- [ ] **Delete Context:** `DELETE /api/org/:orgId/context/:fileId` removes file from GCS and DB.
+- [x] **Upload Context:** `POST /api/org/:orgId/context` (admin only)
+  - Implemented in `app/api/org/[orgId]/context/route.ts`
+  - Validates MIME types (PDF, Word, Excel, text, markdown, CSV, JSON)
+  - Size limit: 50MB per file
+  - Count limit: 20 files per org
+  - Returns signed upload URL for GCS
+  - Supports optional `agentIds` filter for agent-specific context
+  - 21 tests covering auth, authorization, validation, limits
+- [x] **List Context:** `GET /api/org/:orgId/context`
+  - Returns files with metadata (name, type, size, agentIds)
+  - Shows remaining slots vs limit
+  - All org members can view
+- [x] **Delete Context:** `DELETE /api/org/:orgId/context/:fileId`
+  - Admin-only deletion
+  - Removes from GCS and database
+  - Cross-org deletion prevention
+  - 8 tests covering auth, authorization, security
 - [ ] **UI:** Admin page section for context file management.
 
 ### 3.3 Query Orchestration API ✅
