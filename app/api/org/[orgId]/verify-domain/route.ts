@@ -12,11 +12,15 @@
  * @see docs/DESIGN.md - Enterprise Domain Verification section
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import dns from 'dns/promises';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
-import { isAuthorized, buildPrincipalFromSession, CedarActions } from '@/lib/authz/cedar';
+import { NextRequest, NextResponse } from "next/server";
+import dns from "dns/promises";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
+import {
+  isAuthorized,
+  buildPrincipalFromSession,
+  CedarActions,
+} from "@/lib/authz/cedar";
 
 interface RouteParams {
   params: Promise<{ orgId: string }>;
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get org
@@ -49,7 +53,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 },
+      );
     }
 
     // Check membership
@@ -59,19 +66,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!membership) {
-      return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+      return NextResponse.json(
+        { error: "Not a member of this organization" },
+        { status: 403 },
+      );
     }
 
     // Only allow admins and owners to see verification details
-    if (membership.role !== 'ADMIN' && membership.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (membership.role !== "ADMIN" && membership.role !== "OWNER") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 },
+      );
     }
 
     // Enterprise plan check
-    if (org.plan !== 'ENTERPRISE') {
+    if (org.plan !== "ENTERPRISE") {
       return NextResponse.json(
-        { error: 'Domain verification is only available for Enterprise plans' },
-        { status: 400 }
+        { error: "Domain verification is only available for Enterprise plans" },
+        { status: 400 },
       );
     }
 
@@ -94,16 +107,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       isVerified: org.domainVerified ?? false,
       verificationToken,
       instructions: {
-        recordType: 'TXT',
+        recordType: "TXT",
         recordName: dnsRecord,
         recordValue: verificationToken,
         example: `${dnsRecord} TXT "${verificationToken}"`,
-        note: 'Add this DNS TXT record to your domain\'s DNS settings. Propagation may take up to 48 hours.',
+        note: "Add this DNS TXT record to your domain's DNS settings. Propagation may take up to 48 hours.",
       },
     });
   } catch (error) {
-    console.error('Error getting domain verification status:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error getting domain verification status:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -117,7 +133,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get memberships for authorization
@@ -131,9 +147,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check authorization
     const decision = isAuthorized({
       principal,
-      action: { type: 'Action', id: CedarActions.ManageOrg },
+      action: { type: "Action", id: CedarActions.VerifyDomain },
       resource: {
-        type: 'Org',
+        type: "Org",
         id: orgId,
         attributes: {},
       },
@@ -141,8 +157,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (!decision.isAuthorized) {
       return NextResponse.json(
-        { error: 'Not authorized to verify domain' },
-        { status: 403 }
+        { error: "Not authorized to verify domain" },
+        { status: 403 },
       );
     }
 
@@ -159,22 +175,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 },
+      );
     }
 
     // Enterprise plan check
-    if (org.plan !== 'ENTERPRISE') {
+    if (org.plan !== "ENTERPRISE") {
       return NextResponse.json(
-        { error: 'Domain verification is only available for Enterprise plans' },
-        { status: 400 }
+        { error: "Domain verification is only available for Enterprise plans" },
+        { status: 400 },
       );
     }
 
     // Domain required
     if (!org.domain) {
       return NextResponse.json(
-        { error: 'Organization domain is not set' },
-        { status: 400 }
+        { error: "Organization domain is not set" },
+        { status: 400 },
       );
     }
 
@@ -183,15 +202,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         success: true,
         isVerified: true,
-        message: 'Domain is already verified',
+        message: "Domain is already verified",
       });
     }
 
     // Token required
     if (!org.verificationToken) {
       return NextResponse.json(
-        { error: 'No verification token found. Please GET verification instructions first.' },
-        { status: 400 }
+        {
+          error:
+            "No verification token found. Please GET verification instructions first.",
+        },
+        { status: 400 },
       );
     }
 
@@ -202,9 +224,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     try {
       txtRecords = await dns.resolveTxt(dnsRecord);
     } catch (dnsError: unknown) {
-      const errorMessage = dnsError instanceof Error ? dnsError.message : String(dnsError);
+      const errorMessage =
+        dnsError instanceof Error ? dnsError.message : String(dnsError);
       // DNS lookup failed - record doesn't exist or other error
-      if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('ENODATA')) {
+      if (
+        errorMessage.includes("ENOTFOUND") ||
+        errorMessage.includes("ENODATA")
+      ) {
         return NextResponse.json({
           success: false,
           isVerified: false,
@@ -219,7 +245,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check if any TXT record matches the verification token
     const flatRecords = txtRecords.flat();
     const isMatch = flatRecords.some(
-      (record) => record.trim() === org.verificationToken?.trim()
+      (record) => record.trim() === org.verificationToken?.trim(),
     );
 
     if (isMatch) {
@@ -238,15 +264,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         success: false,
         isVerified: false,
-        message: 'Verification token mismatch. Please ensure the TXT record value exactly matches the expected token.',
+        message:
+          "Verification token mismatch. Please ensure the TXT record value exactly matches the expected token.",
         recordName: dnsRecord,
         foundValues: flatRecords,
         expectedValue: org.verificationToken,
       });
     }
   } catch (error) {
-    console.error('Error verifying domain:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error verifying domain:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -259,7 +289,7 @@ function generateVerificationToken(): string {
   const randomBytes = new Uint8Array(16);
   crypto.getRandomValues(randomBytes);
   const hex = Array.from(randomBytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   return `expertai-verify-${hex}`;
 }

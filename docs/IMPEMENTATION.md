@@ -33,12 +33,12 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 > **Last Updated:** 2026-01-16
 
-| Test Type              | Count    | Status                                                 |
-| ---------------------- | -------- | ------------------------------------------------------ |
-| Unit Tests             | ~1300    | ✅ Passing                                             |
-| Integration Tests      | ~20      | ✅ Passing                                             |
-| E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (auth integration deployed, verifying) |
-| **Total**              | **1319** | ✅ All passing in CI                                   |
+| Test Type              | Count    | Status                      |
+| ---------------------- | -------- | --------------------------- |
+| Unit Tests             | ~1300    | ✅ Passing                  |
+| Integration Tests      | ~20      | ✅ Passing                  |
+| E2E Tests (Playwright) | ~250     | ✅ Passing (Blocking in CI) |
+| **Total**              | **1319** | ✅ All passing in CI        |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1177,7 +1177,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
     if (!inputGuard.allowed) {
       return NextResponse.json(
         { error: inputGuard.userMessage },
-        { status: 400 }
+        { status: 400 },
       );
     }
     ```
@@ -1210,7 +1210,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
           error: "Privacy Protection",
           piiTypesDetected: piiGuard.result?.summary,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     ```
@@ -1218,7 +1218,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
     ```typescript
     const outputPIIGuard = await guardOutputForPII(
       JSON.stringify(validatedOutput),
-      { userId, agentId }
+      { userId, agentId },
     );
     const finalOutput = outputPIIGuard.result?.redactedContent
       ? JSON.parse(outputPIIGuard.result.redactedContent)
