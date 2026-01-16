@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1368    | ✅ Passing                     |
+| Unit Tests             | ~1388    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1368** | ✅ All passing in CI           |
+| **Total**              | **1388** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -595,7 +595,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - InviteForm: Role-based visibility (owner/admin only)
   - TeamMembersList: Shows all members with role management
   - PendingInvitesList: Shows pending invites with revoke functionality
-- [x] **Unit Tests:** 48 tests covering org creation, listing, members API, invite CRUD, and UI components.
+- [x] **Invite Acceptance Page:** `/invite/accept` page with token validation, email matching, and accept/decline flows.
+  - Suspense boundary for SSR compatibility
+  - Shows invite details, organization info
+  - Email mismatch warning
+  - 11 tests for acceptance page
+- [x] **Unit Tests:** 68 tests covering org creation, listing, members API, invite CRUD, UI components, and invite acceptance.
 - [x] **Integration Tests:** `lib/__tests__/org.integration.test.ts` covers invite creation, acceptance, revocation with database (8+ tests).
 - [ ] **E2E Tests:** Playwright tests for invite UI flow.
 
