@@ -308,9 +308,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 0.6 Cloud Build Optimization
 
-- [ ] **High-CPU Machine Type:**
-  - Use `E2_HIGHCPU_32` in `cloudbuild.yaml` for ~8x faster builds
-  - Verify machine type is applied: `options.machineType: E2_HIGHCPU_32`
+- [x] **High-CPU Machine Type:**
+  - Using `E2_HIGHCPU_8` in `cloudbuild.yaml` (E2_HIGHCPU_32 requires quota approval)
+  - Verify machine type is applied: `options.machineType: E2_HIGHCPU_8`
 
 - [ ] **Docker Layer Caching (Kaniko):**
   - Replace Docker build with Kaniko executor
@@ -318,16 +318,16 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Set cache TTL: `--cache-ttl=168h` (7 days)
   - Enable compressed caching: `--compressed-caching=true`
 
-- [ ] **pnpm Store Caching:**
-  - Configure volume mount for pnpm store: `/workspace/.pnpm-store`
+- [x] **pnpm Store Caching:**
+  - Configured volume mount for pnpm store: `/workspace/.pnpm-store`
   - Set store directory in build steps: `pnpm config set store-dir /workspace/.pnpm-store`
 
-- [ ] **Parallel Step Execution:**
-  - Run tests parallel with build where possible
-  - Use `waitFor` to express only true dependencies
+- [x] **Parallel Step Execution:**
+  - Tests run parallel with build using `waitFor`
+  - Push waits for all tests AND build to complete
 
-- [ ] **Disk Size:**
-  - Increase disk for larger builds: `options.diskSizeGb: 100`
+- [x] **Disk Size:**
+  - Increased disk for larger builds: `options.diskSizeGb: 100`
 
 ### 0.5 Observability Foundation
 
