@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1388    | ✅ Passing                     |
+| Unit Tests             | ~1410    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1388** | ✅ All passing in CI           |
+| **Total**              | **1410** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -927,17 +927,24 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [x] **Classifier Prompt:** Keyword-based classification with confidence scoring (AI-based classification planned for future).
 - [x] **Fallback Handling:** Returns noMatchSuggestion: "We don't have an expert for that topic yet." when no match found.
-- [ ] **Confirmation UX:** For ambiguous queries, ask user to confirm: "It looks like your question might be [domain]. Use the [Agent Name]?"
+- [x] **Confirmation UX:** OmniConfirmDialog component (`components/agents/omni-confirm-dialog.tsx`):
+  - Shows suggested agent with confidence badge (green ≥80%, amber 50-79%, red <50%)
+  - Displays reasoning and alternatives for ambiguous queries
+  - Low confidence warning with suggestion to review alternatives
+  - No-match state with helpful suggestions
+  - Keyboard accessible with proper ARIA roles
+  - 19 tests covering all states and interactions
 - [x] **OmniAgent API:** `POST /api/omni/route` with `{ query }` returns `{ suggestedAgentId, agentName, confidence, reasoning, alternatives? }`.
   - GET endpoint returns list of available agents with domains
   - 28 tests covering classification accuracy, input validation, alternatives, security
-- [x] **UI Integration:** OmniAgentSelector component added (`components/agents/omni-agent-selector.tsx`):
+- [x] **UI Integration:** OmniAgentSelector component updated (`components/agents/omni-agent-selector.tsx`):
   - "Ask OmniAI" as first dropdown option
   - Optional search input for query classification
   - Live classification with confidence badge
   - Grouped agents by category
   - Beta badges for beta agents
-  - 12 tests covering rendering, props, search, integration
+  - `showConfirmDialog` prop to enable confirmation flow
+  - 15 tests covering rendering, props, search, integration, and dialog
 
 ### 2.7 Multi-Agent Chaining (A2A Protocol)
 

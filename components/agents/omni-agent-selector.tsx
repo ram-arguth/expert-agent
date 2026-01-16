@@ -5,22 +5,24 @@
  * - Select from available agents
  * - Type a query and let OmniAI classify it
  * - See "Ask OmniAI" as the first option
+ * - Optionally show confirmation dialog for classifications
  *
  * Uses the existing simple Select component API
  *
  * @see docs/IMPLEMENTATION.md - Phase 2.6 UI Integration
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useRouter } from 'next/navigation';
-import { Sparkles, Loader2, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Loader2, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { OmniConfirmDialog } from "./omni-confirm-dialog";
 
 // =============================================================================
 // Types
@@ -55,6 +57,8 @@ export interface OmniAgentSelectorProps {
   placeholder?: string;
   disabled?: boolean;
   showSearch?: boolean;
+  /** Show confirmation dialog when OmniAI classifies a query */
+  showConfirmDialog?: boolean;
 }
 
 // =============================================================================
@@ -63,39 +67,44 @@ export interface OmniAgentSelectorProps {
 
 function useOmniClassification() {
   const [isClassifying, setIsClassifying] = React.useState(false);
-  const [result, setResult] = React.useState<OmniClassificationResult | null>(null);
+  const [result, setResult] = React.useState<OmniClassificationResult | null>(
+    null,
+  );
   const [error, setError] = React.useState<string | null>(null);
 
-  const classify = React.useCallback(async (query: string): Promise<OmniClassificationResult | null> => {
-    if (query.length < 5) {
-      setResult(null);
-      return null;
-    }
-
-    setIsClassifying(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/omni/route', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Classification failed');
+  const classify = React.useCallback(
+    async (query: string): Promise<OmniClassificationResult | null> => {
+      if (query.length < 5) {
+        setResult(null);
+        return null;
       }
 
-      const data = await response.json();
-      setResult(data);
-      return data;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Classification failed');
-      return null;
-    } finally {
-      setIsClassifying(false);
-    }
-  }, []);
+      setIsClassifying(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/omni/route", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Classification failed");
+        }
+
+        const data = await response.json();
+        setResult(data);
+        return data;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Classification failed");
+        return null;
+      } finally {
+        setIsClassifying(false);
+      }
+    },
+    [],
+  );
 
   const reset = React.useCallback(() => {
     setResult(null);
@@ -114,33 +123,40 @@ export function OmniAgentSelector({
   onSelectAgent,
   onOmniQuery,
   className,
-  placeholder = 'Select an agent...',
+  placeholder = "Select an agent...",
   disabled = false,
   showSearch = false,
+  showConfirmDialog = false,
 }: OmniAgentSelectorProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedAgent, setSelectedAgent] = React.useState<string | undefined>();
-  const { classify, result, isClassifying } = useOmniClassification();
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedAgent, setSelectedAgent] = React.useState<
+    string | undefined
+  >();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [pendingQuery, setPendingQuery] = React.useState("");
+  const { classify, result, isClassifying, reset } = useOmniClassification();
 
   // Build options array for Select component
   // Add OmniAI as first option, then agents grouped by category
   const selectOptions = React.useMemo(() => {
     const options: { value: string; label: string }[] = [
-      { value: 'omni', label: '✨ Ask OmniAI' },
+      { value: "omni", label: "✨ Ask OmniAI" },
     ];
 
     // Sort agents by category, then by name
     const sortedAgents = [...agents].sort((a, b) => {
-      const catCompare = (a.category || 'General').localeCompare(b.category || 'General');
+      const catCompare = (a.category || "General").localeCompare(
+        b.category || "General",
+      );
       if (catCompare !== 0) return catCompare;
       return a.name.localeCompare(b.name);
     });
 
     // Group by category with category prefix
-    let currentCategory = '';
+    let currentCategory = "";
     sortedAgents.forEach((agent) => {
-      const category = agent.category || 'General';
+      const category = agent.category || "General";
       if (category !== currentCategory) {
         // Add category separator (using — in label)
         options.push({ value: `__cat_${category}`, label: `— ${category} —` });
@@ -155,25 +171,54 @@ export function OmniAgentSelector({
     return options;
   }, [agents]);
 
+  // Handle confirmation from dialog
+  const handleConfirmAgent = React.useCallback(
+    (agentId: string) => {
+      onSelectAgent(agentId);
+      if (onOmniQuery && pendingQuery && result) {
+        onOmniQuery(pendingQuery, result);
+      }
+      setDialogOpen(false);
+      reset();
+      router.push(`/chat?agent=${agentId}`);
+    },
+    [onSelectAgent, onOmniQuery, pendingQuery, result, reset, router],
+  );
+
+  // Handle dialog close
+  const handleDialogClose = React.useCallback(() => {
+    setDialogOpen(false);
+    reset();
+  }, [reset]);
+
   // Handle agent selection
   const handleSelectAgent = (value: string) => {
     // Ignore category separators
-    if (value.startsWith('__cat_')) return;
+    if (value.startsWith("__cat_")) return;
 
     setSelectedAgent(value);
 
-    if (value === 'omni') {
+    if (value === "omni") {
       // Handle OmniAI selection
       if (searchQuery.length >= 5) {
-        classify(searchQuery).then((classResult) => {
-          if (classResult?.suggestedAgentId) {
-            onSelectAgent(classResult.suggestedAgentId);
-            if (onOmniQuery) {
-              onOmniQuery(searchQuery, classResult);
+        setPendingQuery(searchQuery);
+
+        if (showConfirmDialog) {
+          // Open confirmation dialog and start classification
+          setDialogOpen(true);
+          classify(searchQuery);
+        } else {
+          // Legacy behavior: go directly to suggested agent
+          classify(searchQuery).then((classResult) => {
+            if (classResult?.suggestedAgentId) {
+              onSelectAgent(classResult.suggestedAgentId);
+              if (onOmniQuery) {
+                onOmniQuery(searchQuery, classResult);
+              }
+              router.push(`/chat?agent=${classResult.suggestedAgentId}`);
             }
-            router.push(`/chat?agent=${classResult.suggestedAgentId}`);
-          }
-        });
+          });
+        }
       }
     } else {
       onSelectAgent(value);
@@ -184,16 +229,24 @@ export function OmniAgentSelector({
   // Handle clicking the OmniAI suggestion
   const handleSuggestionClick = () => {
     if (result?.suggestedAgentId) {
-      onSelectAgent(result.suggestedAgentId);
-      if (onOmniQuery && searchQuery) {
-        onOmniQuery(searchQuery, result);
+      if (showConfirmDialog) {
+        setPendingQuery(searchQuery);
+        setDialogOpen(true);
+      } else {
+        onSelectAgent(result.suggestedAgentId);
+        if (onOmniQuery && searchQuery) {
+          onOmniQuery(searchQuery, result);
+        }
+        router.push(`/chat?agent=${result.suggestedAgentId}`);
       }
-      router.push(`/chat?agent=${result.suggestedAgentId}`);
     }
   };
 
   return (
-    <div className={cn('space-y-2', className)} data-testid="omni-agent-selector">
+    <div
+      className={cn("space-y-2", className)}
+      data-testid="omni-agent-selector"
+    >
       {/* Optional Search Input for OmniAI */}
       {showSearch && (
         <div className="relative">
@@ -238,6 +291,16 @@ export function OmniAgentSelector({
         options={selectOptions}
         disabled={disabled}
         data-testid="agent-select"
+      />
+
+      {/* Confirmation Dialog */}
+      <OmniConfirmDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        onConfirm={handleConfirmAgent}
+        query={pendingQuery}
+        result={result}
+        isLoading={isClassifying}
       />
     </div>
   );
