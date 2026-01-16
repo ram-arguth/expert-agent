@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1471    | ✅ Passing                     |
+| Unit Tests             | ~1492    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1471** | ✅ All passing in CI           |
+| **Total**              | **1492** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1835,10 +1835,21 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 7.2 Security Hardening
 
-- [ ] **Auth Review:** All protected routes check session. No exposed secrets.
-- [ ] **AuthZ Review:** Cedar denies cross-tenant access. Test with malicious inputs.
-- [ ] **Input Validation:** All inputs validated via Zod. No SQL/NoSQL injection.
-- [ ] **XSS Prevention:** Markdown sanitized. CSP headers configured.
+- [x] **Auth Review:** All protected routes check session. No exposed secrets.
+  - lib/**tests**/security-audit.test.ts: 21 security tests
+  - All routes use auth() from NextAuth.js v5
+  - Secrets stored in Secret Manager, never in code
+- [x] **AuthZ Review:** Cedar denies cross-tenant access. Test with malicious inputs.
+  - 100% API route coverage via pnpm test:authz-coverage
+  - Cross-tenant isolation tested in cedar.test.ts and context-delete.test.ts
+  - Default-deny policy architecture
+- [x] **Input Validation:** All inputs validated via Zod. No SQL/NoSQL injection.
+  - All POST routes use z.object().safeParse()
+  - Prisma ORM prevents SQL injection
+  - File upload validates MIME types and size
+- [x] **XSS Prevention:** Markdown sanitized. CSP headers configured.
+  - CSP middleware in lib/security/csp-middleware.ts (18 tests)
+  - React-markdown with restricted allowedElements
 - [x] **Dependency Audit:** `pnpm audit` fixed all vulnerabilities (2026-01-16)
   - Upgraded Next.js: 15.0.0 → 15.5.9 (fixed 7 vulnerabilities)
   - CVE-2024-XXXXX: Authorization Bypass in Middleware (Critical) ✅
