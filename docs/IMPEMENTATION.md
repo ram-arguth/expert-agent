@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1532    | ✅ Passing                     |
+| Unit Tests             | ~1561    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1532** | ✅ All passing in CI           |
+| **Total**              | **1561** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1686,11 +1686,26 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - `customer.subscription.deleted`: Downgrades to free plan
 - [ ] **Token Top-Up:** Handle one-time purchases to add tokens.
 
-### 5.3 Quota Enforcement
+### 5.3 Quota Enforcement ✅
 
-- [ ] **Pre-Query Check:** In query API, check `tokensRemaining > 0`. Return 402 with upgrade prompt if exhausted.
-- [ ] **Post-Query Deduction:** Deduct actual tokens used. Persist immediately.
-- [ ] **UI Indicator:** Show usage bar in header or account page. Warn when low.
+- [x] **Quota Service:** `lib/billing/quota-service.ts`
+  - `checkQuota()`: Pre-query check with org context, returns upgrade prompts
+  - `deductTokens()`: Atomic token deduction
+  - `getUsageSummary()`: UI usage data
+  - `resetQuota()`: Reset on billing renewal
+  - 21 unit tests covering all functions
+- [x] **Query Integration:** `app/api/query/route.ts` uses quota service
+  - Pre-query check returns 402 with upgrade prompt if exhausted
+  - Post-query deduction with actual token count
+- [x] **Usage API:** `GET /api/billing/usage`
+  - Returns usage summary for authenticated user
+  - Supports org and personal context
+- [x] **UI Indicator:** `components/billing/usage-indicator.tsx`
+  - Compact header view with progress bar
+  - Detailed account page view
+  - Low-usage warnings (<10% remaining)
+  - Upgrade prompts when exhausted
+  - 8 component tests
 
 ### 5.4 Customer Portal
 

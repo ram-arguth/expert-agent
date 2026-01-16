@@ -15,20 +15,24 @@
  * @see docs/DESIGN.md - Query Flow section
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
-import { getCedarEngine, CedarActions } from '@/lib/authz/cedar';
-import { queryVertexAI, estimateTokens } from '@/lib/vertex/client';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
+import { getCedarEngine, CedarActions } from "@/lib/authz/cedar";
+import { queryVertexAI, estimateTokens } from "@/lib/vertex/client";
 import {
   guardInput,
   guardOutput,
   getEmbeddedSafetyInstructions,
   guardInputForPII,
   guardOutputForPII,
-} from '@/lib/security';
-import Handlebars from 'handlebars';
+} from "@/lib/security";
+import {
+  checkQuota as checkQuotaService,
+  deductTokens as deductTokensService,
+} from "@/lib/billing/quota-service";
+import Handlebars from "handlebars";
 
 // Import agent registry
 import {
@@ -37,7 +41,7 @@ import {
   UxAnalystOutputSchema,
   UX_ANALYST_PROMPT_TEMPLATE,
   renderToMarkdown,
-} from '@/lib/agents/ux-analyst';
+} from "@/lib/agents/ux-analyst";
 
 // Query request schema
 const QueryRequestSchema = z.object({
@@ -51,7 +55,7 @@ const QueryRequestSchema = z.object({
         gcsPath: z.string(),
         filename: z.string(),
         mimeType: z.string().optional(),
-      })
+      }),
     )
     .optional(),
 });
@@ -67,7 +71,7 @@ const AGENT_REGISTRY: Record<
     render: (output: unknown) => string;
   }
 > = {
-  'ux-analyst': {
+  "ux-analyst": {
     config: UX_ANALYST_CONFIG,
     inputSchema: UxAnalystInputSchema,
     outputSchema: UxAnalystOutputSchema,
@@ -84,8 +88,8 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
+        { error: "Unauthorized", message: "Authentication required" },
+        { status: 401 },
       );
     }
 
@@ -96,11 +100,11 @@ export async function POST(request: NextRequest) {
     if (!requestValidation.success) {
       return NextResponse.json(
         {
-          error: 'Validation Error',
-          message: 'Invalid request body',
+          error: "Validation Error",
+          message: "Invalid request body",
           details: requestValidation.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -110,18 +114,18 @@ export async function POST(request: NextRequest) {
     const agent = AGENT_REGISTRY[agentId];
     if (!agent) {
       return NextResponse.json(
-        { error: 'Not Found', message: `Agent '${agentId}' not found` },
-        { status: 404 }
+        { error: "Not Found", message: `Agent '${agentId}' not found` },
+        { status: 404 },
       );
     }
 
     // 4. Authorization check
     const cedar = getCedarEngine();
     const decision = cedar.isAuthorized({
-      principal: { type: 'User', id: session.user.id },
-      action: { type: 'Action', id: CedarActions.QueryAgent },
+      principal: { type: "User", id: session.user.id },
+      action: { type: "Action", id: CedarActions.QueryAgent },
       resource: {
-        type: 'Agent',
+        type: "Agent",
         id: agentId,
         attributes: {
           isPublic: agent.config.isPublic,
@@ -132,8 +136,8 @@ export async function POST(request: NextRequest) {
 
     if (!decision.isAuthorized) {
       return NextResponse.json(
-        { error: 'Forbidden', message: 'Not authorized to use this agent' },
-        { status: 403 }
+        { error: "Forbidden", message: "Not authorized to use this agent" },
+        { status: 403 },
       );
     }
 
@@ -142,11 +146,11 @@ export async function POST(request: NextRequest) {
     if (!inputValidation.success) {
       return NextResponse.json(
         {
-          error: 'Input Validation Error',
-          message: 'Invalid inputs for this agent',
+          error: "Input Validation Error",
+          message: "Invalid inputs for this agent",
           details: inputValidation.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -154,58 +158,61 @@ export async function POST(request: NextRequest) {
 
     // 5a. AI Safety Guard - Input validation
     // Check for prompt injection, jailbreak attempts, and off-topic requests
-    const inputGuard = await guardInput(
-      JSON.stringify(validatedInputs),
-      {
-        userId: session.user.id,
-        agentId,
-        // Enable AI check for suspicious but not blocked content
-        useAICheck: false,
-      }
-    );
+    const inputGuard = await guardInput(JSON.stringify(validatedInputs), {
+      userId: session.user.id,
+      agentId,
+      // Enable AI check for suspicious but not blocked content
+      useAICheck: false,
+    });
 
     if (!inputGuard.allowed) {
       return NextResponse.json(
         {
-          error: 'Safety Check Failed',
-          message: inputGuard.userMessage || 'Your request could not be processed',
+          error: "Safety Check Failed",
+          message:
+            inputGuard.userMessage || "Your request could not be processed",
           category: inputGuard.safetyResult.category,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // 5b. PII Detection - Check for sensitive personal information
     // Blocks requests containing critical PII (SSN, credit card, etc.)
-    const piiGuard = await guardInputForPII(
-      JSON.stringify(validatedInputs),
-      {
-        userId: session.user.id,
-        agentId,
-      }
-    );
+    const piiGuard = await guardInputForPII(JSON.stringify(validatedInputs), {
+      userId: session.user.id,
+      agentId,
+    });
 
     if (!piiGuard.allowed) {
       return NextResponse.json(
         {
-          error: 'Privacy Protection',
-          message: piiGuard.userMessage || 'Your request contains sensitive personal information that cannot be processed',
+          error: "Privacy Protection",
+          message:
+            piiGuard.userMessage ||
+            "Your request contains sensitive personal information that cannot be processed",
           piiTypesDetected: piiGuard.result?.summary,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // 6. Check token quota
-    const quotaResult = await checkQuota(session.user.id);
-    if (!quotaResult.hasQuota) {
+    // 6. Check token quota (with org context)
+    const orgId = await getUserActiveOrgId(session.user.id);
+    const quotaResult = await checkQuotaService(session.user.id, orgId);
+    if (!quotaResult.allowed) {
       return NextResponse.json(
         {
-          error: 'Quota Exceeded',
-          message: `Token quota exceeded. ${quotaResult.remaining} tokens remaining.`,
-          upgradeUrl: '/pricing',
+          error: "Quota Exceeded",
+          message:
+            quotaResult.reason ||
+            `Token quota exceeded. ${quotaResult.tokensRemaining} tokens remaining.`,
+          tokensRemaining: quotaResult.tokensRemaining,
+          usagePercent: quotaResult.usagePercent,
+          upgradePrompt: quotaResult.upgradePrompt,
+          upgradeUrl: "/pricing",
         },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
@@ -222,15 +229,17 @@ export async function POST(request: NextRequest) {
       orgContext,
     };
 
-    const compiledPrompt = Handlebars.compile(agent.promptTemplate)(promptContext);
+    const compiledPrompt = Handlebars.compile(agent.promptTemplate)(
+      promptContext,
+    );
 
     // 9a. Prepend safety instructions to prompt
     // Embeds platform branding and content policy rules
     const safetyInstructions = getEmbeddedSafetyInstructions();
-    const fullPrompt = safetyInstructions + '\n\n' + compiledPrompt;
+    const fullPrompt = safetyInstructions + "\n\n" + compiledPrompt;
 
     // 10. Estimate tokens for pre-check
-    const estimatedInputTokens = estimateTokens(fullPrompt);
+    const _estimatedInputTokens = estimateTokens(fullPrompt);
 
     // 11. Call Vertex AI (with safety-enhanced prompt)
     const aiResponse = await queryVertexAI(fullPrompt, agent.outputSchema, {
@@ -242,17 +251,17 @@ export async function POST(request: NextRequest) {
 
     // 12a. AI Safety Guard - Output sanitization
     // Removes model/provider references and checks for harmful content
-    const outputGuard = await guardOutput(
-      JSON.stringify(validatedOutput),
-      {
-        userId: session.user.id,
-        agentId,
-      }
-    );
+    const outputGuard = await guardOutput(JSON.stringify(validatedOutput), {
+      userId: session.user.id,
+      agentId,
+    });
 
     // If output was sanitized, log it (but don't block - sanitization already applied)
     if (outputGuard.wasModified) {
-      console.log('[Safety Guard] Output was sanitized for user:', session.user.id);
+      console.log(
+        "[Safety Guard] Output was sanitized for user:",
+        session.user.id,
+      );
     }
 
     // 12b. PII Detection - Check AI output for accidentally generated PII
@@ -262,7 +271,7 @@ export async function POST(request: NextRequest) {
       {
         userId: session.user.id,
         agentId,
-      }
+      },
     );
 
     // Use redacted output if PII was found (allows response but with PII masked)
@@ -271,14 +280,21 @@ export async function POST(request: NextRequest) {
       : validatedOutput;
 
     if (outputPIIGuard.result?.hasPII) {
-      console.log('[PII Guard] Output contained PII, redacted for user:', session.user.id);
+      console.log(
+        "[PII Guard] Output contained PII, redacted for user:",
+        session.user.id,
+      );
     }
 
     // 13. Render to Markdown
     const renderedMarkdown = agent.render(finalOutput);
 
-    // 14. Deduct tokens
-    await deductTokens(session.user.id, aiResponse.usage.totalTokens);
+    // 14. Deduct tokens (using org context if available)
+    await deductTokensService(
+      session.user.id,
+      orgId,
+      aiResponse.usage.totalTokens,
+    );
 
     // 15. Create or update session
     const agentSession = await createOrUpdateSession({
@@ -315,83 +331,36 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Query error:', error);
+    console.error("Query error:", error);
 
     // Handle specific error types
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
-          error: 'Output Validation Error',
-          message: 'AI response did not match expected schema',
+          error: "Output Validation Error",
+          message: "AI response did not match expected schema",
           details: error.flatten().fieldErrors,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal Server Error', message: 'Failed to process query' },
-      { status: 500 }
+      { error: "Internal Server Error", message: "Failed to process query" },
+      { status: 500 },
     );
   }
 }
 
 /**
- * Check if user has token quota remaining
+ * Get user's active org ID for quota checks
  */
-async function checkQuota(userId: string): Promise<{ hasQuota: boolean; remaining: number }> {
-  // Check user's personal quota
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      memberships: {
-        include: { org: true },
-      },
-    },
+async function getUserActiveOrgId(userId: string): Promise<string | null> {
+  const membership = await prisma.membership.findFirst({
+    where: { userId },
+    select: { orgId: true },
   });
-
-  if (!user) {
-    return { hasQuota: false, remaining: 0 };
-  }
-
-  // For now, use org quota if user is in an org
-  const primaryOrg = user.memberships[0]?.org;
-  if (primaryOrg) {
-    return {
-      hasQuota: primaryOrg.tokensRemaining > 0,
-      remaining: primaryOrg.tokensRemaining,
-    };
-  }
-
-  // Free tier: 1000 tokens per month
-  // TODO: Implement personal quota tracking
-  return { hasQuota: true, remaining: 1000 };
-}
-
-/**
- * Deduct tokens from user/org quota
- */
-async function deductTokens(userId: string, tokens: number): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      memberships: {
-        include: { org: true },
-      },
-    },
-  });
-
-  const primaryOrg = user?.memberships[0]?.org;
-  if (primaryOrg) {
-    await prisma.org.update({
-      where: { id: primaryOrg.id },
-      data: {
-        tokensRemaining: {
-          decrement: tokens,
-        },
-      },
-    });
-  }
+  return membership?.orgId ?? null;
 }
 
 /**
@@ -403,7 +372,12 @@ interface ProcessedFiles {
 }
 
 async function processFiles(
-  files: Array<{ fieldName: string; gcsPath: string; filename: string; mimeType?: string }>
+  files: Array<{
+    fieldName: string;
+    gcsPath: string;
+    filename: string;
+    mimeType?: string;
+  }>,
 ): Promise<ProcessedFiles> {
   const result: Record<string, { filename: string; url: string }> = {};
   const fileUris: Array<{ mimeType: string; uri: string }> = [];
@@ -418,8 +392,8 @@ async function processFiles(
     };
 
     fileUris.push({
-      mimeType: file.mimeType || 'application/octet-stream',
-      uri: `gs://${process.env.GCS_BUCKET || 'expert-ai-uploads-dev'}/${file.gcsPath}`,
+      mimeType: file.mimeType || "application/octet-stream",
+      uri: `gs://${process.env.GCS_BUCKET || "expert-ai-uploads-dev"}/${file.gcsPath}`,
     });
   }
 
@@ -430,27 +404,27 @@ async function processFiles(
  * Generate a signed URL for reading a file
  */
 async function generateReadUrl(gcsPath: string): Promise<string> {
-  const bucketName = process.env.GCS_BUCKET || 'expert-ai-uploads-dev';
+  const bucketName = process.env.GCS_BUCKET || "expert-ai-uploads-dev";
 
-  if (process.env.GCS_MOCK === 'true' || process.env.NODE_ENV === 'test') {
+  if (process.env.GCS_MOCK === "true" || process.env.NODE_ENV === "test") {
     return `https://storage.googleapis.com/${bucketName}/${gcsPath}?mockRead=true`;
   }
 
   try {
-    const { Storage } = await import('@google-cloud/storage');
+    const { Storage } = await import("@google-cloud/storage");
     const storage = new Storage();
     const bucket = storage.bucket(bucketName);
     const file = bucket.file(gcsPath);
 
     const [url] = await file.getSignedUrl({
-      version: 'v4',
-      action: 'read',
+      version: "v4",
+      action: "read",
       expires: Date.now() + 60 * 60 * 1000, // 1 hour
     });
 
     return url;
   } catch (error) {
-    console.error('Error generating read URL:', error);
+    console.error("Error generating read URL:", error);
     return `https://storage.googleapis.com/${bucketName}/${gcsPath}`;
   }
 }
@@ -458,7 +432,10 @@ async function generateReadUrl(gcsPath: string): Promise<string> {
 /**
  * Load organization context for the agent
  */
-async function loadOrgContext(userId: string, agentId: string): Promise<string | undefined> {
+async function loadOrgContext(
+  userId: string,
+  agentId: string,
+): Promise<string | undefined> {
   // Get user's active org
   const membership = await prisma.membership.findFirst({
     where: { userId },
@@ -485,10 +462,10 @@ async function loadOrgContext(userId: string, agentId: string): Promise<string |
   // Combine context files into text
   // In production, this would fetch and parse the actual files
   const contextParts = membership.org.contextFiles.map(
-    (cf) => `[Context File: ${cf.name}]\nPath: ${cf.gcsPath}`
+    (cf) => `[Context File: ${cf.name}]\nPath: ${cf.gcsPath}`,
   );
 
-  return contextParts.join('\n\n');
+  return contextParts.join("\n\n");
 }
 
 /**
@@ -522,7 +499,7 @@ async function createOrUpdateSession({
       await prisma.message.create({
         data: {
           sessionId,
-          role: 'AGENT',
+          role: "AGENT",
           content: markdown,
           jsonData: output as object,
           inputTokens: usage.inputTokens,
@@ -542,11 +519,11 @@ async function createOrUpdateSession({
       messages: {
         create: [
           {
-            role: 'USER',
+            role: "USER",
             content: JSON.stringify(input),
           },
           {
-            role: 'AGENT',
+            role: "AGENT",
             content: markdown,
             jsonData: output as object,
             inputTokens: usage.inputTokens,
