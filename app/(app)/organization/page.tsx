@@ -18,10 +18,12 @@ import {
   Shield,
   FileText,
   CreditCard,
+  BarChart3,
 } from "lucide-react";
 import { MembersTab } from "./members-tab";
 import { ContextFilesTab } from "./context-files-tab";
 import { BillingTab } from "./billing-tab";
+import { UsageAnalyticsTab } from "./usage-analytics-tab";
 
 // Force dynamic rendering since this page requires auth context
 export const dynamic = "force-dynamic";
@@ -59,6 +61,10 @@ export default function OrganizationPage() {
             <CreditCard className="h-4 w-4" />
             Billing
           </TabsTrigger>
+          <TabsTrigger value="usage" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Usage
+          </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2">
             <Settings className="h-4 w-4" />
             Settings
@@ -82,6 +88,11 @@ export default function OrganizationPage() {
         {/* Billing Tab - Subscription and usage management */}
         <TabsContent value="billing">
           <BillingTab />
+        </TabsContent>
+
+        {/* Usage Analytics Tab - Per-user and per-agent consumption */}
+        <TabsContent value="usage">
+          <UsageAnalyticsTab />
         </TabsContent>
 
         {/* Settings Tab */}
