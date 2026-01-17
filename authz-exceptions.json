@@ -7,5 +7,6 @@
   "app/api/billing/portal/route.ts",
   "app/api/billing/usage/route.ts",
   "app/api/agents/[agentId]/interview/route.ts",
-  "app/api/omni/route/route.ts"
+  "app/api/omni/route/route.ts",
+  "app/api/billing/topup/route.ts"
 ]

@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1667    | ✅ Passing                     |
+| Unit Tests             | ~1674    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1667** | ✅ All passing in CI           |
+| **Total**              | **1674** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1688,7 +1688,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - `invoice.payment_succeeded`: Resets token quota on renewal
   - `invoice.payment_failed`: Logs payment failure (TODO: email notification)
   - `customer.subscription.deleted`: Downgrades to free plan
-- [ ] **Token Top-Up:** Handle one-time purchases to add tokens.
+- [x] **Token Top-Up:** Handle one-time purchases to add tokens. (`app/api/billing/topup/route.ts` - 7 tests, webhook enhanced)
 
 ### 5.3 Quota Enforcement ✅
 

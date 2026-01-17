@@ -16,9 +16,9 @@
  * @see docs/DESIGN.md - Billing Integration section
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { prisma } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { prisma } from "@/lib/db";
 
 // Lazy initialization of Stripe client to prevent build-time errors
 let stripeInstance: Stripe | null = null;
@@ -27,16 +27,16 @@ function getStripe(): Stripe {
   if (!stripeInstance) {
     const apiKey = process.env.STRIPE_SECRET_KEY;
     if (!apiKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
+      throw new Error("STRIPE_SECRET_KEY is not configured");
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2025-02-24.acacia',
+      apiVersion: "2025-02-24.acacia",
     });
   }
   return stripeInstance;
 }
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 // Plan to tokens mapping
 const PLAN_TOKEN_LIMITS: Record<string, number> = {
@@ -47,33 +47,45 @@ const PLAN_TOKEN_LIMITS: Record<string, number> = {
 
 // Price ID to plan mapping (configure in environment)
 const PRICE_TO_PLAN: Record<string, string> = {
-  [process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_pro_monthly']: 'pro',
-  [process.env.STRIPE_PRICE_PRO_YEARLY || 'price_pro_yearly']: 'pro',
-  [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_enterprise_monthly']: 'enterprise',
-  [process.env.STRIPE_PRICE_ENTERPRISE_YEARLY || 'price_enterprise_yearly']: 'enterprise',
+  [process.env.STRIPE_PRICE_PRO_MONTHLY || "price_pro_monthly"]: "pro",
+  [process.env.STRIPE_PRICE_PRO_YEARLY || "price_pro_yearly"]: "pro",
+  [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || "price_enterprise_monthly"]:
+    "enterprise",
+  [process.env.STRIPE_PRICE_ENTERPRISE_YEARLY || "price_enterprise_yearly"]:
+    "enterprise",
 };
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-    const signature = request.headers.get('stripe-signature');
+    const signature = request.headers.get("stripe-signature");
 
     if (!signature) {
-      return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing stripe-signature header" },
+        { status: 400 },
+      );
     }
 
     if (!webhookSecret) {
-      console.error('STRIPE_WEBHOOK_SECRET is not configured');
-      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+      console.error("STRIPE_WEBHOOK_SECRET is not configured");
+      return NextResponse.json(
+        { error: "Webhook not configured" },
+        { status: 500 },
+      );
     }
 
     // Verify webhook signature
     let event: Stripe.Event;
     try {
-      event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
+      event = getStripe().webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret,
+      );
     } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      console.error("Webhook signature verification failed:", err);
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
     // Log event for idempotency tracking
@@ -101,20 +113,24 @@ export async function POST(request: NextRequest) {
     // Handle the event
     try {
       switch (event.type) {
-        case 'checkout.session.completed':
-          await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        case "checkout.session.completed":
+          await handleCheckoutCompleted(
+            event.data.object as Stripe.Checkout.Session,
+          );
           break;
 
-        case 'invoice.payment_succeeded':
+        case "invoice.payment_succeeded":
           await handlePaymentSucceeded(event.data.object as Stripe.Invoice);
           break;
 
-        case 'invoice.payment_failed':
+        case "invoice.payment_failed":
           await handlePaymentFailed(event.data.object as Stripe.Invoice);
           break;
 
-        case 'customer.subscription.deleted':
-          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        case "customer.subscription.deleted":
+          await handleSubscriptionDeleted(
+            event.data.object as Stripe.Subscription,
+          );
           break;
 
         default:
@@ -131,14 +147,19 @@ export async function POST(request: NextRequest) {
       console.error(`Error processing event ${event.id}:`, error);
       await prisma.stripeEvent.update({
         where: { id: event.id },
-        data: { error: error instanceof Error ? error.message : 'Unknown error' },
+        data: {
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
       });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
+    console.error("Webhook error:", error);
+    return NextResponse.json(
+      { error: "Webhook handler failed" },
+      { status: 500 },
+    );
   }
 }
 
@@ -147,22 +168,41 @@ export async function POST(request: NextRequest) {
 // =============================================================================
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const { customer, subscription, metadata } = session;
+  const { customer, subscription, metadata, mode } = session;
   const orgId = metadata?.orgId;
 
-  if (!customer || typeof customer !== 'string') {
-    console.error('Missing customer in checkout session');
+  if (!customer || typeof customer !== "string") {
+    console.error("Missing customer in checkout session");
     return;
   }
 
   if (!orgId) {
-    console.error('Missing orgId in checkout session metadata');
+    console.error("Missing orgId in checkout session metadata");
     return;
   }
 
+  // Handle token top-up (one-time payment)
+  if (mode === "payment" && metadata?.type === "token_topup") {
+    const tokens = parseInt(metadata.tokens || "0", 10);
+
+    if (tokens > 0) {
+      // Add tokens to existing balance (don't reset quota date)
+      await prisma.org.update({
+        where: { id: orgId },
+        data: {
+          stripeCustomerId: customer,
+          tokensRemaining: { increment: tokens },
+        },
+      });
+      console.log(`Added ${tokens} tokens to org ${orgId} via top-up`);
+    }
+    return;
+  }
+
+  // Handle subscription checkout
   // Get subscription details to determine plan
-  let plan = 'pro'; // Default
-  if (subscription && typeof subscription === 'string') {
+  let plan = "pro"; // Default
+  if (subscription && typeof subscription === "string") {
     try {
       const sub = await getStripe().subscriptions.retrieve(subscription);
       const priceId = sub.items.data[0]?.price.id;
@@ -170,7 +210,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         plan = PRICE_TO_PLAN[priceId];
       }
     } catch (err) {
-      console.error('Error fetching subscription:', err);
+      console.error("Error fetching subscription:", err);
     }
   }
 
@@ -194,7 +234,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   const { customer, subscription } = invoice;
 
-  if (!customer || typeof customer !== 'string') return;
+  if (!customer || typeof customer !== "string") return;
   if (!subscription) return; // Not a subscription invoice
 
   // Find org by customer ID and reset tokens
@@ -204,7 +244,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   });
 
   if (org) {
-    const tokenLimit = org.tokensMonthly || PLAN_TOKEN_LIMITS[org.plan || 'free'];
+    const tokenLimit =
+      org.tokensMonthly || PLAN_TOKEN_LIMITS[org.plan || "free"];
     await prisma.org.update({
       where: { id: org.id },
       data: {
@@ -219,7 +260,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
   const { customer } = invoice;
 
-  if (!customer || typeof customer !== 'string') return;
+  if (!customer || typeof customer !== "string") return;
 
   // Find org and log payment failure
   // In a full implementation, you'd send email notifications to admins
@@ -238,7 +279,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const { customer } = subscription;
 
-  if (!customer || typeof customer !== 'string') return;
+  if (!customer || typeof customer !== "string") return;
 
   // Find org and downgrade to free plan
   const org = await prisma.org.findFirst({
@@ -250,7 +291,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     await prisma.org.update({
       where: { id: org.id },
       data: {
-        plan: 'free',
+        plan: "free",
         tokensRemaining: PLAN_TOKEN_LIMITS.free,
         tokensMonthly: PLAN_TOKEN_LIMITS.free,
       },
