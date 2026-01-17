@@ -26,6 +26,7 @@ import { ContextFilesTab } from "./context-files-tab";
 import { BillingTab } from "./billing-tab";
 import { UsageAnalyticsTab } from "./usage-analytics-tab";
 import { AuditLogsTab } from "./audit-logs-tab";
+import { SSOConfigTab } from "./sso-config-tab";
 
 // Force dynamic rendering since this page requires auth context
 export const dynamic = "force-dynamic";
@@ -144,49 +145,9 @@ export default function OrganizationPage() {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
+        {/* Security Tab - SSO Configuration */}
         <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>
-                Configure security options for your organization
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Single Sign-On (SSO)</p>
-                  <p className="text-muted-foreground text-sm">
-                    Configure SAML or OIDC authentication
-                  </p>
-                </div>
-                <Button variant="outline">Configure</Button>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">
-                    Require Two-Factor Authentication
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    Enforce 2FA for all organization members
-                  </p>
-                </div>
-                <Button variant="outline">Enable</Button>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Allowed Authentication Methods</p>
-                  <p className="text-muted-foreground text-sm">
-                    Control which sign-in methods are available
-                  </p>
-                </div>
-                <Button variant="outline">Manage</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <SSOConfigTab />
         </TabsContent>
 
         {/* Audit Logs Tab - Enterprise compliance tracking */}

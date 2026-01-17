@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1653    | ✅ Passing                     |
+| Unit Tests             | ~1667    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1653** | ✅ All passing in CI           |
+| **Total**              | **1667** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1821,7 +1821,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Org Member Management:** List members, change roles, remove members. (`members-tab.tsx`)
 - [x] **Org Context Files:** Upload, list, delete context files. (`context-files-tab.tsx`)
 - [x] **Billing Dashboard:** Show plan, usage, manage subscription button. (`billing-tab.tsx` - 12 tests)
-- [ ] **Enterprise SSO Config:** Domain verification status, SSO upload.
+- [x] **Enterprise SSO Config:** Domain verification status, SSO upload. (`sso-config-tab.tsx` - 7 tests, API - 7 tests)
 - [x] **Usage Analytics:** Per-user and per-agent token consumption. (`usage-analytics-tab.tsx` - 9 tests, API - 12 tests)
 
 ### 6.2 Audit Logging (Enterprise)
