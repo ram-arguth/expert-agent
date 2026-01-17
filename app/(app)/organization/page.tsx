@@ -19,11 +19,13 @@ import {
   FileText,
   CreditCard,
   BarChart3,
+  ClipboardList,
 } from "lucide-react";
 import { MembersTab } from "./members-tab";
 import { ContextFilesTab } from "./context-files-tab";
 import { BillingTab } from "./billing-tab";
 import { UsageAnalyticsTab } from "./usage-analytics-tab";
+import { AuditLogsTab } from "./audit-logs-tab";
 
 // Force dynamic rendering since this page requires auth context
 export const dynamic = "force-dynamic";
@@ -72,6 +74,10 @@ export default function OrganizationPage() {
           <TabsTrigger value="security" className="gap-2">
             <Shield className="h-4 w-4" />
             Security
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Audit Logs
           </TabsTrigger>
         </TabsList>
 
@@ -181,6 +187,11 @@ export default function OrganizationPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Audit Logs Tab - Enterprise compliance tracking */}
+        <TabsContent value="audit">
+          <AuditLogsTab />
         </TabsContent>
       </Tabs>
     </div>

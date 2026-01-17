@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1633    | ✅ Passing                     |
+| Unit Tests             | ~1653    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1633** | ✅ All passing in CI           |
+| **Total**              | **1653** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1826,10 +1826,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 6.2 Audit Logging (Enterprise)
 
-- [ ] **Log Events:** Login, file upload, query, admin actions, policy flags.
-- [ ] **Storage:** Dedicated `AuditLog` table or export to Cloud Logging.
-- [ ] **API:** `GET /api/org/:orgId/audit-logs` (admin only, Cedar-protected).
-- [ ] **UI:** Searchable table of events with filters.
+- [x] **Log Events:** Login, file upload, query, admin actions, policy flags. (`lib/audit/audit-service.ts` - 12 tests)
+- [x] **Storage:** Dedicated `AuditLog` table (`prisma/schema.prisma`)
+- [x] **API:** `GET /api/org/:orgId/audit-logs` (admin only, Cedar-protected - 8 tests)
+- [x] **UI:** Searchable table of events with filters. (`audit-logs-tab.tsx`)
 
 ### 6.3 Browser Extension (MVP)
 
