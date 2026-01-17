@@ -1839,10 +1839,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] **Auth:** Use existing session cookie (same domain) or implement extension OAuth flow.
 - [ ] **Display:** Show quick answer in popup, "View full" opens web app.
 
-### 6.4 Guided Interview Mode (Stretch)
+### 6.4 Guided Interview Mode ✅
 
-- [ ] **Multi-Turn Context Gathering:** For agents with `supportsGuidedInterview: true`, enter interactive Q&A to gather context before main analysis.
-- [ ] **State Machine:** Define interview steps in agent config. UI shows current question, collects answer, progresses.
+> **Already implemented in Phase 2.8** - See `lib/agents/interview/` and `components/interview/guided-interview-panel.tsx` (40+ tests)
+
+- [x] **Multi-Turn Context Gathering:** For agents with `supportsGuidedInterview: true`, enter interactive Q&A to gather context before main analysis.
+- [x] **State Machine:** Define interview steps in agent config. UI shows current question, collects answer, progresses.
 
 ---
 
