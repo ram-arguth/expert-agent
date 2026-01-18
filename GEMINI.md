@@ -349,13 +349,32 @@ gcp.projects.IAMBinding(
 > - Testing on older models creates false confidence
 > - Regional endpoints return 404 for Gemini 3 preview models
 
-### 4.2 Authorization Coverage
+### 4.2 Universal Cedar Authorization (ZERO EXCEPTIONS)
 
-> **⚠️ MANDATORY:** Every API route MUST call Cedar for authorization.
+> **⚠️ HARD REQUIREMENT:** Every API route MUST call Cedar for authorization. NO EXCEPTIONS.
 
-- All routes must use `withAuthZ()` wrapper or explicit `cedar.isAuthorized()` call.
-- Public routes must be listed in `authz-exceptions.json`.
-- CI runs `pnpm test:authz-coverage` to enforce this.
+> [!CAUTION]
+> **UNIVERSAL CEDAR - NO EXCEPTIONS ALLOWED**
+>
+> - **ALL routes** must call `cedar.isAuthorized()` - there is NO exceptions file
+> - **Public routes** use `Anonymous` principal (health, SSO callbacks, invite/accept)
+> - **Service routes** use `Service` principal (stripe/webhook, internal/summarize)
+> - **Authenticated routes** use `User` principal (billing, agents, sessions, orgs)
+> - **CI enforces this** via `lib/authz/__tests__/authz-coverage.test.ts`
+>
+> **What is NEVER acceptable:**
+>
+> - Creating an `authz-exceptions.json` file (the test will fail if it exists)
+> - Skipping Cedar for "simple" or "internal" routes
+> - Adding a route without a corresponding Cedar call
+> - Using hardcoded bypasses instead of proper principal types
+>
+> **Why this matters:**
+>
+> - Zero-trust security model - every request is authorized
+> - Audit trail for all API access
+> - Consistent security posture across all endpoints
+> - Enterprise compliance requirements
 
 ### 4.3 Shared Component Usage
 
@@ -653,15 +672,15 @@ When working on this project, verify these are addressed:
 
 ## 9. Key Files Reference
 
-| Purpose                  | File                        |
-| ------------------------ | --------------------------- |
-| Technical Design         | `docs/DESIGN.md`            |
-| Implementation Checklist | `docs/IMPEMENTATION.md`     |
-| UX Analysis Rules        | `docs/ux-analysis-rules.md` |
-| Infrastructure Code      | `infra/__main__.py`         |
-| App CI/CD Config         | `cloudbuild.yaml`           |
-| Infra CI/CD Config       | `cloudbuild-infra.yaml`     |
-| AuthZ Exceptions         | `authz-exceptions.json`     |
+| Purpose                  | File                                         |
+| ------------------------ | -------------------------------------------- |
+| Technical Design         | `docs/DESIGN.md`                             |
+| Implementation Checklist | `docs/IMPEMENTATION.md`                      |
+| UX Analysis Rules        | `docs/ux-analysis-rules.md`                  |
+| Infrastructure Code      | `infra/__main__.py`                          |
+| App CI/CD Config         | `cloudbuild.yaml`                            |
+| Infra CI/CD Config       | `cloudbuild-infra.yaml`                      |
+| AuthZ Coverage Test      | `lib/authz/__tests__/authz-coverage.test.ts` |
 
 ---
 
