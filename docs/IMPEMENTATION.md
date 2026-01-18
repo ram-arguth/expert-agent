@@ -31,14 +31,14 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 ### Current Test Count
 
-> **Last Updated:** 2026-01-16
+> **Last Updated:** 2026-01-18
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1706    | ✅ Passing                     |
-| Integration Tests      | ~24      | ✅ Passing                     |
+| Unit Tests             | ~1710    | ✅ Passing                     |
+| Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1706** | ✅ All passing in CI           |
+| **Total**              | **1766** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1856,10 +1856,15 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 7.1 Testing
 
-- [x] **Unit Tests:** 1674 tests passing. Coverage on critical paths:
+- [x] **Unit Tests:** 1710 tests passing. Coverage on critical paths:
   - Schemas: 96% | Security: 91% | Auth: 85% | Billing: 82%
   - E2E parallelization: 4 workers, Chromium-only in CI
-- [ ] **Integration Tests:** API endpoint tests against dev environment.
+- [x] **Integration Tests:** 56 tests across 5 files (requires PostgreSQL):
+  - `billing.integration.test.ts`: Token quota, deduction, reset, Stripe data
+  - `agent-query.integration.test.ts`: Sessions, messages, usage records
+  - `file-upload.integration.test.ts`: Files, context files, MIME validation
+  - `auth.integration.test.ts`: User creation, sessions, membership
+  - `org.integration.test.ts`: Organization management, SSO config
 - [ ] **E2E Tests (Playwright):** Full user flows: signup → query → export.
 - [ ] **Load Testing:** Simulate concurrent users in Gamma. Verify Cloud Run scales.
 
