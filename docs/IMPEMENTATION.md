@@ -568,7 +568,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.3 Enterprise SSO (BYO SAML/OIDC)
 
-- [ ] **SSO Config API:** `POST /api/org/:orgId/sso` for admins to upload SAML metadata (XML) or OIDC config (issuer, clientId, clientSecret). Store in `Org.ssoConfig`.
+> **Status:** SSO Config API implemented. SAML/OIDC auth flows require external IdP setup.
+
+- [x] **SSO Config API:** `POST /api/org/:orgId/sso` for admins to upload SAML metadata or OIDC config. (Implemented in Phase 6.1 - 14 tests)
 - [ ] **Dynamic Provider Routing:**
   - On login page, user enters email.
   - Backend checks if email domain matches an enterprise org with verified domain and SSO config.
