@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1674    | ✅ Passing                     |
+| Unit Tests             | ~1691    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1674** | ✅ All passing in CI           |
+| **Total**              | **1691** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1288,15 +1288,16 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Get Session:** `GET /api/sessions/:sessionId` returns full message history.
 - [x] **Delete Session:** `DELETE /api/sessions/:sessionId` soft-deletes (archives) session.
 
-### 3.5 Memory Summarization
+### 3.5 Memory Summarization ✅
 
-- [ ] **Scheduled Job:** Cloud Scheduler triggers `POST /api/internal/summarize` daily.
-- [ ] **Summarization Logic:**
+- [x] **Scheduled Job:** Cloud Scheduler triggers `POST /api/internal/summarize` daily.
+- [x] **Summarization Logic:** (`lib/memory/summarization-service.ts` - 10 tests)
   1. Find sessions with `updatedAt` > 14 days ago and `archived = false`.
   2. For each, call Gemini 3 Flash with summarization prompt.
   3. Save summary to GCS, update `Session.summaryUrl`, set `archived = true`.
   4. Optionally delete old messages to save space.
-- [ ] **Resume Archived Session:** On query to archived session, load summary into prompt context first.
+- [x] **API:** `POST /api/internal/summarize` - internal endpoint with secret auth (7 tests)
+- [x] **Resume Archived Session:** On query to archived session, load summary into prompt context first.
 
 ### 3.6 Phase 3 Test Requirements
 
