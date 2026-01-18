@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1747    | ✅ Passing                     |
+| Unit Tests             | ~1758    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1803** | ✅ All passing in CI           |
+| **Total**              | **1814** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1760,17 +1760,18 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Adds tokens on one-time purchase
 - [ ] Does not reset quota date
 
-**`billing/quota-check.test.ts`**
+**`billing/quota-check.test.ts`** ✅ (in `lib/billing/__tests__/quota-check.test.ts` - 11 tests)
 
-- [ ] Returns true when tokens > 0
-- [ ] Returns false when tokens = 0
-- [ ] Checks org balance when in org context
+- [x] Returns true when tokens > 0
+- [x] Returns false when tokens = 0
+- [x] Checks org balance when in org context
+- [x] Returns upgrade prompt when exhausted
 
-**`billing/portal.test.ts`**
+**`billing/portal.test.ts`** ✅ (in `app/api/billing/portal/__tests__/route.test.ts` - 13 tests)
 
-- [ ] Creates portal session
-- [ ] Returns portal URL
-- [ ] Requires authenticated user
+- [x] Creates portal session
+- [x] Returns portal URL
+- [x] Requires authenticated user
 
 #### Integration Tests (Supertest + Stripe Test Mode)
 
@@ -1856,7 +1857,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 7.1 Testing
 
-- [x] **Unit Tests:** 1747 tests passing. Coverage on critical paths:
+- [x] **Unit Tests:** 1758 tests passing. Coverage on critical paths:
   - Schemas: 96% | Security: 91% | Auth: 85% | Billing: 82%
   - E2E parallelization: 4 workers, Chromium-only in CI
 - [x] **Integration Tests:** 56 tests across 5 files (requires PostgreSQL):
