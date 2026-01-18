@@ -1397,22 +1397,22 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`api/query-errors.integration.test.ts`** _(Vertex AI mocked)_
 
-- [ ] 400 on invalid input
-- [ ] 402 on quota exhausted
-- [ ] 403 on unauthorized agent access
-- [ ] 500 on Vertex API failure (graceful)
+- [x] 400 on invalid input
+- [x] 402 on quota exhausted
+- [x] 403 on unauthorized agent access
+- [x] 500 on Vertex API failure (graceful)
 
 **`api/sessions.integration.test.ts`**
 
-- [ ] List returns user's sessions
-- [ ] Get returns full message history
-- [ ] Cross-user session access denied
+- [x] List returns user's sessions
+- [x] Get returns full message history
+- [x] Cross-user session access denied
 
 **`api/org-context.integration.test.ts`**
 
-- [ ] Admin can upload context file
-- [ ] Member cannot upload (403)
-- [ ] Context included in query prompt
+- [x] Admin can upload context file
+- [x] Member cannot upload (403)
+- [x] Context included in query prompt
 
 #### E2E Tests (Playwright + **Mocked AI Backend**)
 
