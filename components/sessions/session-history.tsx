@@ -8,24 +8,24 @@
  * @see docs/DESIGN.md - Session Management
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { 
-  MessageSquare, 
-  Clock, 
-  Search, 
+import * as React from "react";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  MessageSquare,
+  Clock,
+  Search,
   ChevronDown,
   RefreshCw,
   Archive,
   Loader2,
-  AlertCircle
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 /**
  * Session data structure from API
@@ -74,38 +74,41 @@ function useSessions(agentId?: string, limit = 20) {
   const [hasMore, setHasMore] = React.useState(false);
   const [cursor, setCursor] = React.useState<string | null>(null);
 
-  const fetchSessions = React.useCallback(async (isLoadMore = false) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const fetchSessions = React.useCallback(
+    async (isLoadMore = false) => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      const params = new URLSearchParams();
-      if (agentId) params.set('agentId', agentId);
-      params.set('limit', limit.toString());
-      if (isLoadMore && cursor) params.set('cursor', cursor);
+        const params = new URLSearchParams();
+        if (agentId) params.set("agentId", agentId);
+        params.set("limit", limit.toString());
+        if (isLoadMore && cursor) params.set("cursor", cursor);
 
-      const response = await fetch(`/api/sessions?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sessions: ${response.status}`);
+        const response = await fetch(`/api/sessions?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch sessions: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (isLoadMore) {
+          setSessions((prev) => [...prev, ...data.sessions]);
+        } else {
+          setSessions(data.sessions);
+        }
+
+        setHasMore(data.pagination.hasMore);
+        setCursor(data.pagination.nextCursor);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Unknown error"));
+      } finally {
+        setIsLoading(false);
       }
-
-      const data = await response.json();
-      
-      if (isLoadMore) {
-        setSessions(prev => [...prev, ...data.sessions]);
-      } else {
-        setSessions(data.sessions);
-      }
-      
-      setHasMore(data.pagination.hasMore);
-      setCursor(data.pagination.nextCursor);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [agentId, limit, cursor]);
+    },
+    [agentId, limit, cursor],
+  );
 
   // Initial fetch
   React.useEffect(() => {
@@ -133,19 +136,19 @@ function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
-  
+
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  
-  if (minutes < 1) return 'Just now';
+
+  if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;
-  
-  return date.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
   });
 }
 
@@ -162,23 +165,24 @@ function SessionItem({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        'w-full text-left p-3 rounded-lg transition-colors',
-        'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-        isActive && 'bg-primary/10 border-l-2 border-primary',
-        session.archived && 'opacity-60'
+        "w-full h-auto text-left p-3 rounded-lg justify-start",
+        isActive && "bg-primary/10 border-l-2 border-primary",
+        session.archived && "opacity-60",
       )}
       data-testid={`session-item-${session.id}`}
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <div className={cn(
-          'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-          isActive ? 'bg-primary text-primary-foreground' : 'bg-muted'
-        )}>
+        <div
+          className={cn(
+            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+            isActive ? "bg-primary text-primary-foreground" : "bg-muted",
+          )}
+        >
           {session.archived ? (
             <Archive className="h-4 w-4" />
           ) : (
@@ -196,7 +200,7 @@ function SessionItem({
               {formatRelativeTime(session.updatedAt)}
             </span>
           </div>
-          
+
           {session.lastMessage ? (
             <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
               {session.lastMessage.preview}
@@ -206,7 +210,7 @@ function SessionItem({
               No messages yet
             </p>
           )}
-          
+
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />
@@ -221,7 +225,7 @@ function SessionItem({
           </div>
         </div>
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -240,39 +244,44 @@ export function SessionHistory({
 }: SessionHistoryProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [searchQuery, setSearchQuery] = React.useState('');
-  
-  const { sessions, isLoading, error, hasMore, loadMore, refresh } = useSessions(
-    agentId,
-    initialLimit
-  );
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const { sessions, isLoading, error, hasMore, loadMore, refresh } =
+    useSessions(agentId, initialLimit);
 
   // Filter sessions by search query
   const filteredSessions = React.useMemo(() => {
     if (!searchQuery.trim()) return sessions;
-    
+
     const query = searchQuery.toLowerCase();
-    return sessions.filter(session => 
-      session.agentName.toLowerCase().includes(query) ||
-      session.lastMessage?.preview.toLowerCase().includes(query)
+    return sessions.filter(
+      (session) =>
+        session.agentName.toLowerCase().includes(query) ||
+        session.lastMessage?.preview.toLowerCase().includes(query),
     );
   }, [sessions, searchQuery]);
 
   // Handle session selection
-  const handleSelectSession = React.useCallback((session: SessionData) => {
-    if (onSelectSession) {
-      onSelectSession(session);
-    } else {
-      // Default: navigate to session
-      router.push(`/conversations/${session.id}`);
-    }
-  }, [onSelectSession, router]);
+  const handleSelectSession = React.useCallback(
+    (session: SessionData) => {
+      if (onSelectSession) {
+        onSelectSession(session);
+      } else {
+        // Default: navigate to session
+        router.push(`/conversations/${session.id}`);
+      }
+    },
+    [onSelectSession, router],
+  );
 
   // Empty state
   if (!isLoading && sessions.length === 0 && !error) {
     return (
-      <div 
-        className={cn('flex flex-col items-center justify-center py-8 text-center', className)}
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-8 text-center",
+          className,
+        )}
         data-testid="session-history-empty"
       >
         <Clock className="h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -287,15 +296,16 @@ export function SessionHistory({
   // Error state
   if (error) {
     return (
-      <div 
-        className={cn('flex flex-col items-center justify-center py-8 text-center', className)}
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-8 text-center",
+          className,
+        )}
         data-testid="session-history-error"
       >
         <AlertCircle className="h-12 w-12 text-destructive/50 mb-4" />
         <h3 className="text-lg font-medium mb-1">Failed to load sessions</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          {error.message}
-        </p>
+        <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
         <Button variant="outline" size="sm" onClick={refresh}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Try again
@@ -305,12 +315,20 @@ export function SessionHistory({
   }
 
   return (
-    <div className={cn('flex flex-col h-full', className)} data-testid="session-history">
+    <div
+      className={cn("flex flex-col h-full", className)}
+      data-testid="session-history"
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="font-semibold">Session History</h2>
-        <Button variant="ghost" size="icon" onClick={refresh} disabled={isLoading}>
-          <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={refresh}
+          disabled={isLoading}
+        >
+          <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
         </Button>
       </div>
 
@@ -356,12 +374,12 @@ export function SessionHistory({
                   onClick={() => handleSelectSession(session)}
                 />
               ))}
-              
+
               {/* Load more */}
-              {hasMore && searchQuery === '' && (
+              {hasMore && searchQuery === "" && (
                 <div className="p-2 text-center">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={loadMore}
                     disabled={isLoading}
@@ -380,9 +398,9 @@ export function SessionHistory({
                   </Button>
                 </div>
               )}
-              
+
               {/* No results */}
-              {filteredSessions.length === 0 && searchQuery !== '' && (
+              {filteredSessions.length === 0 && searchQuery !== "" && (
                 <div className="p-4 text-center">
                   <p className="text-sm text-muted-foreground">
                     No sessions match &quot;{searchQuery}&quot;
