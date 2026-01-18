@@ -8,17 +8,17 @@
  * @see docs/IMPLEMENTATION.md - Phase 2.6
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { auth } from '@/auth';
-import { logger } from '@/lib/observability';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/auth";
+import { logger } from "@/lib/observability";
 
 // =============================================================================
 // Schemas
 // =============================================================================
 
 const RouteRequestSchema = z.object({
-  query: z.string().min(5).max(2000).describe('User query to classify'),
+  query: z.string().min(5).max(2000).describe("User query to classify"),
   includeAlternatives: z.boolean().optional().default(true),
 });
 
@@ -29,14 +29,16 @@ const RouteResponseSchema = z.object({
   agentName: z.string().nullable(),
   confidence: z.number().min(0).max(1),
   reasoning: z.string(),
-  alternatives: z.array(
-    z.object({
-      agentId: z.string(),
-      agentName: z.string(),
-      confidence: z.number(),
-      reason: z.string(),
-    })
-  ).optional(),
+  alternatives: z
+    .array(
+      z.object({
+        agentId: z.string(),
+        agentName: z.string(),
+        confidence: z.number(),
+        reason: z.string(),
+      }),
+    )
+    .optional(),
   noMatchSuggestion: z.string().optional(),
 });
 
@@ -56,25 +58,78 @@ interface AgentClassification {
 
 const AGENT_REGISTRY: AgentClassification[] = [
   {
-    id: 'ux-analyst',
-    name: 'UX Analyst',
-    keywords: ['ux', 'usability', 'accessibility', 'design', 'user experience', 'interface', 'ui', 'layout', 'navigation', 'wcag', 'screenshot', 'mockup', 'wireframe', 'prototype'],
-    description: 'Analyzes user interfaces for usability, accessibility, and design quality',
-    domains: ['design', 'product', 'web', 'mobile', 'accessibility'],
+    id: "ux-analyst",
+    name: "UX Analyst",
+    keywords: [
+      "ux",
+      "usability",
+      "accessibility",
+      "design",
+      "user experience",
+      "interface",
+      "ui",
+      "layout",
+      "navigation",
+      "wcag",
+      "screenshot",
+      "mockup",
+      "wireframe",
+      "prototype",
+    ],
+    description:
+      "Analyzes user interfaces for usability, accessibility, and design quality",
+    domains: ["design", "product", "web", "mobile", "accessibility"],
   },
   {
-    id: 'legal-advisor',
-    name: 'Legal Advisor',
-    keywords: ['contract', 'legal', 'agreement', 'nda', 'terms', 'compliance', 'liability', 'clause', 'law', 'jurisdiction', 'employment contract', 'service agreement', 'license', 'intellectual property', 'trademark', 'copyright'],
-    description: 'Reviews contracts and legal documents, identifies risks, and provides recommendations',
-    domains: ['legal', 'contracts', 'compliance', 'business law'],
+    id: "legal-advisor",
+    name: "Legal Advisor",
+    keywords: [
+      "contract",
+      "legal",
+      "agreement",
+      "nda",
+      "terms",
+      "compliance",
+      "liability",
+      "clause",
+      "law",
+      "jurisdiction",
+      "employment contract",
+      "service agreement",
+      "license",
+      "intellectual property",
+      "trademark",
+      "copyright",
+    ],
+    description:
+      "Reviews contracts and legal documents, identifies risks, and provides recommendations",
+    domains: ["legal", "contracts", "compliance", "business law"],
   },
   {
-    id: 'finance-planner',
-    name: 'Finance Planner',
-    keywords: ['budget', 'investment', 'retirement', 'savings', 'tax', 'financial', 'money', 'debt', 'income', 'expense', '401k', 'ira', 'portfolio', 'stocks', 'bonds', 'mortgage', 'loan'],
-    description: 'Provides financial planning, budgeting, and investment guidance',
-    domains: ['finance', 'personal-finance', 'investing', 'tax', 'retirement'],
+    id: "finance-planner",
+    name: "Finance Planner",
+    keywords: [
+      "budget",
+      "investment",
+      "retirement",
+      "savings",
+      "tax",
+      "financial",
+      "money",
+      "debt",
+      "income",
+      "expense",
+      "401k",
+      "ira",
+      "portfolio",
+      "stocks",
+      "bonds",
+      "mortgage",
+      "loan",
+    ],
+    description:
+      "Provides financial planning, budgeting, and investment guidance",
+    domains: ["finance", "personal-finance", "investing", "tax", "retirement"],
   },
 ];
 
@@ -101,7 +156,11 @@ interface ClassificationResult {
  */
 function classifyQuery(query: string): ClassificationResult {
   const normalizedQuery = query.toLowerCase();
-  const scores: Array<{ agent: AgentClassification; score: number; matchedKeywords: string[] }> = [];
+  const scores: Array<{
+    agent: AgentClassification;
+    score: number;
+    matchedKeywords: string[];
+  }> = [];
 
   for (const agent of AGENT_REGISTRY) {
     let score = 0;
@@ -111,7 +170,7 @@ function classifyQuery(query: string): ClassificationResult {
     for (const keyword of agent.keywords) {
       if (normalizedQuery.includes(keyword)) {
         // Longer keywords are more specific, worth more
-        const keywordWeight = keyword.split(' ').length > 1 ? 3 : 1;
+        const keywordWeight = keyword.split(" ").length > 1 ? 3 : 1;
         score += keywordWeight;
         matchedKeywords.push(keyword);
       }
@@ -138,29 +197,34 @@ function classifyQuery(query: string): ClassificationResult {
       agentId: null,
       agentName: null,
       confidence: 0,
-      reasoning: 'No matching expert found for this query. The query does not contain keywords related to our available agents.',
+      reasoning:
+        "No matching expert found for this query. The query does not contain keywords related to our available agents.",
       alternatives: [],
     };
   }
 
   // Calculate confidence based on score difference and absolute score
   const topScore = scores[0].score;
-  const maxPossibleScore = scores[0].agent.keywords.length + scores[0].agent.domains.length * 2;
-  const normalizedConfidence = Math.min(1, (topScore / Math.max(maxPossibleScore, 5)) * 1.5);
+  const maxPossibleScore =
+    scores[0].agent.keywords.length + scores[0].agent.domains.length * 2;
+  const normalizedConfidence = Math.min(
+    1,
+    (topScore / Math.max(maxPossibleScore, 5)) * 1.5,
+  );
 
   // Generate alternatives
   const alternatives = scores.slice(1, 4).map((s) => ({
     agentId: s.agent.id,
     agentName: s.agent.name,
     confidence: Math.min(1, (s.score / Math.max(maxPossibleScore, 5)) * 1.5),
-    reason: `Matched keywords: ${s.matchedKeywords.slice(0, 3).join(', ')}`,
+    reason: `Matched keywords: ${s.matchedKeywords.slice(0, 3).join(", ")}`,
   }));
 
   return {
     agentId: scores[0].agent.id,
     agentName: scores[0].agent.name,
     confidence: normalizedConfidence,
-    reasoning: `Best match based on keywords: ${scores[0].matchedKeywords.slice(0, 5).join(', ')}. ${scores[0].agent.description}`,
+    reasoning: `Best match based on keywords: ${scores[0].matchedKeywords.slice(0, 5).join(", ")}. ${scores[0].agent.description}`,
     alternatives,
   };
 }
@@ -170,30 +234,46 @@ function classifyQuery(query: string): ClassificationResult {
 // =============================================================================
 
 export async function POST(request: NextRequest) {
-  const log = logger.child({ route: '/api/omni/route', method: 'POST' });
+  const log = logger.child({ route: "/api/omni/route", method: "POST" });
 
   try {
     // Authentication (optional - classification can work without auth)
     const session = await auth();
-    const userId = session?.user?.id || 'anonymous';
+    const userId = session?.user?.id || "anonymous";
 
-    log.info({ userId }, 'OmniAgent route request received');
+    // Cedar authorization with User or Anonymous principal
+    const { cedar, buildPrincipalFromSession } =
+      await import("@/lib/authz/cedar");
+    const principal = session
+      ? buildPrincipalFromSession(session, [])
+      : { type: "Anonymous" as const, id: "omni-router" };
+    const decision = cedar.isAuthorized({
+      principal,
+      action: { type: "Action", id: "RouteQuery" },
+      resource: { type: "Agent", id: "omni" },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    log.info({ userId }, "OmniAgent route request received");
 
     // Parse and validate request body
     const body = await request.json();
     const parseResult = RouteRequestSchema.safeParse(body);
 
     if (!parseResult.success) {
-      log.warn({ errors: parseResult.error.errors }, 'Invalid request body');
+      log.warn({ errors: parseResult.error.errors }, "Invalid request body");
       return NextResponse.json(
         {
-          error: 'Invalid request',
+          error: "Invalid request",
           details: parseResult.error.errors.map((e) => ({
-            path: e.path.join('.'),
+            path: e.path.join("."),
             message: e.message,
           })),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -209,7 +289,7 @@ export async function POST(request: NextRequest) {
         suggestedAgentId: classification.agentId,
         confidence: classification.confidence,
       },
-      'Query classified'
+      "Query classified",
     );
 
     // Build response
@@ -232,10 +312,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    log.error({ error }, 'OmniAgent route error');
+    log.error({ error }, "OmniAgent route error");
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

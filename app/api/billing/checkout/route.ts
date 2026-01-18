@@ -18,10 +18,10 @@
  * @see docs/DESIGN.md - Billing Integration section
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 
 // Lazy initialization of Stripe client to prevent build-time errors
 let stripeInstance: Stripe | null = null;
@@ -30,10 +30,10 @@ function getStripe(): Stripe {
   if (!stripeInstance) {
     const apiKey = process.env.STRIPE_SECRET_KEY;
     if (!apiKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
+      throw new Error("STRIPE_SECRET_KEY is not configured");
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2025-02-24.acacia',
+      apiVersion: "2025-02-24.acacia",
     });
   }
   return stripeInstance;
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = (await request.json()) as CheckoutRequestBody;
@@ -66,21 +66,24 @@ export async function POST(request: NextRequest) {
 
     // Validate priceId
     if (!priceId) {
-      return NextResponse.json({ error: 'priceId is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "priceId is required" },
+        { status: 400 },
+      );
     }
 
     // orgId is required - individual billing is not supported
     if (!orgId) {
       return NextResponse.json(
-        { error: 'orgId is required. Individual billing is not supported.' },
-        { status: 400 }
+        { error: "orgId is required. Individual billing is not supported." },
+        { status: 400 },
       );
     }
 
     // In production, validate priceId against known prices
-    if (process.env.NODE_ENV === 'production' && VALID_PRICE_IDS.length > 0) {
+    if (process.env.NODE_ENV === "production" && VALID_PRICE_IDS.length > 0) {
       if (!VALID_PRICE_IDS.includes(priceId)) {
-        return NextResponse.json({ error: 'Invalid priceId' }, { status: 400 });
+        return NextResponse.json({ error: "Invalid priceId" }, { status: 400 });
       }
     }
 
@@ -89,15 +92,31 @@ export async function POST(request: NextRequest) {
       where: {
         userId: session.user.id,
         orgId,
-        role: { in: ['ADMIN', 'OWNER'] },
+        role: { in: ["ADMIN", "OWNER"] },
       },
     });
 
     if (!membership) {
       return NextResponse.json(
-        { error: 'Not authorized to manage billing for this organization' },
-        { status: 403 }
+        { error: "Not authorized to manage billing for this organization" },
+        { status: 403 },
       );
+    }
+
+    // Cedar authorization with User principal
+    const { cedar, buildPrincipalFromSession } =
+      await import("@/lib/authz/cedar");
+    const principal = buildPrincipalFromSession(session, [
+      { orgId, role: membership.role },
+    ]);
+    const decision = cedar.isAuthorized({
+      principal,
+      action: { type: "Action", id: "CreateCheckout" },
+      resource: { type: "Org", id: orgId },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Get or create Stripe customer for org
@@ -107,7 +126,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 },
+      );
     }
 
     let stripeCustomerId: string;
@@ -134,15 +156,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Build success and cancel URLs
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const successUrl = `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/billing/cancel`;
 
     // Create Stripe Checkout Session
     const checkoutSession = await getStripe().checkout.sessions.create({
       customer: stripeCustomerId,
-      mode: 'subscription', // Use 'payment' for one-time purchases
-      payment_method_types: ['card'],
+      mode: "subscription", // Use 'payment' for one-time purchases
+      payment_method_types: ["card"],
       line_items: [
         {
           price: priceId,
@@ -168,22 +190,25 @@ export async function POST(request: NextRequest) {
       url: checkoutSession.url,
     });
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error("Error creating checkout session:", error);
 
     // Handle Stripe-specific errors (check by error type/properties)
     if (
       error instanceof Error &&
-      'type' in error &&
-      typeof (error as { type: unknown }).type === 'string' &&
-      (error as { type: string }).type.startsWith('Stripe')
+      "type" in error &&
+      typeof (error as { type: unknown }).type === "string" &&
+      (error as { type: string }).type.startsWith("Stripe")
     ) {
       const stripeError = error as Error & { statusCode?: number };
       return NextResponse.json(
         { error: stripeError.message },
-        { status: stripeError.statusCode || 500 }
+        { status: stripeError.statusCode || 500 },
       );
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

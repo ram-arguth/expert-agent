@@ -88,6 +88,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
+    // Cedar authorization with Service principal (after signature verification)
+    const { cedar } = await import("@/lib/authz/cedar");
+    const decision = cedar.isAuthorized({
+      principal: { type: "Service", id: "stripe-webhook" },
+      action: { type: "Action", id: "ProcessWebhook" },
+      resource: { type: "Org", id: "system" },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Log event for idempotency tracking
     const existingEvent = await prisma.stripeEvent.findUnique({
       where: { id: event.id },

@@ -32,6 +32,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Cedar authorization with Service principal
+    const { cedar } = await import("@/lib/authz/cedar");
+    const decision = cedar.isAuthorized({
+      principal: { type: "Service", id: "cloud-scheduler" },
+      action: { type: "Action", id: "TriggerSummarization" },
+      resource: { type: "Agent", id: "system" },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Parse optional limit parameter
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");

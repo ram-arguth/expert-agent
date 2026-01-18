@@ -6,18 +6,18 @@
  * Phase 1.4: Team Org Creation & Invites
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 
 // Validation schema
 const AcceptInviteSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
+  token: z.string().min(1, "Token is required"),
 });
 
 // Allowed auth providers
-const ALLOWED_PROVIDERS = ['google', 'apple', 'microsoft'];
+const ALLOWED_PROVIDERS = ["google", "apple", "microsoft"];
 
 // Check if provider is allowed (handles variants like microsoft-entra-id)
 function isAllowedProvider(provider: string | undefined): boolean {
@@ -32,20 +32,32 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id || !session?.user?.email) {
       return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
+        { error: "Unauthorized", message: "Authentication required" },
+        { status: 401 },
       );
+    }
+
+    // Cedar authorization with Anonymous principal (token-based invite acceptance)
+    const { cedar } = await import("@/lib/authz/cedar");
+    const decision = cedar.isAuthorized({
+      principal: { type: "Anonymous", id: "invite-accept" },
+      action: { type: "Action", id: "AcceptInvite" },
+      resource: { type: "Invite", id: "pending" },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // 2. Validate provider (must be trusted identity)
     if (!isAllowedProvider(session.user.provider)) {
       return NextResponse.json(
         {
-          error: 'Forbidden',
+          error: "Forbidden",
           message:
-            'Accepting invites requires sign-in with Google, Apple, or Microsoft account',
+            "Accepting invites requires sign-in with Google, Apple, or Microsoft account",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -56,11 +68,11 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: 'Validation Error',
-          message: 'Invalid request body',
+          error: "Validation Error",
+          message: "Invalid request body",
           details: validation.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,19 +94,19 @@ export async function POST(request: NextRequest) {
 
     if (!invite) {
       return NextResponse.json(
-        { error: 'Not Found', message: 'Invalid invite token' },
-        { status: 404 }
+        { error: "Not Found", message: "Invalid invite token" },
+        { status: 404 },
       );
     }
 
     // 5. Check invite status
-    if (invite.status !== 'PENDING') {
+    if (invite.status !== "PENDING") {
       return NextResponse.json(
         {
-          error: 'Conflict',
+          error: "Conflict",
           message: `Invite has already been ${invite.status.toLowerCase()}`,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -103,12 +115,12 @@ export async function POST(request: NextRequest) {
       // Mark as expired
       await prisma.invite.update({
         where: { id: invite.id },
-        data: { status: 'EXPIRED' },
+        data: { status: "EXPIRED" },
       });
 
       return NextResponse.json(
-        { error: 'Gone', message: 'Invite has expired' },
-        { status: 410 }
+        { error: "Gone", message: "Invite has expired" },
+        { status: 410 },
       );
     }
 
@@ -116,10 +128,10 @@ export async function POST(request: NextRequest) {
     if (invite.email.toLowerCase() !== session.user.email.toLowerCase()) {
       return NextResponse.json(
         {
-          error: 'Forbidden',
-          message: 'This invite was sent to a different email address',
+          error: "Forbidden",
+          message: "This invite was sent to a different email address",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -137,16 +149,16 @@ export async function POST(request: NextRequest) {
       // Mark invite as accepted anyway
       await prisma.invite.update({
         where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+        data: { status: "ACCEPTED", acceptedAt: new Date() },
       });
 
       return NextResponse.json(
         {
-          error: 'Conflict',
-          message: 'You are already a member of this organization',
+          error: "Conflict",
+          message: "You are already a member of this organization",
           org: invite.org,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -164,7 +176,7 @@ export async function POST(request: NextRequest) {
       // Mark invite as accepted
       await tx.invite.update({
         where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+        data: { status: "ACCEPTED", acceptedAt: new Date() },
       });
 
       return newMembership;
@@ -172,15 +184,15 @@ export async function POST(request: NextRequest) {
 
     // 10. Return success with org info
     return NextResponse.json({
-      message: 'Successfully joined organization',
+      message: "Successfully joined organization",
       org: invite.org,
       role: membership.role,
     });
   } catch (error) {
-    console.error('Error accepting invite:', error);
+    console.error("Error accepting invite:", error);
     return NextResponse.json(
-      { error: 'Internal Server Error', message: 'Failed to accept invite' },
-      { status: 500 }
+      { error: "Internal Server Error", message: "Failed to accept invite" },
+      { status: 500 },
     );
   }
 }
@@ -189,12 +201,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const token = url.searchParams.get('token');
+    const token = url.searchParams.get("token");
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Bad Request', message: 'Token query parameter required' },
-        { status: 400 }
+        { error: "Bad Request", message: "Token query parameter required" },
+        { status: 400 },
       );
     }
 
@@ -223,28 +235,28 @@ export async function GET(request: NextRequest) {
 
     if (!invite) {
       return NextResponse.json(
-        { error: 'Not Found', message: 'Invalid invite token' },
-        { status: 404 }
+        { error: "Not Found", message: "Invalid invite token" },
+        { status: 404 },
       );
     }
 
     // Check if expired
     const isExpired = invite.expiresAt < new Date();
-    const isValid = invite.status === 'PENDING' && !isExpired;
+    const isValid = invite.status === "PENDING" && !isExpired;
 
     return NextResponse.json({
       email: invite.email,
       role: invite.role,
-      status: isExpired ? 'EXPIRED' : invite.status,
+      status: isExpired ? "EXPIRED" : invite.status,
       orgName: invite.org.name,
-      invitedBy: invite.invitedBy?.name || 'Unknown',
+      invitedBy: invite.invitedBy?.name || "Unknown",
       isValid,
     });
   } catch (error) {
-    console.error('Error fetching invite:', error);
+    console.error("Error fetching invite:", error);
     return NextResponse.json(
-      { error: 'Internal Server Error', message: 'Failed to fetch invite' },
-      { status: 500 }
+      { error: "Internal Server Error", message: "Failed to fetch invite" },
+      { status: 500 },
     );
   }
 }

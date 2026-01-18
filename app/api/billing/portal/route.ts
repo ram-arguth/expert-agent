@@ -13,10 +13,10 @@
  * @see docs/DESIGN.md - Billing Integration section
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 
 // Lazy initialization of Stripe client to prevent build-time errors
 let stripeInstance: Stripe | null = null;
@@ -25,10 +25,10 @@ function getStripe(): Stripe {
   if (!stripeInstance) {
     const apiKey = process.env.STRIPE_SECRET_KEY;
     if (!apiKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
+      throw new Error("STRIPE_SECRET_KEY is not configured");
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2025-02-24.acacia',
+      apiVersion: "2025-02-24.acacia",
     });
   }
   return stripeInstance;
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = (await request.json()) as PortalRequestBody;
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // orgId is required
     if (!orgId) {
-      return NextResponse.json({ error: 'orgId is required' }, { status: 400 });
+      return NextResponse.json({ error: "orgId is required" }, { status: 400 });
     }
 
     // Verify membership and permissions (Admin or Owner can access billing)
@@ -59,15 +59,31 @@ export async function POST(request: NextRequest) {
       where: {
         userId: session.user.id,
         orgId,
-        role: { in: ['ADMIN', 'OWNER', 'BILLING_MANAGER'] },
+        role: { in: ["ADMIN", "OWNER", "BILLING_MANAGER"] },
       },
     });
 
     if (!membership) {
       return NextResponse.json(
-        { error: 'Not authorized to manage billing for this organization' },
-        { status: 403 }
+        { error: "Not authorized to manage billing for this organization" },
+        { status: 403 },
       );
+    }
+
+    // Cedar authorization with User principal
+    const { cedar, buildPrincipalFromSession } =
+      await import("@/lib/authz/cedar");
+    const principal = buildPrincipalFromSession(session, [
+      { orgId, role: membership.role },
+    ]);
+    const decision = cedar.isAuthorized({
+      principal,
+      action: { type: "Action", id: "ManagePortal" },
+      resource: { type: "Org", id: orgId },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Get org with Stripe customer ID
@@ -77,18 +93,21 @@ export async function POST(request: NextRequest) {
     });
 
     if (!org) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 },
+      );
     }
 
     if (!org.stripeCustomerId) {
       return NextResponse.json(
-        { error: 'Organization does not have an active subscription' },
-        { status: 400 }
+        { error: "Organization does not have an active subscription" },
+        { status: 400 },
       );
     }
 
     // Build return URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const returnUrl = `${baseUrl}/settings/billing`;
 
     // Create Stripe Customer Portal session
@@ -101,22 +120,25 @@ export async function POST(request: NextRequest) {
       url: portalSession.url,
     });
   } catch (error) {
-    console.error('Error creating portal session:', error);
+    console.error("Error creating portal session:", error);
 
     // Handle Stripe-specific errors
     if (
       error instanceof Error &&
-      'type' in error &&
-      typeof (error as { type: unknown }).type === 'string' &&
-      (error as { type: string }).type.startsWith('Stripe')
+      "type" in error &&
+      typeof (error as { type: unknown }).type === "string" &&
+      (error as { type: string }).type.startsWith("Stripe")
     ) {
       const stripeError = error as Error & { statusCode?: number };
       return NextResponse.json(
         { error: stripeError.message },
-        { status: stripeError.statusCode || 500 }
+        { status: stripeError.statusCode || 500 },
       );
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

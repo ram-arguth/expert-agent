@@ -105,6 +105,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Cedar authorization with User principal
+    const { cedar, buildPrincipalFromSession } =
+      await import("@/lib/authz/cedar");
+    const principal = buildPrincipalFromSession(session, [
+      { orgId, role: membership.role },
+    ]);
+    const decision = cedar.isAuthorized({
+      principal,
+      action: { type: "Action", id: "TopUp" },
+      resource: { type: "Org", id: orgId },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Get org with Stripe customer
     const org = await prisma.org.findUnique({
       where: { id: orgId },

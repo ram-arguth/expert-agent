@@ -30,6 +30,20 @@ export async function POST(
       );
     }
 
+    // Cedar authorization with Anonymous principal (IdP-initiated callback)
+    const { cedar } = await import("@/lib/authz/cedar");
+    const decision = cedar.isAuthorized({
+      principal: { type: "Anonymous", id: "sso-callback" },
+      action: { type: "Action", id: "SSOCallback" },
+      resource: { type: "Org", id: orgId },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.redirect(
+        new URL("/auth/error?message=Unauthorized", request.url),
+      );
+    }
+
     // Handle callback
     const userInfo = await handleSAMLCallback(orgId, samlResponse);
 

@@ -111,6 +111,8 @@ export const CedarActions = {
   ListAgents: "ListAgents",
   GetAgent: "GetAgent",
   QueryAgent: "QueryAgent",
+  InterviewAgent: "InterviewAgent",
+  ChainAgents: "ChainAgents",
 
   // Organization actions
   CreateOrg: "CreateOrg",
@@ -128,6 +130,7 @@ export const CedarActions = {
   GetProfile: "GetProfile",
   UpdateProfile: "UpdateProfile",
   GetMemberships: "GetMemberships",
+  AcceptInvite: "AcceptInvite",
 
   // Session/Conversation actions
   CreateSession: "CreateSession",
@@ -145,10 +148,22 @@ export const CedarActions = {
   ViewBilling: "ViewBilling",
   ManageBilling: "ManageBilling",
   ViewUsage: "ViewUsage",
+  CreateCheckout: "CreateCheckout",
+  ManagePortal: "ManagePortal",
+  TopUp: "TopUp",
 
   // Admin actions
   ViewAuditLog: "ViewAuditLog",
   ManageSettings: "ManageSettings",
+
+  // Anonymous actions (public endpoints)
+  HealthCheck: "HealthCheck",
+  SSOCallback: "SSOCallback",
+
+  // Service actions (internal/external services)
+  ProcessWebhook: "ProcessWebhook",
+  TriggerSummarization: "TriggerSummarization",
+  RouteQuery: "RouteQuery",
 } as const;
 
 export type CedarActionType = (typeof CedarActions)[keyof typeof CedarActions];
@@ -215,14 +230,30 @@ class CedarEngine {
       }),
     });
 
-    // Anonymous can only access public resources
+    // Anonymous can access public resources and system endpoints
     this.policies.push({
-      id: "anonymous-public-only",
+      id: "anonymous-system-access",
       effect: "permit",
       priority: 100,
       evaluate: (req) => {
         if (req.principal.type === "Anonymous") {
           const action = req.action.id;
+
+          // Anonymous can perform health checks
+          if (action === CedarActions.HealthCheck) {
+            return { matches: true, reason: "Health check is public" };
+          }
+
+          // Anonymous can complete SSO callbacks (IdP-initiated)
+          if (action === CedarActions.SSOCallback) {
+            return { matches: true, reason: "SSO callback is public" };
+          }
+
+          // Anonymous can accept invites (token-based auth)
+          if (action === CedarActions.AcceptInvite) {
+            return { matches: true, reason: "Invite acceptance is public" };
+          }
+
           // Anonymous can list public agents
           if (
             action === CedarActions.ListAgents &&
@@ -233,6 +264,47 @@ class CedarEngine {
               reason: "Anonymous can list public agents",
             };
           }
+
+          return { matches: false };
+        }
+        return { matches: false };
+      },
+    });
+
+    // Service principals can access internal endpoints
+    this.policies.push({
+      id: "service-internal-access",
+      effect: "permit",
+      priority: 100,
+      evaluate: (req) => {
+        if (req.principal.type === "Service") {
+          const action = req.action.id;
+          const serviceId = req.principal.id;
+
+          // Stripe webhook service can process webhooks
+          if (
+            action === CedarActions.ProcessWebhook &&
+            serviceId === "stripe-webhook"
+          ) {
+            return { matches: true, reason: "Stripe webhook authorized" };
+          }
+
+          // Cloud Scheduler can trigger summarization
+          if (
+            action === CedarActions.TriggerSummarization &&
+            serviceId === "cloud-scheduler"
+          ) {
+            return { matches: true, reason: "Cloud Scheduler authorized" };
+          }
+
+          // Omni router can route queries
+          if (
+            action === CedarActions.RouteQuery &&
+            serviceId === "omni-router"
+          ) {
+            return { matches: true, reason: "Omni router authorized" };
+          }
+
           return { matches: false };
         }
         return { matches: false };
@@ -327,11 +399,24 @@ class CedarEngine {
           }
 
           if (userOrgs.some((orgId) => allowedOrgs.includes(orgId))) {
-            return {
-              matches: true,
-              reason: "Can query agent allowed for user org",
-            };
+            return { matches: true, reason: "User org is in allowed list" };
           }
+        }
+
+        // Users can use the omni router
+        if (req.action.id === CedarActions.RouteQuery) {
+          return {
+            matches: true,
+            reason: "Authenticated user can route queries",
+          };
+        }
+
+        // Users can interview agents
+        if (req.action.id === CedarActions.InterviewAgent) {
+          return {
+            matches: true,
+            reason: "Authenticated user can interview agents",
+          };
         }
         return { matches: false };
       },
@@ -516,20 +601,27 @@ class CedarEngine {
       evaluate: (req) => {
         if (req.principal.type !== "User") return { matches: false };
 
+        const billingActions: readonly string[] = [
+          CedarActions.ViewBilling,
+          CedarActions.ManageBilling,
+          CedarActions.ViewUsage,
+          CedarActions.CreateCheckout,
+          CedarActions.ManagePortal,
+          CedarActions.TopUp,
+        ];
+
         if (
-          (req.action.id === CedarActions.ViewBilling ||
-            req.action.id === CedarActions.ManageBilling ||
-            req.action.id === CedarActions.ViewUsage) &&
+          billingActions.includes(req.action.id) &&
           req.resource.type === "Org"
         ) {
           const roles = req.principal.attributes?.roles || {};
           const orgRole = roles[req.resource.id];
 
+          // View actions - any member
           if (
             req.action.id === CedarActions.ViewBilling ||
             req.action.id === CedarActions.ViewUsage
           ) {
-            // Any member can view
             if (orgRole) {
               return {
                 matches: true,
@@ -538,11 +630,25 @@ class CedarEngine {
             }
           }
 
-          if (req.action.id === CedarActions.ManageBilling) {
-            if (orgRole === "owner" || orgRole === "billing_manager") {
+          // Manage actions - admin/owner only
+          const manageActions: readonly string[] = [
+            CedarActions.ManageBilling,
+            CedarActions.CreateCheckout,
+            CedarActions.ManagePortal,
+            CedarActions.TopUp,
+          ];
+          if (manageActions.includes(req.action.id)) {
+            if (
+              orgRole === "OWNER" ||
+              orgRole === "ADMIN" ||
+              orgRole === "BILLING_MANAGER" ||
+              orgRole === "owner" ||
+              orgRole === "admin" ||
+              orgRole === "billing_manager"
+            ) {
               return {
                 matches: true,
-                reason: "Owner/billing_manager can manage billing",
+                reason: "Admin/owner/billing_manager can manage billing",
               };
             }
           }
@@ -682,3 +788,15 @@ export function isAuthorized(
 
 // Export the engine for testing
 export { CedarEngine };
+
+/**
+ * Convenience namespace for Cedar operations
+ * Use: import { cedar } from '@/lib/authz/cedar';
+ * Then: cedar.isAuthorized({ ... })
+ */
+export const cedar = {
+  isAuthorized,
+  buildPrincipalFromSession,
+  getCedarEngine,
+  CedarActions,
+};

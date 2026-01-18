@@ -25,10 +25,27 @@ export async function GET(_request: NextRequest) {
     // 2. Get user's active org (if any)
     const membership = await prisma.membership.findFirst({
       where: { userId: session.user.id },
-      select: { orgId: true },
+      select: { orgId: true, role: true },
     });
 
     const orgId = membership?.orgId ?? null;
+
+    // Cedar authorization with User principal
+    const { cedar, buildPrincipalFromSession } =
+      await import("@/lib/authz/cedar");
+    const memberships = membership
+      ? [{ orgId: membership.orgId, role: membership.role }]
+      : [];
+    const principal = buildPrincipalFromSession(session, memberships);
+    const decision = cedar.isAuthorized({
+      principal,
+      action: { type: "Action", id: "ViewUsage" },
+      resource: { type: "Org", id: orgId || "personal" },
+    });
+
+    if (!decision.isAuthorized) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // 3. Get usage summary
     const summary = await getUsageSummary(session.user.id, orgId);
