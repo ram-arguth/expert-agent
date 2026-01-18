@@ -1831,13 +1831,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **API:** `GET /api/org/:orgId/audit-logs` (admin only, Cedar-protected - 8 tests)
 - [x] **UI:** Searchable table of events with filters. (`audit-logs-tab.tsx`)
 
-### 6.3 Browser Extension (MVP)
+### 6.3 Browser Extension (MVP) ✅
 
-- [ ] **Manifest V3:** Create Chrome extension with `permissions` for API domain.
-- [ ] **Popup UI:** Agent selector dropdown, text input, submit button.
-- [ ] **Context Menu:** Right-click "Ask about this" sends selected text.
-- [ ] **Auth:** Use existing session cookie (same domain) or implement extension OAuth flow.
-- [ ] **Display:** Show quick answer in popup, "View full" opens web app.
+- [x] **Manifest V3:** Create Chrome extension with `permissions` for API domain. (`extensions/chrome/manifest.json`)
+- [x] **Popup UI:** Agent selector dropdown, text input, submit button. (`popup.html` + `popup.js`)
+- [x] **Context Menu:** Right-click "Ask about this" sends selected text. (`background.js`)
+- [x] **Auth:** Uses existing session cookie (same domain).
+- [x] **Display:** Show quick answer in popup, "View full" opens web app.
 
 ### 6.4 Guided Interview Mode ✅
 

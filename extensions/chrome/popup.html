@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expert AI</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        width: 380px;
+        min-height: 400px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #e8e8e8;
+        padding: 16px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .header img {
+        width: 28px;
+        height: 28px;
+      }
+
+      .header h1 {
+        font-size: 18px;
+        font-weight: 600;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .agent-selector {
+        margin-bottom: 12px;
+      }
+
+      .agent-selector label {
+        display: block;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 6px;
+      }
+
+      .agent-selector select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #e8e8e8;
+        font-size: 14px;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .agent-selector select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+      }
+
+      .query-input {
+        margin-bottom: 12px;
+      }
+
+      .query-input label {
+        display: block;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 6px;
+      }
+
+      .query-input textarea {
+        width: 100%;
+        height: 100px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #e8e8e8;
+        font-size: 14px;
+        resize: vertical;
+        outline: none;
+      }
+
+      .query-input textarea:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+      }
+
+      .query-input textarea::placeholder {
+        color: #666;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+
+      .submit-btn:hover {
+        opacity: 0.9;
+      }
+
+      .submit-btn:active {
+        transform: scale(0.98);
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .response-area {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        display: none;
+      }
+
+      .response-area.visible {
+        display: block;
+      }
+
+      .response-area.loading::before {
+        content: "Thinking...";
+        display: block;
+        color: #888;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .response-area.error {
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .response-content {
+        font-size: 13px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
+      .view-full-btn {
+        margin-top: 12px;
+        padding: 8px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        background: transparent;
+        color: #667eea;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .view-full-btn:hover {
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      .footer {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+      }
+
+      .footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-size: 12px;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img src="icons/icon48.png" alt="Expert AI" />
+      <h1>Expert AI</h1>
+    </div>
+
+    <div class="agent-selector">
+      <label for="agent">Select Agent</label>
+      <select id="agent">
+        <option value="ux-analyst">UX Analyst</option>
+        <option value="legal-advisor">Legal Advisor</option>
+        <option value="finance-planner">Finance Planner</option>
+        <option value="general">General Assistant</option>
+      </select>
+    </div>
+
+    <div class="query-input">
+      <label for="query">Your Question</label>
+      <textarea
+        id="query"
+        placeholder="What would you like to know?"
+      ></textarea>
+    </div>
+
+    <button class="submit-btn" id="submit">Ask Expert</button>
+
+    <div class="response-area" id="response-area">
+      <div class="response-content" id="response-content"></div>
+      <button class="view-full-btn" id="view-full" style="display: none">
+        View Full Analysis →
+      </button>
+    </div>
+
+    <div class="footer">
+      <a href="#" id="open-app">Open Full App</a>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
