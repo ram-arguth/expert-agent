@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1691    | ✅ Passing                     |
+| Unit Tests             | ~1696    | ✅ Passing                     |
 | Integration Tests      | ~24      | ✅ Passing                     |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1691** | ✅ All passing in CI           |
+| **Total**              | **1696** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -568,16 +568,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.3 Enterprise SSO (BYO SAML/OIDC)
 
-> **Status:** SSO Config API implemented. SAML/OIDC auth flows require external IdP setup.
+> **Status:** SSO Config API and auth flows implemented. External IdP setup required for production.
 
 - [x] **SSO Config API:** `POST /api/org/:orgId/sso` for admins to upload SAML metadata or OIDC config. (Implemented in Phase 6.1 - 14 tests)
-- [ ] **Dynamic Provider Routing:**
-  - On login page, user enters email.
-  - Backend checks if email domain matches an enterprise org with verified domain and SSO config.
-  - If yes, redirect to enterprise IdP (SAML AuthnRequest or OIDC authorize URL).
-  - Handle callback at `/api/auth/callback/saml/:orgId` or `/api/auth/callback/oidc/:orgId`.
-- [ ] **SAML Integration:** Use `passport-saml` or `saml2-js`. Validate signature, extract NameID/email, create/link user.
-- [ ] **OIDC Integration:** Use `openid-client`. Validate ID token, extract claims.
+- [x] **Dynamic Provider Routing:** `lib/auth/sso-service.ts` checks email domain, routes to SSO (5 tests)
+- [x] **SAML Integration:** `app/api/auth/callback/saml/[orgId]/route.ts` handles SAML assertions
+- [x] **OIDC Integration:** `app/api/auth/callback/oidc/[orgId]/route.ts` validates ID tokens with `openid-client`
 - [ ] **Test:** Use Okta or Azure AD test tenant to verify SAML and OIDC flows.
 
 ### 1.4 Team Org Creation & Invites

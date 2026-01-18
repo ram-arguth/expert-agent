@@ -9,5 +9,7 @@
   "app/api/agents/[agentId]/interview/route.ts",
   "app/api/omni/route/route.ts",
   "app/api/billing/topup/route.ts",
-  "app/api/internal/summarize/route.ts"
+  "app/api/internal/summarize/route.ts",
+  "app/api/auth/callback/oidc/[orgId]/route.ts",
+  "app/api/auth/callback/saml/[orgId]/route.ts"
 ]
