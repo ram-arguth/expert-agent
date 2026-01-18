@@ -454,7 +454,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 1.1 Database Schema (Cloud SQL PostgreSQL)
 
-- [ ] **Define Prisma Schema (or raw SQL migrations):**
+- [x] **Define Prisma Schema:** Implemented in `prisma/schema.prisma`
 
   ```prisma
   model User {
@@ -548,7 +548,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [x] **Prisma Schema:** Created `prisma/schema.prisma` with all models (User, Org, Membership, Invite, Session, Message, File, ContextFile, Agent, UsageRecord, StripeEvent).
 - [x] **Prisma Client:** Created `lib/db/client.ts` singleton with HMR support.
-- [ ] **Run Migrations:** `npx prisma migrate dev` in dev. Integrate migration into CI/CD for beta/prod.
+- [x] **Run Migrations:** Prisma migrations run in dev. CI/CD applies via `prisma migrate deploy`.
 
 ### 1.2 Social OAuth Login (Google, Apple, Microsoft Entra ID)
 
