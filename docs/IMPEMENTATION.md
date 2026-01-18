@@ -1305,37 +1305,37 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`upload/signed-url.test.ts`**
 
-- [ ] Generates valid GCS signed URL
-- [ ] Rejects file > size limit (10MB)
-- [ ] Rejects disallowed MIME types
-- [ ] Returns unique `gcsPath` per request
-- [ ] Returns 401 for unauthenticated
+- [x] Generates valid GCS signed URL
+- [x] Rejects file > size limit (10MB)
+- [x] Rejects disallowed MIME types
+- [x] Returns unique `gcsPath` per request
+- [x] Returns 401 for unauthenticated
 
 **`upload/confirm.test.ts`**
 
-- [ ] Creates ContextFile record on confirm
-- [ ] Associates with correct `orgId`
-- [ ] Handles missing file in GCS gracefully
+- [x] Creates ContextFile record on confirm
+- [x] Associates with correct `orgId`
+- [x] Handles missing file in GCS gracefully
 
 **`query/input-validation.test.ts`**
 
-- [ ] Parses valid input per schema
-- [ ] Returns 400 with validation errors
-- [ ] Handles File field references correctly
+- [x] Parses valid input per schema
+- [x] Returns 400 with validation errors
+- [x] Handles File field references correctly
 
 **`query/quota-check.test.ts`**
 
-- [ ] Returns 402 when tokens exhausted
-- [ ] Proceeds when tokens available
-- [ ] Handles org-level quota correctly
+- [x] Returns 402 when tokens exhausted
+- [x] Proceeds when tokens available
+- [x] Handles org-level quota correctly
 
 **`query/prompt-assembly.test.ts`**
 
-- [ ] Loads correct template for agent
-- [ ] Interpolates all input fields
-- [ ] Includes file URLs in prompt
-- [ ] Includes org context when present
-- [ ] Handles missing optional fields
+- [x] Loads correct template for agent
+- [x] Interpolates all input fields
+- [x] Includes file URLs in prompt
+- [x] Includes org context when present
+- [x] Handles missing optional fields
 
 **`query/vertex-call.test.ts`** _(uses mocked Vertex client)_
 
