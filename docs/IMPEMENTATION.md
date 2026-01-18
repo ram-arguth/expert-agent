@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1710    | ✅ Passing                     |
+| Unit Tests             | ~1747    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1766** | ✅ All passing in CI           |
+| **Total**              | **1803** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1342,25 +1342,25 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`query/vertex-call.test.ts`** _(uses mocked Vertex client)_
 
-- [ ] Constructs correct API payload
-- [ ] Includes JSON output mode config
-- [ ] Handles Vertex API timeout
-- [ ] Handles Vertex API error response
-- [ ] Parses token usage from metadata
+- [x] Constructs correct API payload
+- [x] Includes JSON output mode config
+- [x] Handles Vertex API timeout
+- [x] Handles Vertex API error response
+- [x] Parses token usage from metadata
 
-**`query/output-validation.test.ts`**
+**`lib/agents/__tests__/output-validation.test.ts`** ✅
 
-- [ ] Parses valid JSON from LLM
-- [ ] Logs error on invalid JSON
-- [ ] Returns graceful failure message
-- [ ] Validates against output schema
+- [x] Parses valid JSON from LLM
+- [x] Throws error on invalid JSON
+- [x] Returns graceful failure message
+- [x] Validates against output schema
 
 **`query/token-deduction.test.ts`**
 
-- [ ] Deducts exact tokens used
-- [ ] Updates user balance atomically
-- [ ] Updates org balance when in org context
-- [ ] Handles race conditions (transactions)
+- [x] Deducts exact tokens used
+- [x] Updates user balance atomically
+- [x] Updates org balance when in org context
+- [x] Handles race conditions (transactions)
 
 **`session/create.test.ts`**
 
@@ -1856,7 +1856,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 7.1 Testing
 
-- [x] **Unit Tests:** 1710 tests passing. Coverage on critical paths:
+- [x] **Unit Tests:** 1747 tests passing. Coverage on critical paths:
   - Schemas: 96% | Security: 91% | Auth: 85% | Billing: 82%
   - E2E parallelization: 4 workers, Chromium-only in CI
 - [x] **Integration Tests:** 56 tests across 5 files (requires PostgreSQL):
