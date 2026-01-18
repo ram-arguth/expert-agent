@@ -122,16 +122,19 @@ Returns session (with isTestPrincipal: true for test sessions)
   // Outputs: ✅ route has authz, ❌ route missing authz
   // Exit code 1 if any route is missing authz
   ```
-- [x] **Exceptions list:** Maintain `authz-exceptions.json` for intentionally public routes (e.g., healthcheck, webhook with signature verification)
+- [x] **Universal Cedar:** ALL routes frontended by Cedar - no exceptions file. Uses appropriate principal types:
+  - `Anonymous`: health, SSO callbacks, invite/accept
+  - `Service`: stripe/webhook (after signature verification), internal/summarize (after secret check)
+  - `User`: All authenticated routes (billing, agents, sessions, orgs)
 - [x] **CI integration:** Run as part of `pnpm test:authz-coverage` in pre-commit and CI
 
-**`scripts/check-authz-coverage.test.ts`**
+**`lib/authz/__tests__/authz-coverage.test.ts`**
 
-- [x] Detects route without Cedar call
-- [x] Passes route with `withAuthZ()` wrapper
-- [x] Passes route with explicit `cedar.isAuthorized()`
-- [x] Respects exceptions list
-- [x] Fails CI if any uncovered route found
+- [x] Discovers all API routes automatically
+- [x] Passes route with `cedar.isAuthorized()` call
+- [x] Passes route using NextAuth handler delegation
+- [x] **Fails if any route bypasses Cedar**
+- [x] Fails if `authz-exceptions.json` exists (enforces zero-exception policy)
 
 ### Shared Component Usage Check
 
