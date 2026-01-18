@@ -847,9 +847,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [x] **Finance Planner Tests:** 49 tests covering input/output schemas, prompt compilation, rendering
 
-### 2.3 Prompt Templates (Handlebars)
+### 2.3 Prompt Templates (Handlebars) ✅
 
-- [ ] **Create Template per Agent:**
+- [x] **Create Template per Agent:** Implemented in lib/agents/\*/prompt-template.ts using Handlebars:
 
   ```handlebars
   {{! packages/agents/legal-advisor/prompt.hbs }}
