@@ -1603,11 +1603,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Submitting sends follow-up query
 - [ ] Follow-up response displays
 
-**`e2e/session-history.spec.ts`**
+**`e2e/session-history.spec.ts`** ✅ (11 tests created)
 
-- [ ] Past sessions appear in sidebar
-- [ ] Clicking session loads history
-- [ ] New query in old session continues
+- [x] Past sessions appear in sidebar
+- [x] Clicking session loads history
+- [x] New query in old session continues
 
 **`e2e/export-pdf.spec.ts`**
 
@@ -1620,11 +1620,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Opening link shows content
 - [ ] Unauthenticated redirects to login
 
-**`e2e/responsive-mobile.spec.ts`**
+**`e2e/responsive-mobile.spec.ts`** ✅ (11 tests created)
 
-- [ ] Sidebar collapses on mobile
-- [ ] Input form usable on mobile
-- [ ] Response readable on mobile
+- [x] Sidebar collapses on mobile
+- [x] Input form usable on mobile
+- [x] Response readable on mobile
 
 #### Additional Tests for New Phase 4 Features
 
