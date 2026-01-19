@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1758    | ✅ Passing                     |
+| Unit Tests             | ~1763    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1888** | ✅ All passing in CI           |
+| **Total**              | **1893** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1455,7 +1455,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 ### 4.1 Agent Selection Sidebar
 
 - [x] **Component:** Sidebar listing agents (from `GET /api/agents`). Group by category if many. Show beta badge. Highlight selected agent.
-- [ ] **Workspace Indicator:** Show current org context at top of sidebar.
+- [x] **Workspace Indicator:** Show current org context at top of sidebar.
 
 ### 4.2 Dynamic Input Form
 
@@ -1519,7 +1519,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Shows beta badge when `isBeta: true`
 - [x] Highlights selected agent
 - [x] Calls `onSelectAgent` when agent clicked
-- [ ] Shows workspace indicator
+- [x] Shows workspace indicator
 
 **`components/forms/dynamic-form.test.tsx`**
 

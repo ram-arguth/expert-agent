@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Bot,
@@ -14,12 +14,19 @@ import {
   ChevronRight,
   Building2,
   CreditCard,
+  User,
   type LucideIcon,
-} from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useWorkspace } from "@/lib/context/workspace-context";
 
 export interface NavItem {
   title: string;
@@ -30,18 +37,18 @@ export interface NavItem {
 
 // Navigation items aligned with Expert Agent Platform DESIGN.md
 const defaultNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Expert Agents', href: '/agents', icon: Bot },
-  { title: 'Conversations', href: '/conversations', icon: MessageSquare },
-  { title: 'Reports', href: '/reports', icon: FileText },
-  { title: 'Settings', href: '/settings', icon: Settings },
-  { title: 'Help', href: '/help', icon: HelpCircle },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Expert Agents", href: "/agents", icon: Bot },
+  { title: "Conversations", href: "/conversations", icon: MessageSquare },
+  { title: "Reports", href: "/reports", icon: FileText },
+  { title: "Settings", href: "/settings", icon: Settings },
+  { title: "Help", href: "/help", icon: HelpCircle },
 ];
 
 // Additional nav items for organization context
 const orgNavItems: NavItem[] = [
-  { title: 'Organization', href: '/organization', icon: Building2 },
-  { title: 'Billing', href: '/billing', icon: CreditCard },
+  { title: "Organization", href: "/organization", icon: Building2 },
+  { title: "Billing", href: "/billing", icon: CreditCard },
 ];
 
 export interface SidebarProps {
@@ -61,18 +68,23 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { status } = useSession();
-  const isAuthenticated = status === 'authenticated';
-  const logoHref = isAuthenticated ? '/dashboard' : '/';
+  const { activeOrgId, activeOrg, switchWorkspace } = useWorkspace();
+  const isAuthenticated = status === "authenticated";
+  const logoHref = isAuthenticated ? "/dashboard" : "/";
 
   const allItems = showOrgItems ? [...items, ...orgNavItems] : items;
+
+  // Display name for workspace indicator
+  const workspaceName = activeOrg?.name || "Personal";
+  const WorkspaceIcon = activeOrgId ? Building2 : User;
 
   return (
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'bg-card flex h-full flex-col border-r transition-all duration-300',
-          collapsed ? 'w-16' : 'w-64',
-          className
+          "bg-card flex h-full flex-col border-r transition-all duration-300",
+          collapsed ? "w-16" : "w-64",
+          className,
         )}
         data-testid="sidebar"
       >
@@ -80,27 +92,82 @@ export function Sidebar({
         <div className="flex h-16 items-center border-b px-4">
           <Link href={logoHref} className="flex items-center gap-2">
             <Bot className="text-primary h-6 w-6" />
-            {!collapsed && <span className="text-primary text-xl font-bold">Expert AI</span>}
+            {!collapsed && (
+              <span className="text-primary text-xl font-bold">Expert AI</span>
+            )}
           </Link>
         </div>
 
+        {/* Workspace Indicator */}
+        {isAuthenticated && (
+          <div className="border-b" data-testid="workspace-indicator">
+            {collapsed ? (
+              <div className="flex justify-center py-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={() => {
+                        // Could open a modal or navigate to workspace selection
+                      }}
+                      aria-label={`Current workspace: ${workspaceName}`}
+                    >
+                      <WorkspaceIcon className="h-5 w-5 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Workspace:</span>
+                      <br />
+                      <span className="font-medium">{workspaceName}</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                className="flex w-full items-center justify-start gap-2 px-4 py-3 h-auto text-sm hover:bg-accent"
+                onClick={() => {
+                  // Navigate to workspace settings/switcher
+                  window.location.href = "/organization";
+                }}
+                aria-label={`Current workspace: ${workspaceName}. Click to manage.`}
+              >
+                <WorkspaceIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 text-left min-w-0">
+                  <div className="text-xs text-muted-foreground">Workspace</div>
+                  <div className="font-medium truncate">{workspaceName}</div>
+                </div>
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-2" role="navigation" aria-label="Main navigation">
+        <nav
+          className="flex-1 space-y-1 p-2"
+          role="navigation"
+          aria-label="Main navigation"
+        >
           {allItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+            const isActive =
+              pathname === item.href || pathname?.startsWith(`${item.href}/`);
             const Icon = item.icon;
 
             const linkContent = (
               <Link
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  collapsed && 'justify-center px-2'
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  collapsed && "justify-center px-2",
                 )}
-                aria-current={isActive ? 'page' : undefined}
+                aria-current={isActive ? "page" : undefined}
               >
                 <Icon className="h-5 w-5 shrink-0" />
                 {!collapsed && <span>{item.title}</span>}
@@ -133,7 +200,7 @@ export function Sidebar({
               size="sm"
               onClick={onToggle}
               className="w-full justify-center"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
                 <ChevronRight className="h-4 w-4" />
