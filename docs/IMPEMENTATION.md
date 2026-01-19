@@ -1595,13 +1595,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Submitting query shows response (dynamic-form.spec.ts - form validation)
 - [x] Response renders as Markdown (guided-interview.spec.ts - analysis display)
 
-**`e2e/highlight-follow-up.spec.ts`** _(AI response mocked)_
+**`e2e/highlight-follow-up.spec.ts`** ✅ (10 tests created)
 
-- [ ] User selects text in response
-- [ ] Tooltip appears near selection
-- [ ] Clicking opens comment popover
-- [ ] Submitting sends follow-up query
-- [ ] Follow-up response displays
+- [x] User selects text in response
+- [x] Tooltip appears near selection
+- [x] Clicking opens comment popover
+- [x] Submitting sends follow-up query
+- [x] Follow-up response displays
 
 **`e2e/session-history.spec.ts`** ✅ (11 tests created)
 
@@ -1642,19 +1642,19 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Clicking favorite toggles pin state
 - [ ] Filters by: favorites, recent, shared
 
-**`e2e/chat-panel.spec.ts`** _(AI response mocked)_
+**`e2e/chat-panel.spec.ts`** ✅ (10 tests created)
 
-- [ ] Chat sidebar opens from report view
-- [ ] User can ask follow-up in chat
-- [ ] "Incorporate" button updates report
-- [ ] Chat shows "✓ Incorporated into v3"
+- [x] Chat sidebar opens from report view
+- [x] User can ask follow-up in chat
+- [x] "Incorporate" button updates report
+- [x] Chat shows "✓ Incorporated into v3"
 
-**`e2e/artifact-favorites.spec.ts`**
+**`e2e/artifact-favorites.spec.ts`** ✅ (10 tests created)
 
-- [ ] User can pin an artifact
-- [ ] Pinned artifacts appear in Favorites section
-- [ ] User can unpin artifact
-- [ ] Shared-with-me shows artifacts shared by others
+- [x] User can pin an artifact
+- [x] Pinned artifacts appear in Favorites section
+- [x] User can unpin artifact
+- [x] Shared-with-me shows artifacts shared by others
 
 ---
 
