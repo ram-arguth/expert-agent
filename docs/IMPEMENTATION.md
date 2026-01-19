@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1763    | ✅ Passing                     |
+| Unit Tests             | ~1783    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1893** | ✅ All passing in CI           |
+| **Total**              | **1913** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1467,7 +1467,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - `z.any()` with file description → Single file upload
   - File arrays → Multi-file upload
 - [x] **Descriptions:** Use `.describe()` metadata for labels and hints.
-- [ ] **Submit Handler:** Validate, upload files, call `POST /api/query`.
+- [x] **Submit Handler:** Validate, upload files, call `POST /api/query`. (`lib/hooks/use-agent-query.ts`, `lib/services/file-upload-service.ts`)
 
 ### 4.3 Chat/Document Display
 
