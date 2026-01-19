@@ -20,8 +20,8 @@ pnpm test:unit -- --run
 echo "🔐 Checking Cedar authorization coverage..."
 pnpm test:authz-coverage
 
-# 5. Check component usage (warning-only, non-blocking)
+# 5. Check component usage (MANDATORY - blocking)
 echo "🧩 Checking shared component usage..."
-pnpm test:component-usage || echo "⚠️  Component usage warnings (non-blocking)"
+pnpm test:component-usage
 
 echo "✅ All pre-commit checks passed!"
