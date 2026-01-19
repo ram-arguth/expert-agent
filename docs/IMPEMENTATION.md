@@ -37,8 +37,8 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 | ---------------------- | -------- | ------------------------------ |
 | Unit Tests             | ~1758    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
-| E2E Tests (Playwright) | ~250     | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1814** | ✅ All passing in CI           |
+| E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
+| **Total**              | **1888** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1588,12 +1588,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### E2E Tests (Playwright + **Mocked AI Backend**)
 
-**`e2e/chat-ui.spec.ts`** _(AI response mocked)_
+**`e2e/chat-ui.spec.ts`** ✅ (covered by `e2e/agent-catalog.spec.ts` + `e2e/dynamic-form.spec.ts`)
 
-- [ ] Agent sidebar displays
-- [ ] Selecting agent shows input form
-- [ ] Submitting query shows response
-- [ ] Response renders as Markdown
+- [x] Agent sidebar displays (agent-catalog.spec.ts - sidebar shows agent list)
+- [x] Selecting agent shows input form (agent-catalog.spec.ts - clicking agent navigates)
+- [x] Submitting query shows response (dynamic-form.spec.ts - form validation)
+- [x] Response renders as Markdown (guided-interview.spec.ts - analysis display)
 
 **`e2e/highlight-follow-up.spec.ts`** _(AI response mocked)_
 
