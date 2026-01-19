@@ -14,27 +14,27 @@
  * @see docs/DESIGN.md - Agent Input Schemas
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useForm, Controller, FieldErrors } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z, ZodObject, ZodRawShape, ZodTypeAny } from 'zod';
-import { Loader2, Upload, X, FileText, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select } from '@/components/ui/select';
+import * as React from "react";
+import { useForm, Controller, FieldErrors } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z, ZodObject, ZodRawShape, ZodTypeAny } from "zod";
+import { Loader2, Upload, X, FileText, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select } from "@/components/ui/select";
 
 /**
  * Field metadata extracted from Zod schema
  */
 interface FieldMeta {
   name: string;
-  type: 'string' | 'text' | 'number' | 'boolean' | 'enum' | 'file' | 'files';
+  type: "string" | "text" | "number" | "boolean" | "enum" | "file" | "files";
   label: string;
   description?: string;
   required: boolean;
@@ -49,28 +49,25 @@ interface FieldMeta {
 /**
  * Extract field metadata from a Zod schema
  */
-function extractFieldMeta(
-  name: string,
-  zodType: ZodTypeAny
-): FieldMeta | null {
+function extractFieldMeta(name: string, zodType: ZodTypeAny): FieldMeta | null {
   // Handle optional wrapper
   let innerType = zodType;
   let required = true;
-  
+
   // Unwrap ZodOptional
-  if (zodType._def.typeName === 'ZodOptional') {
+  if (zodType._def.typeName === "ZodOptional") {
     innerType = zodType._def.innerType;
     required = false;
   }
-  
+
   // Unwrap ZodNullable
-  if (innerType._def.typeName === 'ZodNullable') {
+  if (innerType._def.typeName === "ZodNullable") {
     innerType = innerType._def.innerType;
     required = false;
   }
-  
+
   // Unwrap ZodDefault (has a default value, so technically not required)
-  if (innerType._def.typeName === 'ZodDefault') {
+  if (innerType._def.typeName === "ZodDefault") {
     innerType = innerType._def.innerType;
     required = false;
   }
@@ -80,15 +77,16 @@ function extractFieldMeta(
 
   // Handle different Zod types
   switch (innerType._def.typeName) {
-    case 'ZodString': {
+    case "ZodString": {
       // Check if it's a long text field based on description
-      const isLongText = description?.toLowerCase().includes('context') ||
-                          description?.toLowerCase().includes('description') ||
-                          name.toLowerCase().includes('context') ||
-                          name.toLowerCase().includes('notes');
+      const isLongText =
+        description?.toLowerCase().includes("context") ||
+        description?.toLowerCase().includes("description") ||
+        name.toLowerCase().includes("context") ||
+        name.toLowerCase().includes("notes");
       return {
         name,
-        type: isLongText ? 'text' : 'string',
+        type: isLongText ? "text" : "string",
         label,
         description,
         required,
@@ -96,40 +94,44 @@ function extractFieldMeta(
       };
     }
 
-    case 'ZodNumber':
+    case "ZodNumber":
       return {
         name,
-        type: 'number',
+        type: "number",
         label,
         description,
         required,
-        min: innerType._def.checks?.find((c: { kind: string }) => c.kind === 'min')?.value,
-        max: innerType._def.checks?.find((c: { kind: string }) => c.kind === 'max')?.value,
+        min: innerType._def.checks?.find(
+          (c: { kind: string }) => c.kind === "min",
+        )?.value,
+        max: innerType._def.checks?.find(
+          (c: { kind: string }) => c.kind === "max",
+        )?.value,
       };
 
-    case 'ZodBoolean':
+    case "ZodBoolean":
       return {
         name,
-        type: 'boolean',
+        type: "boolean",
         label,
         description,
         required,
       };
 
-    case 'ZodEnum':
+    case "ZodEnum":
       return {
         name,
-        type: 'enum',
+        type: "enum",
         label,
         description,
         required,
         options: innerType._def.values,
       };
 
-    case 'ZodNativeEnum':
+    case "ZodNativeEnum":
       return {
         name,
-        type: 'enum',
+        type: "enum",
         label,
         description,
         required,
@@ -137,35 +139,39 @@ function extractFieldMeta(
       };
 
     // File handling via custom check
-    case 'ZodAny':
-    case 'ZodUnknown':
+    case "ZodAny":
+    case "ZodUnknown":
       // Check description for file hints
-      if (description?.toLowerCase().includes('file') ||
-          description?.toLowerCase().includes('upload') ||
-          description?.toLowerCase().includes('document')) {
+      if (
+        description?.toLowerCase().includes("file") ||
+        description?.toLowerCase().includes("upload") ||
+        description?.toLowerCase().includes("document")
+      ) {
         return {
           name,
-          type: 'file',
+          type: "file",
           label,
           description,
           required,
-          accept: '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg',
+          accept: ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg",
         };
       }
       return null;
 
-    case 'ZodArray': {
+    case "ZodArray": {
       // Handle file arrays
       const elementType = innerType._def.type;
-      if (elementType._def.description?.toLowerCase().includes('file') ||
-          name.toLowerCase().includes('file')) {
+      if (
+        elementType._def.description?.toLowerCase().includes("file") ||
+        name.toLowerCase().includes("file")
+      ) {
         return {
           name,
-          type: 'files',
+          type: "files",
           label,
           description,
           required,
-          accept: '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg',
+          accept: ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg",
           multiple: true,
         };
       }
@@ -182,7 +188,7 @@ function extractFieldMeta(
  */
 function formatLabel(name: string): string {
   return name
-    .replace(/([A-Z])/g, ' $1')
+    .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase())
     .trim();
 }
@@ -190,13 +196,7 @@ function formatLabel(name: string): string {
 /**
  * File preview component
  */
-function FilePreview({
-  file,
-  onRemove,
-}: {
-  file: File;
-  onRemove: () => void;
-}) {
+function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
   return (
     <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
       <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -218,6 +218,11 @@ function FilePreview({
 }
 
 /**
+ * Default max file size: 10MB
+ */
+const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+/**
  * File drop zone component
  */
 function FileDropZone({
@@ -226,52 +231,97 @@ function FileDropZone({
   value,
   onChange,
   error,
+  maxSize = DEFAULT_MAX_FILE_SIZE,
 }: {
   accept?: string;
   multiple?: boolean;
   value: File | File[] | null;
   onChange: (files: File | File[] | null) => void;
   error?: string;
+  maxSize?: number;
 }) {
   const [isDragging, setIsDragging] = React.useState(false);
+  const [sizeError, setSizeError] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  /**
+   * Validate file sizes and filter out oversized files
+   */
+  const validateFiles = React.useCallback(
+    (files: File[]): File[] => {
+      const validFiles: File[] = [];
+      const oversizedFiles: string[] = [];
+
+      for (const file of files) {
+        if (file.size > maxSize) {
+          oversizedFiles.push(file.name);
+        } else {
+          validFiles.push(file);
+        }
+      }
+
+      if (oversizedFiles.length > 0) {
+        const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+        setSizeError(
+          `File${oversizedFiles.length > 1 ? "s" : ""} too large: ${oversizedFiles.join(", ")} (max ${maxSizeMB}MB)`,
+        );
+      } else {
+        setSizeError(null);
+      }
+
+      return validFiles;
+    },
+    [maxSize],
+  );
 
   const handleDrop = React.useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
-      
+
       const files = Array.from(e.dataTransfer.files);
       if (files.length === 0) return;
-      
+
+      const validFiles = validateFiles(files);
+      if (validFiles.length === 0) return;
+
       if (multiple) {
         const currentFiles = Array.isArray(value) ? value : [];
-        onChange([...currentFiles, ...files]);
+        onChange([...currentFiles, ...validFiles]);
       } else {
-        onChange(files[0]);
+        onChange(validFiles[0]);
       }
     },
-    [multiple, value, onChange]
+    [multiple, value, onChange, validateFiles],
   );
 
   const handleFileSelect = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
-      
+
+      const validFiles = validateFiles(files);
+      if (validFiles.length === 0) {
+        // Reset input even on error for re-selection
+        if (inputRef.current) {
+          inputRef.current.value = "";
+        }
+        return;
+      }
+
       if (multiple) {
         const currentFiles = Array.isArray(value) ? value : [];
-        onChange([...currentFiles, ...files]);
+        onChange([...currentFiles, ...validFiles]);
       } else {
-        onChange(files[0]);
+        onChange(validFiles[0]);
       }
-      
+
       // Reset input for re-selection
       if (inputRef.current) {
-        inputRef.current.value = '';
+        inputRef.current.value = "";
       }
     },
-    [multiple, value, onChange]
+    [multiple, value, onChange, validateFiles],
   );
 
   const handleRemove = React.useCallback(
@@ -283,7 +333,7 @@ function FileDropZone({
         onChange(null);
       }
     },
-    [multiple, value, onChange]
+    [multiple, value, onChange],
   );
 
   const files = Array.isArray(value) ? value : value ? [value] : [];
@@ -292,10 +342,12 @@ function FileDropZone({
     <div className="space-y-2">
       <div
         className={cn(
-          'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
-          isDragging && 'border-primary bg-primary/5',
-          error && 'border-destructive',
-          !isDragging && !error && 'border-muted-foreground/25 hover:border-primary/50'
+          "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+          isDragging && "border-primary bg-primary/5",
+          error && "border-destructive",
+          !isDragging &&
+            !error &&
+            "border-muted-foreground/25 hover:border-primary/50",
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -319,7 +371,7 @@ function FileDropZone({
         </p>
         {accept && (
           <p className="text-xs text-muted-foreground mt-1">
-            Accepted: {accept.replace(/\./g, '').replace(/,/g, ', ')}
+            Accepted: {accept.replace(/\./g, "").replace(/,/g, ", ")}
           </p>
         )}
       </div>
@@ -336,10 +388,13 @@ function FileDropZone({
         </div>
       )}
 
-      {error && (
-        <p className="text-sm text-destructive flex items-center gap-1">
+      {(error || sizeError) && (
+        <p
+          className="text-sm text-destructive flex items-center gap-1"
+          data-testid="file-error"
+        >
           <AlertCircle className="h-3 w-3" />
-          {error}
+          {error || sizeError}
         </p>
       )}
     </div>
@@ -373,7 +428,7 @@ export function DynamicForm<T extends ZodRawShape>({
   schema,
   onSubmit,
   defaultValues,
-  submitLabel = 'Submit',
+  submitLabel = "Submit",
   isLoading = false,
   className,
 }: DynamicFormProps<T>) {
@@ -413,7 +468,7 @@ export function DynamicForm<T extends ZodRawShape>({
   return (
     <form
       onSubmit={onFormSubmit}
-      className={cn('space-y-6', className)}
+      className={cn("space-y-6", className)}
       data-testid="dynamic-form"
     >
       {fields.map((field) => (
@@ -424,7 +479,7 @@ export function DynamicForm<T extends ZodRawShape>({
           </Label>
 
           {/* String input */}
-          {field.type === 'string' && (
+          {field.type === "string" && (
             <Input
               id={field.name}
               placeholder={field.placeholder}
@@ -434,7 +489,7 @@ export function DynamicForm<T extends ZodRawShape>({
           )}
 
           {/* Text area */}
-          {field.type === 'text' && (
+          {field.type === "text" && (
             <Textarea
               id={field.name}
               placeholder={field.placeholder}
@@ -445,7 +500,7 @@ export function DynamicForm<T extends ZodRawShape>({
           )}
 
           {/* Number input */}
-          {field.type === 'number' && (
+          {field.type === "number" && (
             <Input
               id={field.name}
               type="number"
@@ -457,7 +512,7 @@ export function DynamicForm<T extends ZodRawShape>({
           )}
 
           {/* Boolean checkbox */}
-          {field.type === 'boolean' && (
+          {field.type === "boolean" && (
             <Controller
               name={field.name}
               control={control}
@@ -479,7 +534,7 @@ export function DynamicForm<T extends ZodRawShape>({
           )}
 
           {/* Enum select */}
-          {field.type === 'enum' && field.options && (
+          {field.type === "enum" && field.options && (
             <Controller
               name={field.name as any}
               control={control}
@@ -499,14 +554,14 @@ export function DynamicForm<T extends ZodRawShape>({
           )}
 
           {/* File upload */}
-          {(field.type === 'file' || field.type === 'files') && (
+          {(field.type === "file" || field.type === "files") && (
             <Controller
               name={field.name}
               control={control}
               render={({ field: controllerField }) => (
                 <FileDropZone
                   accept={field.accept}
-                  multiple={field.type === 'files'}
+                  multiple={field.type === "files"}
                   value={controllerField.value}
                   onChange={controllerField.onChange}
                   error={getError(field.name)}
@@ -516,15 +571,17 @@ export function DynamicForm<T extends ZodRawShape>({
           )}
 
           {/* Error message */}
-          {field.type !== 'file' && field.type !== 'files' && getError(field.name) && (
-            <p className="text-sm text-destructive flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
-              {getError(field.name)}
-            </p>
-          )}
+          {field.type !== "file" &&
+            field.type !== "files" &&
+            getError(field.name) && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {getError(field.name)}
+              </p>
+            )}
 
           {/* Description (if not shown with boolean) */}
-          {field.type !== 'boolean' && field.description && (
+          {field.type !== "boolean" && field.description && (
             <p className="text-xs text-muted-foreground">{field.description}</p>
           )}
         </div>

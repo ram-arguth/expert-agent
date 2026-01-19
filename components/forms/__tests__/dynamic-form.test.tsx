@@ -11,13 +11,13 @@
  * @see docs/IMPEMENTATION.md - Phase 4.7 Test Requirements
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { z } from 'zod';
-import { DynamicForm } from '../dynamic-form';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { z } from "zod";
+import { DynamicForm } from "../dynamic-form";
 
-describe('DynamicForm', () => {
+describe("DynamicForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -26,69 +26,69 @@ describe('DynamicForm', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Field Type Rendering', () => {
-    it('renders text input for z.string()', async () => {
+  describe("Field Type Rendering", () => {
+    it("renders text input for z.string()", async () => {
       const schema = z.object({
-        name: z.string().describe('Your name'),
+        name: z.string().describe("Your name"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const input = screen.getByRole('textbox', { name: /your name/i });
+      const input = screen.getByRole("textbox", { name: /your name/i });
       expect(input).toBeInTheDocument();
       // Input is rendered correctly (no type check needed as Input component handles this)
     });
 
-    it('renders textarea for long text fields', async () => {
+    it("renders textarea for long text fields", async () => {
       const schema = z.object({
-        additionalContext: z.string().optional().describe('Additional context'),
+        additionalContext: z.string().optional().describe("Additional context"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
       // Should be a textarea due to 'context' in name
-      const textarea = screen.getByRole('textbox');
-      expect(textarea.tagName.toLowerCase()).toBe('textarea');
+      const textarea = screen.getByRole("textbox");
+      expect(textarea.tagName.toLowerCase()).toBe("textarea");
     });
 
-    it('renders number input for z.number()', async () => {
+    it("renders number input for z.number()", async () => {
       const schema = z.object({
-        age: z.number().describe('Your age'),
+        age: z.number().describe("Your age"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const input = screen.getByRole('spinbutton', { name: /your age/i });
+      const input = screen.getByRole("spinbutton", { name: /your age/i });
       expect(input).toBeInTheDocument();
-      expect(input).toHaveAttribute('type', 'number');
+      expect(input).toHaveAttribute("type", "number");
     });
 
-    it('renders checkbox for z.boolean()', async () => {
+    it("renders checkbox for z.boolean()", async () => {
       const schema = z.object({
-        agreeToTerms: z.boolean().describe('I agree to the terms'),
+        agreeToTerms: z.boolean().describe("I agree to the terms"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const checkbox = screen.getByRole('checkbox');
+      const checkbox = screen.getByRole("checkbox");
       expect(checkbox).toBeInTheDocument();
     });
 
-    it('renders select dropdown for z.enum()', async () => {
+    it("renders select dropdown for z.enum()", async () => {
       const schema = z.object({
-        priority: z.enum(['low', 'medium', 'high']).describe('Priority level'),
+        priority: z.enum(["low", "medium", "high"]).describe("Priority level"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const select = screen.getByRole('combobox');
+      const select = screen.getByRole("combobox");
       expect(select).toBeInTheDocument();
     });
 
-    it('shows required indicator for required fields', async () => {
+    it("shows required indicator for required fields", async () => {
       const schema = z.object({
-        requiredField: z.string().describe('Required field'),
-        optionalField: z.string().optional().describe('Optional field'),
+        requiredField: z.string().describe("Required field"),
+        optionalField: z.string().optional().describe("Optional field"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
@@ -96,13 +96,13 @@ describe('DynamicForm', () => {
       // Required field should have asterisk in parent label element
       const labels = screen.getAllByText(/required field/i);
       // Check that we have a required asterisk somewhere
-      const allText = screen.getByTestId('dynamic-form').innerHTML;
-      expect(allText).toContain('text-destructive');
+      const allText = screen.getByTestId("dynamic-form").innerHTML;
+      expect(allText).toContain("text-destructive");
     });
 
-    it('renders file upload for file fields', async () => {
+    it("renders file upload for file fields", async () => {
       const schema = z.object({
-        document: z.any().describe('Upload your file'),
+        document: z.any().describe("Upload your file"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
@@ -112,19 +112,19 @@ describe('DynamicForm', () => {
     });
   });
 
-  describe('Validation', () => {
-    it('shows validation error for required empty field', async () => {
+  describe("Validation", () => {
+    it("shows validation error for required empty field", async () => {
       const user = userEvent.setup();
       const onSubmit = vi.fn();
-      
+
       const schema = z.object({
-        name: z.string().min(1, 'Name is required'),
+        name: z.string().min(1, "Name is required"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={onSubmit} />);
 
       // Submit without filling
-      await user.click(screen.getByRole('button', { name: /submit/i }));
+      await user.click(screen.getByRole("button", { name: /submit/i }));
 
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument();
@@ -132,98 +132,89 @@ describe('DynamicForm', () => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it('shows validation error for invalid input', async () => {
+    it("shows validation error for invalid input", async () => {
       const user = userEvent.setup();
-      
+
       const schema = z.object({
-        email: z.string().email('Invalid email format'),
+        email: z.string().email("Invalid email format"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const input = screen.getByRole('textbox');
-      await user.type(input, 'not-an-email');
-      await user.click(screen.getByRole('button', { name: /submit/i }));
+      const input = screen.getByRole("textbox");
+      await user.type(input, "not-an-email");
+      await user.click(screen.getByRole("button", { name: /submit/i }));
 
       await waitFor(() => {
         expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
       });
     });
 
-    it('clears error when valid input provided', async () => {
+    it("clears error when valid input provided", async () => {
       const user = userEvent.setup();
-      
+
       const schema = z.object({
-        name: z.string().min(1, 'Name is required'),
+        name: z.string().min(1, "Name is required"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
       // Submit to trigger error
-      await user.click(screen.getByRole('button', { name: /submit/i }));
-      
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument();
       });
 
       // Type valid input
-      const input = screen.getByRole('textbox');
-      await user.type(input, 'John');
+      const input = screen.getByRole("textbox");
+      await user.type(input, "John");
 
       // Submit again - error should clear
-      await user.click(screen.getByRole('button', { name: /submit/i }));
-      
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
       await waitFor(() => {
         expect(screen.queryByText(/name is required/i)).not.toBeInTheDocument();
       });
     });
   });
 
-  describe('Submit Handling', () => {
-    it('calls onSubmit with validated data', async () => {
+  describe("Submit Handling", () => {
+    it("calls onSubmit with validated data", async () => {
       const user = userEvent.setup();
       const onSubmit = vi.fn();
-      
+
       // Use optional field to avoid validation blocking
       const schema = z.object({
-        notes: z.string().optional().describe('Notes'),
+        notes: z.string().optional().describe("Notes"),
       });
 
-      render(
-        <DynamicForm
-          schema={schema}
-          onSubmit={onSubmit}
-        />
-      );
+      render(<DynamicForm schema={schema} onSubmit={onSubmit} />);
 
-      const textarea = screen.getByRole('textbox');
-      await user.type(textarea, 'Test notes');
-      await user.click(screen.getByRole('button', { name: /submit/i }));
+      const textarea = screen.getByRole("textbox");
+      await user.type(textarea, "Test notes");
+      await user.click(screen.getByRole("button", { name: /submit/i }));
 
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalled();
       });
     });
 
-    it('shows loading state during submission', async () => {
+    it("shows loading state during submission", async () => {
       const schema = z.object({
         name: z.string(),
       });
 
       render(
-        <DynamicForm
-          schema={schema}
-          onSubmit={vi.fn()}
-          isLoading={true}
-        />
+        <DynamicForm schema={schema} onSubmit={vi.fn()} isLoading={true} />,
       );
 
-      const button = screen.getByRole('button');
+      const button = screen.getByRole("button");
       expect(button).toBeDisabled();
       expect(screen.getByText(/processing/i)).toBeInTheDocument();
     });
 
-    it('uses custom submit label', async () => {
+    it("uses custom submit label", async () => {
       const schema = z.object({
         name: z.string(),
       });
@@ -233,15 +224,17 @@ describe('DynamicForm', () => {
           schema={schema}
           onSubmit={vi.fn()}
           submitLabel="Send Query"
-        />
+        />,
       );
 
-      expect(screen.getByRole('button', { name: /send query/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /send query/i }),
+      ).toBeInTheDocument();
     });
   });
 
-  describe('Default Values', () => {
-    it('populates form with default values', async () => {
+  describe("Default Values", () => {
+    it("populates form with default values", async () => {
       const schema = z.object({
         name: z.string(),
         email: z.string(),
@@ -251,26 +244,26 @@ describe('DynamicForm', () => {
         <DynamicForm
           schema={schema}
           onSubmit={vi.fn()}
-          defaultValues={{ name: 'John', email: 'john@example.com' }}
-        />
+          defaultValues={{ name: "John", email: "john@example.com" }}
+        />,
       );
 
-      const inputs = screen.getAllByRole('textbox');
-      expect(inputs[0]).toHaveValue('John');
-      expect(inputs[1]).toHaveValue('john@example.com');
+      const inputs = screen.getAllByRole("textbox");
+      expect(inputs[0]).toHaveValue("John");
+      expect(inputs[1]).toHaveValue("john@example.com");
     });
   });
 
-  describe('Enum/Select Fields', () => {
-    it('renders select dropdown for enum schema', async () => {
+  describe("Enum/Select Fields", () => {
+    it("renders select dropdown for enum schema", async () => {
       const schema = z.object({
-        status: z.enum(['draft', 'published', 'archived']).describe('Status'),
+        status: z.enum(["draft", "published", "archived"]).describe("Status"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
       // Select should be rendered
-      const select = screen.getByRole('combobox');
+      const select = screen.getByRole("combobox");
       expect(select).toBeInTheDocument();
     });
 
@@ -278,10 +271,10 @@ describe('DynamicForm', () => {
     // with Radix UI Select's pointer capture. E2E tests cover this functionality.
   });
 
-  describe('Checkbox Fields', () => {
-    it('renders checkbox for boolean schema', async () => {
+  describe("Checkbox Fields", () => {
+    it("renders checkbox for boolean schema", async () => {
       const schema = z.object({
-        agreed: z.boolean().describe('I agree'),
+        agreed: z.boolean().describe("I agree"),
       });
 
       render(
@@ -289,18 +282,18 @@ describe('DynamicForm', () => {
           schema={schema}
           onSubmit={vi.fn()}
           defaultValues={{ agreed: false }}
-        />
+        />,
       );
 
-      const checkbox = screen.getByRole('checkbox');
+      const checkbox = screen.getByRole("checkbox");
       expect(checkbox).toBeInTheDocument();
     });
 
-    it('checkbox can be toggled', async () => {
+    it("checkbox can be toggled", async () => {
       const user = userEvent.setup();
-      
+
       const schema = z.object({
-        agreed: z.boolean().describe('I agree'),
+        agreed: z.boolean().describe("I agree"),
       });
 
       render(
@@ -308,53 +301,57 @@ describe('DynamicForm', () => {
           schema={schema}
           onSubmit={vi.fn()}
           defaultValues={{ agreed: false }}
-        />
+        />,
       );
 
-      const checkbox = screen.getByRole('checkbox');
+      const checkbox = screen.getByRole("checkbox");
       // Radix UI checkbox may use aria-checked instead of checked
-      expect(checkbox).toHaveAttribute('aria-checked', 'false');
+      expect(checkbox).toHaveAttribute("aria-checked", "false");
 
       await user.click(checkbox);
-      expect(checkbox).toHaveAttribute('aria-checked', 'true');
+      expect(checkbox).toHaveAttribute("aria-checked", "true");
     });
   });
 
-  describe('File Upload', () => {
-    it('accepts dropped files', async () => {
+  describe("File Upload", () => {
+    it("accepts dropped files", async () => {
       const schema = z.object({
-        document: z.any().describe('Upload file'),
+        document: z.any().describe("Upload file"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const dropzone = screen.getByText(/drag & drop/i).closest('div');
+      const dropzone = screen.getByText(/drag & drop/i).closest("div");
       expect(dropzone).toBeInTheDocument();
 
       // Simulate file drop
-      const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
+      const file = new File(["test content"], "test.pdf", {
+        type: "application/pdf",
+      });
       const dataTransfer = {
         files: [file],
-        types: ['Files'],
+        types: ["Files"],
       };
 
       fireEvent.drop(dropzone!, { dataTransfer });
 
       await waitFor(() => {
-        expect(screen.getByText('test.pdf')).toBeInTheDocument();
+        expect(screen.getByText("test.pdf")).toBeInTheDocument();
       });
     });
 
-    it('shows file size', async () => {
+    it("shows file size", async () => {
       const schema = z.object({
-        document: z.any().describe('Upload file'),
+        document: z.any().describe("Upload file"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const dropzone = screen.getByText(/drag & drop/i).closest('div');
-      const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
-      
+      const dropzone = screen.getByText(/drag & drop/i).closest("div");
+      const file = new File(["test content"], "test.pdf", {
+        type: "application/pdf",
+      });
+
       fireEvent.drop(dropzone!, {
         dataTransfer: { files: [file] },
       });
@@ -365,78 +362,169 @@ describe('DynamicForm', () => {
       });
     });
 
-    it('allows removing uploaded file', async () => {
+    it("allows removing uploaded file", async () => {
       const user = userEvent.setup();
-      
+
       const schema = z.object({
-        document: z.any().describe('Upload file'),
+        document: z.any().describe("Upload file"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const dropzone = screen.getByText(/drag & drop/i).closest('div');
-      const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
-      
+      const dropzone = screen.getByText(/drag & drop/i).closest("div");
+      const file = new File(["test"], "test.pdf", { type: "application/pdf" });
+
       fireEvent.drop(dropzone!, {
         dataTransfer: { files: [file] },
       });
 
       await waitFor(() => {
-        expect(screen.getByText('test.pdf')).toBeInTheDocument();
+        expect(screen.getByText("test.pdf")).toBeInTheDocument();
       });
 
       // Remove file
-      const removeButton = screen.getByRole('button', { name: '' }); // X button
+      const removeButton = screen.getByRole("button", { name: "" }); // X button
       await user.click(removeButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('test.pdf')).not.toBeInTheDocument();
+        expect(screen.queryByText("test.pdf")).not.toBeInTheDocument();
+      });
+    });
+
+    it("displays error for oversized file", async () => {
+      const schema = z.object({
+        document: z.any().describe("Upload file"),
+      });
+
+      render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
+
+      const dropzone = screen.getByText(/drag & drop/i).closest("div");
+
+      // Create file larger than 10MB (default max)
+      const largeContent = new Array(11 * 1024 * 1024).fill("x").join("");
+      const file = new File([largeContent], "large-file.pdf", {
+        type: "application/pdf",
+      });
+
+      fireEvent.drop(dropzone!, {
+        dataTransfer: { files: [file] },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("file-error")).toBeInTheDocument();
+        expect(screen.getByText(/file.*too large/i)).toBeInTheDocument();
+        expect(screen.getByText(/max 10mb/i)).toBeInTheDocument();
+      });
+
+      // File should not be added
+      expect(screen.queryByText("large-file.pdf")).not.toBeInTheDocument();
+    });
+
+    it("accepts file under size limit", async () => {
+      const schema = z.object({
+        document: z.any().describe("Upload file"),
+      });
+
+      render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
+
+      const dropzone = screen.getByText(/drag & drop/i).closest("div");
+
+      // Create small file (1KB)
+      const smallContent = new Array(1024).fill("x").join("");
+      const file = new File([smallContent], "small-file.pdf", {
+        type: "application/pdf",
+      });
+
+      fireEvent.drop(dropzone!, {
+        dataTransfer: { files: [file] },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("small-file.pdf")).toBeInTheDocument();
+      });
+
+      // No error should be shown
+      expect(screen.queryByTestId("file-error")).not.toBeInTheDocument();
+    });
+
+    it("filters out only oversized files from batch", async () => {
+      const schema = z.object({
+        supportingFiles: z.array(z.any()).describe("Upload supporting files"),
+      });
+
+      render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
+
+      const dropzone = screen.getByText(/drag & drop/i).closest("div");
+
+      // Create one valid and one oversized file
+      const smallContent = new Array(1024).fill("x").join("");
+      const validFile = new File([smallContent], "valid.pdf", {
+        type: "application/pdf",
+      });
+
+      const largeContent = new Array(11 * 1024 * 1024).fill("x").join("");
+      const oversizedFile = new File([largeContent], "oversized.pdf", {
+        type: "application/pdf",
+      });
+
+      fireEvent.drop(dropzone!, {
+        dataTransfer: { files: [validFile, oversizedFile] },
+      });
+
+      await waitFor(() => {
+        // Valid file should be added
+        expect(screen.getByText("valid.pdf")).toBeInTheDocument();
+        // Oversized file should not be added
+        expect(screen.queryByText("oversized.pdf")).not.toBeInTheDocument();
+        // Error should show
+        expect(screen.getByTestId("file-error")).toBeInTheDocument();
+        expect(screen.getByText(/too large/i)).toBeInTheDocument();
       });
     });
   });
 
-  describe('Accessibility', () => {
-    it('has proper form structure', async () => {
+  describe("Accessibility", () => {
+    it("has proper form structure", async () => {
       const schema = z.object({
-        name: z.string().describe('Your name'),
+        name: z.string().describe("Your name"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      expect(screen.getByTestId('dynamic-form')).toBeInTheDocument();
+      expect(screen.getByTestId("dynamic-form")).toBeInTheDocument();
     });
 
-    it('associates labels with inputs', async () => {
+    it("associates labels with inputs", async () => {
       const schema = z.object({
-        email: z.string().describe('Email address'),
+        email: z.string().describe("Email address"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      const input = screen.getByRole('textbox', { name: /email address/i });
+      const input = screen.getByRole("textbox", { name: /email address/i });
       expect(input).toBeInTheDocument();
     });
 
-    it('marks invalid fields with aria-invalid', async () => {
+    it("marks invalid fields with aria-invalid", async () => {
       const user = userEvent.setup();
-      
+
       const schema = z.object({
-        name: z.string().min(1, 'Required'),
+        name: z.string().min(1, "Required"),
       });
 
       render(<DynamicForm schema={schema} onSubmit={vi.fn()} />);
 
-      await user.click(screen.getByRole('button', { name: /submit/i }));
+      await user.click(screen.getByRole("button", { name: /submit/i }));
 
       await waitFor(() => {
-        const input = screen.getByRole('textbox');
-        expect(input).toHaveAttribute('aria-invalid', 'true');
+        const input = screen.getByRole("textbox");
+        expect(input).toHaveAttribute("aria-invalid", "true");
       });
     });
   });
 
-  describe('Security', () => {
-    it('escapes XSS in field descriptions', async () => {
+  describe("Security", () => {
+    it("escapes XSS in field descriptions", async () => {
       const schema = z.object({
         name: z.string().describe('<script>alert("xss")</script>Name'),
       });
@@ -445,11 +533,11 @@ describe('DynamicForm', () => {
 
       // Script tags should be escaped (shown as text, not executed)
       // React automatically escapes HTML content
-      const content = screen.getByTestId('dynamic-form').textContent || '';
+      const content = screen.getByTestId("dynamic-form").textContent || "";
       // Neither the script tag should execute nor be hidden
-      expect(content).toContain('script');
+      expect(content).toContain("script");
       // The form should still render
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
+      expect(screen.getByRole("textbox")).toBeInTheDocument();
     });
   });
 });

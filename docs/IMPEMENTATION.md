@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1803    | ✅ Passing                     |
+| Unit Tests             | ~1807    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1933** | ✅ All passing in CI           |
+| **Total**              | **1937** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1532,9 +1532,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 **`components/file-upload.test.tsx`** (integrated into dynamic-form)
 
 - [x] Accepts drag-drop files
-- [ ] Shows progress during upload
-- [ ] Displays error for oversized file
 - [x] Shows filename after upload
+- [x] Displays error for oversized file (10MB max)
+- [x] Filters oversized files from batch uploads
 
 **`components/chat/markdown-display.test.tsx`**
 
