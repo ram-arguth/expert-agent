@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1783    | ✅ Passing                     |
+| Unit Tests             | ~1803    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1913** | ✅ All passing in CI           |
+| **Total**              | **1933** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1628,19 +1628,19 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Additional Tests for New Phase 4 Features
 
-**`components/chat-panel.test.tsx`** _(Chat Panel)_
+**`components/chat-panel.test.tsx`** ✅ (27 tests in `chat/__tests__/chat-panel.test.tsx`)
 
-- [ ] Renders collapsible sidebar
-- [ ] Shows chat history
-- [ ] "Incorporate into Report" button visible
-- [ ] Sync state indicator shows after incorporation
+- [x] Renders collapsible sidebar
+- [x] Shows chat history
+- [x] "Incorporate into Report" button visible
+- [x] Sync state indicator shows after incorporation
 
-**`components/artifact-list.test.tsx`** _(Artifact Favorites)_
+**`components/artifact-list.test.tsx`** ✅ (20 tests in `artifacts/__tests__/artifact-list.test.tsx`)
 
-- [ ] Renders list of artifacts
-- [ ] Shows favorite icon for pinned items
-- [ ] Clicking favorite toggles pin state
-- [ ] Filters by: favorites, recent, shared
+- [x] Renders list of artifacts
+- [x] Shows favorite icon for pinned items
+- [x] Clicking favorite toggles pin state
+- [x] Filters by: favorites, recent, shared
 
 **`e2e/chat-panel.spec.ts`** ✅ (10 tests created)
 
