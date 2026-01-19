@@ -1609,16 +1609,16 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Clicking session loads history
 - [x] New query in old session continues
 
-**`e2e/export-pdf.spec.ts`**
+**`e2e/export-pdf.spec.ts`** ✅ (6 tests created)
 
-- [ ] Export button triggers download
-- [ ] Downloaded file is valid PDF
+- [x] Export button triggers download
+- [x] Downloaded file is valid PDF
 
-**`e2e/share-link.spec.ts`**
+**`e2e/share-link.spec.ts`** ✅ (10 tests created)
 
-- [ ] Share creates link
-- [ ] Opening link shows content
-- [ ] Unauthenticated redirects to login
+- [x] Share creates link
+- [x] Opening link shows content
+- [x] Unauthenticated redirects to login
 
 **`e2e/responsive-mobile.spec.ts`** ✅ (11 tests created)
 
