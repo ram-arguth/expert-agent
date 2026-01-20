@@ -1808,11 +1808,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### E2E Tests (Playwright)
 
-**`e2e/subscription-flow.spec.ts`** _(Stripe test mode)_
+**`e2e/subscription-flow.spec.ts`** ✅ (13 tests created) _(Stripe test mode)_
 
-- [ ] User clicks upgrade button
-- [ ] Redirects to Stripe Checkout
-- [ ] After payment, plan updated in UI
+- [x] User clicks upgrade button
+- [x] Redirects to Stripe Checkout
+- [x] After payment, plan updated in UI
 
 **`e2e/quota-ui.spec.ts`** ✅ (14 tests created)
 
@@ -1820,10 +1820,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Warning appears when low
 - [x] Upgrade prompt on exhausted
 
-**`e2e/billing-portal.spec.ts`** _(Stripe test mode)_
+**`e2e/billing-portal.spec.ts`** ✅ (16 tests created) _(Stripe test mode)_
 
-- [ ] Manage button opens Stripe portal
-- [ ] User can update payment (test mode)
+- [x] Manage button opens Stripe portal
+- [x] User can update payment (test mode)
 
 ---
 
