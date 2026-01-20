@@ -806,19 +806,28 @@ git push origin $TAG   # → deploys to expert-ai-prod (requires approval)
 
 When monitoring Cloud Build:
 
+- **ALWAYS use `--region=us-west1`** for Cloud Build commands in this project:
+
+  ```bash
+  # ⚠️ CRITICAL: Cloud Build Triggers run in us-west1, NOT global!
+  gcloud builds list --project=expert-ai-dev --region=us-west1 --limit=5
+  gcloud builds describe BUILD_ID --project=expert-ai-dev --region=us-west1
+  gcloud builds log BUILD_ID --project=expert-ai-dev --region=us-west1
+  ```
+
 - **Use short polling intervals** (30-60 seconds) instead of long waits (180+ seconds)
 - **Check status more frequently** to provide faster feedback to the user
 - **Preferred pattern**:
 
   ```bash
   # Quick status check
-  gcloud builds describe BUILD_ID --project=PROJECT_ID --format="value(status)"
+  gcloud builds describe BUILD_ID --project=PROJECT_ID --region=us-west1 --format="value(status)"
 
   # List recent builds
-  gcloud builds list --project=PROJECT_ID --limit=5 --format="table(id,createTime,status)"
+  gcloud builds list --project=PROJECT_ID --region=us-west1 --limit=5 --format="table(id,createTime,status)"
 
   # Stream logs
-  gcloud builds log BUILD_ID --project=PROJECT_ID --stream
+  gcloud builds log BUILD_ID --project=PROJECT_ID --region=us-west1 --stream
   ```
 
 - **Avoid**: Long `WaitDurationSeconds` values (180+) when polling `command_status`
