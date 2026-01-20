@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1839    | ✅ Passing                     |
+| Unit Tests             | ~1859    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1969** | ✅ All passing in CI           |
+| **Total**              | **1989** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1482,7 +1482,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Tooltip:** Show "Ask about this" button near selection.
 - [x] **Follow-up Input:** Open popover with text area. Pre-fill with quoted text.
 - [x] **Submit:** Send as new query with context: `"Regarding: '{selectedText}'\n\nUser asks: {followUpQuestion}"`.
-- [ ] **Display:** Show follow-up Q&A in threaded view or inline.
+- [x] **Display:** Show follow-up Q&A in threaded view with nesting. (`components/chat/threaded-message.tsx`)
 
 ### 4.5 Session History & Revision
 
