@@ -459,12 +459,29 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Integration Tests
 
-**`infra/cloud-run.integration.test.ts`**
+**`infra/cloud-run.integration.test.ts`** _(Post-deployment smoke tests)_
 
 - [ ] Cloud Run service responds to health check
 - [ ] Can connect to Cloud SQL
 - [ ] Can read from Secret Manager
 - [ ] Can write to GCS bucket
+
+**`lib/__tests__/security.integration.test.ts`** _(Security hardening)_
+
+- [ ] XSS prevention: stored HTML is sanitized before render
+- [ ] SQL injection prevention: parameterized queries block injection
+- [ ] Authorization bypass: cross-user resource access denied
+- [ ] Rate limiting: 429 returned after threshold exceeded
+- [ ] Input validation: malformed JSON returns 400
+- [ ] Large payload: oversized request returns 413
+
+**`lib/__tests__/context-files.integration.test.ts`** _(Org context flow)_
+
+- [ ] Admin uploads org context file successfully
+- [ ] Context file content appears in agent prompts
+- [ ] Member query includes org context automatically
+- [ ] Context isolation: Org A context not visible to Org B
+- [ ] Context file deletion cascades correctly
 
 ---
 
@@ -1897,6 +1914,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
     `session-history.spec.ts`, `highlight-follow-up.spec.ts`, `chat-panel.spec.ts`,
     `omni-agent.spec.ts`, `responsive-mobile.spec.ts`
 - [ ] **Load Testing:** Simulate concurrent users in Gamma. Verify Cloud Run scales.
+- [ ] **Accessibility E2E Tests:** `e2e/accessibility.spec.ts`
+  - [ ] Keyboard navigation works for all interactive elements
+  - [ ] Focus trap in modal dialogs
+  - [ ] Skip links functional for screen readers
+  - [ ] Color contrast meets WCAG AA (automated axe checks)
+  - [ ] ARIA labels on interactive elements
 
 ### 7.2 Security Hardening
 
