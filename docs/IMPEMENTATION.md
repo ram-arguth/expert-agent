@@ -1394,21 +1394,21 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Saves summary to GCS
 - [x] Marks session as archived
 
-#### Integration Tests (Supertest + Test DB + **Mocked Vertex AI**)
+#### Integration Tests (Supertest + Test DB + **Mocked Vertex AI**) ✅
 
-**`api/upload.integration.test.ts`**
+**`lib/__tests__/file-upload.integration.test.ts`** ✅ (11 tests)
 
-- [ ] Full upload flow: request URL → PUT file → confirm
-- [ ] File appears in GCS (mocked)
-- [ ] ContextFile record created in DB
+- [x] Full upload flow: request URL → PUT file → confirm (stores file metadata after upload)
+- [x] File appears in GCS (mocked via gcsPath storage)
+- [x] ContextFile record created in DB (creates context file for org)
 
-**`api/query.integration.test.ts`** _(Vertex AI mocked with fixture response)_
+**`lib/__tests__/agent-query.integration.test.ts`** ✅ (11 tests) _(Vertex AI mocked with fixture response)_
 
-- [ ] Full query flow: input → prompt → Vertex (mocked) → response
-- [ ] Message stored in DB
-- [ ] Tokens deducted correctly
-- [ ] New session created when no sessionId
-- [ ] Session continued when sessionId provided
+- [x] Full query flow: input → prompt → Vertex (mocked) → response (creates usage record after query)
+- [x] Message stored in DB (stores user message, stores agent response with structured JSON)
+- [x] Tokens deducted correctly (covered in quota.integration.test.ts)
+- [x] New session created when no sessionId (creates session for personal use)
+- [x] Session continued when sessionId provided (retrieves messages in order)
 
 **`api/query-errors.integration.test.ts`** _(Vertex AI mocked)_
 
@@ -1871,16 +1871,24 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 ### 7.1 Testing
 
-- [x] **Unit Tests:** 1758 tests passing. Coverage on critical paths:
+- [x] **Unit Tests:** 1859 tests passing. Coverage on critical paths:
   - Schemas: 96% | Security: 91% | Auth: 85% | Billing: 82%
   - E2E parallelization: 4 workers, Chromium-only in CI
-- [x] **Integration Tests:** 56 tests across 5 files (requires PostgreSQL):
+- [x] **Integration Tests:** 71 tests across 6 files (requires PostgreSQL):
   - `billing.integration.test.ts`: Token quota, deduction, reset, Stripe data
   - `agent-query.integration.test.ts`: Sessions, messages, usage records
   - `file-upload.integration.test.ts`: Files, context files, MIME validation
   - `auth.integration.test.ts`: User creation, sessions, membership
   - `org.integration.test.ts`: Organization management, SSO config
-- [ ] **E2E Tests (Playwright):** Full user flows: signup → query → export.
+  - `quota.integration.test.ts`: Quota API, balance deduction, portal requirements
+- [x] **E2E Tests (Playwright):** 20 spec files covering critical user flows:
+  - Auth: `auth-flow.spec.ts`, `team-invite.spec.ts`, `workspace-switch.spec.ts`
+  - Query: `query-flow.spec.ts`, `follow-up-query.spec.ts`, `guided-interview.spec.ts`
+  - Export: `export-pdf.spec.ts`, `share-link.spec.ts`, `artifact-favorites.spec.ts`
+  - Billing: `subscription-flow.spec.ts`, `billing-portal.spec.ts`, `quota-ui.spec.ts`
+  - UI: `agent-catalog.spec.ts`, `dynamic-form.spec.ts`, `file-upload-flow.spec.ts`,
+    `session-history.spec.ts`, `highlight-follow-up.spec.ts`, `chat-panel.spec.ts`,
+    `omni-agent.spec.ts`, `responsive-mobile.spec.ts`
 - [ ] **Load Testing:** Simulate concurrent users in Gamma. Verify Cloud Run scales.
 
 ### 7.2 Security Hardening
