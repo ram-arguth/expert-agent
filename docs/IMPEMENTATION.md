@@ -212,20 +212,29 @@ Returns session (with isTestPrincipal: true for test sessions)
 
 ### 0.2 Pulumi Infrastructure-as-Code
 
-- [ ] **GCP Projects:** Define separate projects via Pulumi:
+- [x] **GCP Projects:** Define separate projects via Pulumi:
   - `expert-ai-dev`, `expert-ai-beta`, `expert-ai-gamma`, `expert-ai-prod`
   - `expert-ai-root` (shared: Artifact Registry, CI service accounts)
-- [ ] **Enable APIs:** Cloud Run, Cloud SQL, Cloud Storage, Vertex AI, Secret Manager, Cloud Build, Cloud Scheduler, Cloud Logging/Monitoring, Pub/Sub.
-- [ ] **Cloud SQL (PostgreSQL):** Provision PostgreSQL instance per environment. Enable pgvector extension for embeddings if needed. Configure private IP or authorized networks.
-- [ ] **GCS Buckets:** Create buckets for file uploads (`expert-ai-{env}-uploads`) and artifacts (`expert-ai-{env}-artifacts`). Enable default encryption, no public access, CORS for signed URL uploads.
-- [ ] **Cloud Run Service:** Define service for Next.js app. Configure:
+  - ✅ Implemented in `infra/__main__.py` with environment-specific configs
+- [x] **Enable APIs:** Cloud Run, Cloud SQL, Cloud Storage, Vertex AI, Secret Manager, Cloud Build, Cloud Scheduler, Cloud Logging/Monitoring, Pub/Sub.
+  - ✅ All 12 required APIs enabled in `infra/__main__.py` lines 118-142
+- [x] **Cloud SQL (PostgreSQL):** Provision PostgreSQL instance per environment. Enable pgvector extension for embeddings if needed. Configure private IP or authorized networks.
+  - ✅ PostgreSQL 15 instance with configurable tier, database, user, and auto-generated password
+- [x] **GCS Buckets:** Create buckets for file uploads (`expert-ai-{env}-uploads`) and artifacts (`expert-ai-{env}-artifacts`). Enable default encryption, no public access, CORS for signed URL uploads.
+  - ✅ `expert-agent-uploads-{env}` and `expert-agent-summaries-{env}` buckets with CORS, lifecycle rules
+- [x] **Cloud Run Service:** Define service for Next.js app. Configure:
   - Region, min/max instances (prod: min=1 to avoid cold starts)
   - Memory/CPU (start with 1GB/1 vCPU)
   - Dedicated service account with least privilege
-- [ ] **Secret Manager:** Store OAuth secrets (Google, Apple), Stripe API keys, DB credentials. Reference in Cloud Run env vars.
-- [ ] **Artifact Registry:** Create Docker repository for container images.
-- [ ] **Cloud Scheduler:** Define job for memory summarization (daily, hits internal API endpoint).
-- [ ] **Networking:** Ensure Cloud Run can reach Cloud SQL (via VPC connector or public IP with authorized networks). HTTPS enforced.
+  - ✅ Service account with 6 IAM roles; Cloud Run deployed via CI/CD
+- [x] **Secret Manager:** Store OAuth secrets (Google, Apple), Stripe API keys, DB credentials. Reference in Cloud Run env vars.
+  - ✅ 12 secrets defined (database-url, nextauth-secret, OAuth providers, Stripe, E2E)
+- [x] **Artifact Registry:** Create Docker repository for container images.
+  - ✅ Per-project Docker repository with isolation
+- [x] **Cloud Scheduler:** Define job for memory summarization (daily, hits internal API endpoint).
+  - ✅ `memory-summarization-{env}` job for non-dev environments
+- [x] **Networking:** Ensure Cloud Run can reach Cloud SQL (via VPC connector or public IP with authorized networks). HTTPS enforced.
+  - ✅ Cloud SQL configured with IPv4 enabled; HTTPS enforced by Cloud Run
 
 ### 0.3 CI/CD Pipeline (Cloud Build Triggers - Pure GCP)
 
@@ -254,21 +263,24 @@ This project uses **100% Cloud Build** (Sovereign Orchestration) - no GitHub Act
   7. Run E2E tests (Playwright) ✅
   8. Database migrations (TODO: re-enable once database is configured via IaC)
 
-- [ ] **Cross-Project Permissions:**
+- [x] **Cross-Project Permissions:**
   - Dev/Beta/Gamma Cloud Build SAs need `artifactregistry.admin` on `expert-ai-root`
   - Dev/Beta/Gamma Cloud Build SAs need `run.admin` on their respective projects
+  - ✅ Implemented via IAM bindings in `infra/__main__.py` lines 304-415
 
-- [ ] **Pulumi Infrastructure:** Cloud Build Trigger for infrastructure changes via `cloudbuild-infra.yaml`
+- [x] **Pulumi Infrastructure:** Cloud Build Trigger for infrastructure changes via `cloudbuild-infra.yaml`
+  - ✅ `cloudbuild-infra.yaml` exists and triggers on infra changes
 
 ### 0.4 DNS & Domain Configuration
 
 DNS zones are provisioned via Pulumi (CI/CD), but registrar delegation requires manual steps:
 
-- [ ] **Cloud DNS Zones** (via Pulumi - automated):
+- [x] **Cloud DNS Zones** (via Pulumi - automated):
   - `ai-oz-ly` zone in `expert-ai-prod-484103` for `ai.oz.ly`
   - `ai-gamma-oz-ly` zone in `expert-ai-gamma` for `ai-gamma.oz.ly`
   - `ai-beta-oz-ly` zone in `expert-ai-beta` for `ai-beta.oz.ly`
   - `ai-dev-oz-ly` zone in `expert-ai-dev` for `ai-dev.oz.ly`
+  - ✅ All zones defined in `infra/__main__.py` lines 531-623
 
 - [ ] **Nameserver Delegation** (manual at registrar):
       After Pulumi deploys DNS zones, get NS records from outputs:
