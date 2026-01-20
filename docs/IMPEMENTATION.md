@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1822    | ✅ Passing                     |
+| Unit Tests             | ~1839    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1952** | ✅ All passing in CI           |
+| **Total**              | **1969** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1487,7 +1487,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 ### 4.5 Session History & Revision
 
 - [x] **Session Selector:** Dropdown or sidebar list of past sessions.
-- [ ] **Revision History:** If session has multiple agent responses, show version selector or timeline.
+- [x] **Revision History:** Version selector dropdown with timeline visualization. (`components/revisions/revision-selector.tsx`)
 - [ ] **Diff View (Stretch):** Highlight changes between versions.
 
 ### 4.6 Chat Panel (Separate from Report)
@@ -1498,7 +1498,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Chat vs Report Separation:** Chat is for clarifying discussion; Report is the polished structured output.
 - [x] **"Incorporate into Report" Button:** User can request agent to produce new report version incorporating chat discussion.
 - [x] **Chat History:** Persist chat separately from report revisions. Show user questions + agent replies in conversational format.
-- [ ] **Sync State:** When chat updates report, mark in chat "✓ Incorporated into v3".
+- [x] **Sync State:** When chat updates report, mark in chat "✓ Incorporated into v3". (`incorporatedVersion` prop in ChatMessage)
 
 ### 4.7 Export & Share
 
