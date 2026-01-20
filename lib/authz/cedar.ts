@@ -138,6 +138,11 @@ export const CedarActions = {
   ListSessions: "ListSessions",
   DeleteSession: "DeleteSession",
 
+  // Artifact actions
+  ListArtifacts: "ListArtifacts",
+  GetArtifact: "GetArtifact",
+  FavoriteArtifact: "FavoriteArtifact",
+
   // File actions
   UploadFile: "UploadFile",
   GetFile: "GetFile",
@@ -535,15 +540,22 @@ class CedarEngine {
           CedarActions.GetSession,
           CedarActions.ListSessions,
           CedarActions.DeleteSession,
+          CedarActions.ListArtifacts,
+          CedarActions.GetArtifact,
+          CedarActions.FavoriteArtifact,
         ];
 
         if (sessionActions.includes(req.action.id)) {
           // CreateSession and ListSessions are always allowed for authenticated users
           if (
             req.action.id === CedarActions.CreateSession ||
-            req.action.id === CedarActions.ListSessions
+            req.action.id === CedarActions.ListSessions ||
+            req.action.id === CedarActions.ListArtifacts
           ) {
-            return { matches: true, reason: "User can create/list sessions" };
+            return {
+              matches: true,
+              reason: "User can create/list sessions and artifacts",
+            };
           }
 
           // For GetSession and DeleteSession, must own the session

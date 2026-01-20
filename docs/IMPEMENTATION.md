@@ -35,10 +35,10 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
-| Unit Tests             | ~1807    | ✅ Passing                     |
+| Unit Tests             | ~1822    | ✅ Passing                     |
 | Integration Tests      | ~56      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1937** | ✅ All passing in CI           |
+| **Total**              | **1952** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1507,7 +1507,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Share Link:** `POST /api/share` creates shared artifact with UUID. Return link. Recipient can view (login required for MVP).
 - [x] **Share to Team/Org:** Option to share with entire team/org (changes artifact ACL).
 - [x] **Artifact Favorites/Pinning:** Users can pin/favorite artifacts for quick access. Show in "Favorites" section.
-- [ ] **Artifact List View:** `GET /api/artifacts` returns user's artifacts. Filter by: favorites, recent, shared-with-me.
+- [x] **Artifact List View:** `GET /api/artifacts` returns user's artifacts. Filter by: favorites (stub), recent, shared (stub). (`app/api/artifacts/route.ts`)
 
 ### 4.7 Phase 4 Test Requirements
 
