@@ -36,9 +36,9 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
 | Unit Tests             | ~1859    | ✅ Passing                     |
-| Integration Tests      | ~71      | ✅ Passing (requires DB)       |
+| Integration Tests      | ~83      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **2004** | ✅ All passing in CI           |
+| **Total**              | **2016** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1789,11 +1789,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Integration Tests (Supertest + Stripe Test Mode)
 
-**`api/billing.integration.test.ts`**
+**`api/billing.integration.test.ts`** ✅ (in `lib/__tests__/stripe-checkout.integration.test.ts` - 12 tests)
 
-- [ ] Checkout flow creates subscription (test mode)
-- [ ] Webhook updates DB on payment
-- [ ] Token balance updated correctly
+- [x] Checkout flow creates subscription (test mode) - creates org with stripeCustomerId
+- [x] Webhook updates DB on payment - checkout.session.completed, payment_succeeded, subscription_deleted
+- [x] Token balance updated correctly - pro/enterprise tokens, renewal reset, downgrade
 
 **`api/quota.integration.test.ts`** ✅ _(Vertex AI mocked)_
 
