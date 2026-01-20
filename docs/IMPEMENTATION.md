@@ -615,7 +615,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - 11 tests for acceptance page
 - [x] **Unit Tests:** 68 tests covering org creation, listing, members API, invite CRUD, UI components, and invite acceptance.
 - [x] **Integration Tests:** `lib/__tests__/org.integration.test.ts` covers invite creation, acceptance, revocation with database (8+ tests).
-- [ ] **E2E Tests:** Playwright tests for invite UI flow.
+- [x] **E2E Tests:** `e2e/team-invite.spec.ts` - 15+ Playwright tests covering owner capabilities, member restrictions, invite acceptance, revoke, and accessibility.
 
 ### 1.5 Enterprise Domain Verification
 
@@ -1107,12 +1107,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Returns "no suitable agent" for unsupported domain
 - [x] Logs feature suggestions when fallback triggered
 
-**`api/agent-chaining.test.ts`** _(Multi-Agent Chaining)_ _(Vertex AI mocked)_
+**`api/agent-chaining.test.ts`** ✅ _(Multi-Agent Chaining)_ (in `app/api/agents/[agentId]/chain/__tests__/chain.test.ts` - 11 tests + `mapper-registry.test.ts` - 29 tests)
 
-- [ ] Executes 2-agent chain successfully
-- [ ] Validates output at each step
-- [ ] Fails chain if intermediate validation fails
-- [ ] Returns combined result with source attribution
+- [x] Executes 2-agent chain successfully (executes valid chain successfully)
+- [x] Validates output at each step (returns step-by-step results)
+- [x] Fails chain if intermediate validation fails (returns 400 for invalid chain)
+- [x] Returns combined result with source attribution (aggregates token usage across steps)
 
 **`api/guided-interview.test.ts`** _(Guided Interview Mode)_ ✅ (in `app/api/agents/[agentId]/interview/__tests__/route.test.ts` - 22 tests)
 
