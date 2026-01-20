@@ -31,14 +31,14 @@ This section defines mandatory testing policies, pre-commit hooks, and automated
 
 ### Current Test Count
 
-> **Last Updated:** 2026-01-18
+> **Last Updated:** 2026-01-20
 
 | Test Type              | Count    | Status                         |
 | ---------------------- | -------- | ------------------------------ |
 | Unit Tests             | ~1859    | ✅ Passing                     |
-| Integration Tests      | ~56      | ✅ Passing (requires DB)       |
+| Integration Tests      | ~71      | ✅ Passing (requires DB)       |
 | E2E Tests (Playwright) | ~74      | ⚠️ Non-blocking (features WIP) |
-| **Total**              | **1989** | ✅ All passing in CI           |
+| **Total**              | **2004** | ✅ All passing in CI           |
 
 ### Pre-Commit Hooks (Husky)
 
@@ -1795,16 +1795,16 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Webhook updates DB on payment
 - [ ] Token balance updated correctly
 
-**`api/quota.integration.test.ts`** _(Vertex AI mocked)_
+**`api/quota.integration.test.ts`** ✅ _(Vertex AI mocked)_
 
-- [ ] Query succeeds when tokens available
-- [ ] Query returns 402 when exhausted
-- [ ] Balance decreases after query
+- [x] Query succeeds when tokens available
+- [x] Query returns 402 when exhausted
+- [x] Balance decreases after query
 
-**`api/portal.integration.test.ts`**
+**`api/portal.integration.test.ts`** ✅
 
-- [ ] Portal session created successfully
-- [ ] Returns valid Stripe URL
+- [x] Portal session created successfully (via org stripeCustomerId check)
+- [x] Returns valid Stripe URL (requires stripeCustomerId)
 
 #### E2E Tests (Playwright)
 
