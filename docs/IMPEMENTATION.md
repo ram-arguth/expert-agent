@@ -327,11 +327,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Using `E2_HIGHCPU_8` in `cloudbuild.yaml` (E2_HIGHCPU_32 requires quota approval)
   - Verify machine type is applied: `options.machineType: E2_HIGHCPU_8`
 
-- [ ] **Docker Layer Caching (Kaniko):**
-  - Replace Docker build with Kaniko executor
-  - Configure cache repository: `--cache-repo=${ARTIFACT_REGISTRY}/cache`
-  - Set cache TTL: `--cache-ttl=168h` (7 days)
-  - Enable compressed caching: `--compressed-caching=true`
+- [x] **Docker Layer Caching (Kaniko):**
+  - Replaced Docker build with Kaniko executor (`gcr.io/kaniko-project/executor:latest`)
+  - Cache repository: `--cache-repo=${ARTIFACT_REGISTRY}/cache`
+  - Cache TTL: `--cache-ttl=168h` (7 days)
+  - Compressed caching: `--compressed-caching=true`
+  - Snapshot optimization: `--snapshotMode=redo`
+  - Push handled by Kaniko directly (no separate docker push step)
 
 - [x] **pnpm Store Caching:**
   - Configured volume mount for pnpm store: `/workspace/.pnpm-store`
