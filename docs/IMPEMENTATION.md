@@ -1431,30 +1431,32 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### E2E Tests (Playwright + **Mocked AI Backend**)
 
-**`e2e/file-upload.spec.ts`**
+**`e2e/file-upload-flow.spec.ts`** ✅ (15 tests created)
 
-- [ ] User uploads PDF via drag-drop
-- [ ] Progress indicator shows
-- [ ] File appears in attachments list
-- [ ] Error shown for oversized file
+- [x] User uploads PDF via drag-drop
+- [x] Progress indicator shows
+- [x] File appears in attachments list
+- [x] Error shown for oversized file
 
-**`e2e/query-flow.spec.ts`** _(AI response mocked via MSW or API stub)_
+**`e2e/query-flow.spec.ts`** ✅ (12 tests created) _(AI response mocked via MSW or API stub)_
 
-- [ ] User fills form and submits
-- [ ] Loading indicator during query
-- [ ] Agent response displays in Markdown
-- [ ] Session created and visible in history
+- [x] User fills form and submits
+- [x] Loading indicator during query
+- [x] Agent response displays in Markdown
+- [x] Session created and visible in history
 
-**`e2e/follow-up-query.spec.ts`** _(AI response mocked)_
+**`e2e/follow-up-query.spec.ts`** ✅ (14 tests created) _(AI response mocked)_
 
-- [ ] User asks follow-up question
-- [ ] Session continues with context
-- [ ] Multiple exchanges in one session
+- [x] User asks follow-up question
+- [x] Session continues with context
+- [x] Multiple exchanges in one session
 
-**`e2e/quota-exhausted.spec.ts`**
+**`e2e/quota-ui.spec.ts`** ✅ (14 tests created)
 
-- [ ] Error modal on quota exhausted
-- [ ] Upgrade button links to billing
+- [x] Usage bar shows current/total tokens
+- [x] Warning appears when quota low
+- [x] Upgrade prompt on quota exhausted
+- [x] Upgrade button links to billing
 
 ---
 
@@ -1812,11 +1814,11 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] Redirects to Stripe Checkout
 - [ ] After payment, plan updated in UI
 
-**`e2e/quota-ui.spec.ts`**
+**`e2e/quota-ui.spec.ts`** ✅ (14 tests created)
 
-- [ ] Usage bar shows current/total
-- [ ] Warning appears when low
-- [ ] Upgrade prompt on exhausted
+- [x] Usage bar shows current/total
+- [x] Warning appears when low
+- [x] Upgrade prompt on exhausted
 
 **`e2e/billing-portal.spec.ts`** _(Stripe test mode)_
 
