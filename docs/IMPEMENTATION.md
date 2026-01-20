@@ -372,7 +372,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - Duration measurement: `measureDuration()`, `measureDurationSync()`
   - In-memory storage for dev/test, Cloud Monitoring integration for production
   - 37 tests covering all metric types, helpers, and edge cases
-- [ ] **Alerting:** Create Cloud Monitoring alert policies (error rate spike, high latency, quota exhaustion).
+- [x] **Alerting:** Cloud Monitoring alert policies defined in Pulumi IaC (`infra/__main__.py`):
+  - Error rate spike: > 5% errors over 5 minutes
+  - High latency: P95 > 5 seconds over 5 minutes
+  - Scaling near max: > 80% of max Cloud Run instances
+  - Cloud SQL CPU: > 80% over 10 minutes
+  - Email notification channel configured via `alerting_email` stack config
 
 ### 0.6 Security & Cost Protection Infrastructure
 

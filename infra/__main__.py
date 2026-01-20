@@ -705,6 +705,188 @@ else:
     export("domain_mapping_url", "Domain mapping pending verification - set domain_verified: true in config after verifying domain")
 
 # ============================================
+# Cloud Monitoring Alert Policies
+# ============================================
+# Alert policies for error rate spike, high latency, and quota exhaustion
+# Note: Notification channels must be configured manually in GCP Console
+
+# Email notification channel placeholder - configure in GCP Console
+# and set in stack config: gcp:alerting_email
+alerting_email = config.get("alerting_email")
+
+if alerting_email:
+    # Create email notification channel
+    email_channel = gcp.monitoring.NotificationChannel(
+        f"email-notification-{env}",
+        project=project_id,
+        type="email",
+        display_name=f"Expert Agent Alerts ({env})",
+        labels={
+            "email_address": alerting_email,
+        },
+        opts=pulumi.ResourceOptions(depends_on=enabled_apis),
+    )
+    notification_channels = [email_channel.name]
+else:
+    notification_channels = []
+
+# Alert: Cloud Run Error Rate Spike (> 5% errors over 5 minutes)
+error_rate_alert = gcp.monitoring.AlertPolicy(
+    f"cloud-run-error-rate-{env}",
+    project=project_id,
+    display_name=f"[{env.upper()}] Cloud Run Error Rate > 5%",
+    combiner="OR",
+    conditions=[
+        gcp.monitoring.AlertPolicyConditionArgs(
+            display_name="Error rate exceeds 5%",
+            condition_threshold=gcp.monitoring.AlertPolicyConditionConditionThresholdArgs(
+                filter=f'resource.type = "cloud_run_revision" AND resource.labels.service_name = "expert-agent" AND metric.type = "run.googleapis.com/request_count" AND metric.labels.response_code_class != "2xx"',
+                aggregations=[
+                    gcp.monitoring.AlertPolicyConditionConditionThresholdAggregationArgs(
+                        alignment_period="300s",
+                        per_series_aligner="ALIGN_RATE",
+                        cross_series_reducer="REDUCE_SUM",
+                        group_by_fields=["resource.labels.service_name"],
+                    ),
+                ],
+                comparison="COMPARISON_GT",
+                threshold_value=0.05,  # 5% error rate
+                duration="300s",
+                trigger=gcp.monitoring.AlertPolicyConditionConditionThresholdTriggerArgs(
+                    count=1,
+                ),
+            ),
+        ),
+    ],
+    notification_channels=notification_channels,
+    alert_strategy=gcp.monitoring.AlertPolicyAlertStrategyArgs(
+        auto_close="604800s",  # 7 days
+    ),
+    documentation=gcp.monitoring.AlertPolicyDocumentationArgs(
+        content=f"Cloud Run service 'expert-agent' in {env} environment has error rate > 5%. Check Cloud Run logs for details.",
+        mime_type="text/markdown",
+    ),
+    opts=pulumi.ResourceOptions(depends_on=enabled_apis),
+)
+
+# Alert: Cloud Run High Latency (p95 > 5s over 5 minutes)
+latency_alert = gcp.monitoring.AlertPolicy(
+    f"cloud-run-latency-{env}",
+    project=project_id,
+    display_name=f"[{env.upper()}] Cloud Run Latency > 5s (p95)",
+    combiner="OR",
+    conditions=[
+        gcp.monitoring.AlertPolicyConditionArgs(
+            display_name="P95 latency exceeds 5 seconds",
+            condition_threshold=gcp.monitoring.AlertPolicyConditionConditionThresholdArgs(
+                filter=f'resource.type = "cloud_run_revision" AND resource.labels.service_name = "expert-agent" AND metric.type = "run.googleapis.com/request_latencies"',
+                aggregations=[
+                    gcp.monitoring.AlertPolicyConditionConditionThresholdAggregationArgs(
+                        alignment_period="300s",
+                        per_series_aligner="ALIGN_PERCENTILE_95",
+                        cross_series_reducer="REDUCE_MEAN",
+                        group_by_fields=["resource.labels.service_name"],
+                    ),
+                ],
+                comparison="COMPARISON_GT",
+                threshold_value=5000,  # 5000ms = 5s
+                duration="300s",
+                trigger=gcp.monitoring.AlertPolicyConditionConditionThresholdTriggerArgs(
+                    count=1,
+                ),
+            ),
+        ),
+    ],
+    notification_channels=notification_channels,
+    alert_strategy=gcp.monitoring.AlertPolicyAlertStrategyArgs(
+        auto_close="604800s",  # 7 days
+    ),
+    documentation=gcp.monitoring.AlertPolicyDocumentationArgs(
+        content=f"Cloud Run service 'expert-agent' in {env} environment has P95 latency > 5 seconds. This may indicate slow AI responses or database issues.",
+        mime_type="text/markdown",
+    ),
+    opts=pulumi.ResourceOptions(depends_on=enabled_apis),
+)
+
+# Alert: Cloud Run Instance Count High (approaching max instances)
+scaling_alert = gcp.monitoring.AlertPolicy(
+    f"cloud-run-scaling-{env}",
+    project=project_id,
+    display_name=f"[{env.upper()}] Cloud Run Scaling Near Max",
+    combiner="OR",
+    conditions=[
+        gcp.monitoring.AlertPolicyConditionArgs(
+            display_name=f"Instance count > {int(env_config['cloud_run_max_instances'] * 0.8)} (80% of max)",
+            condition_threshold=gcp.monitoring.AlertPolicyConditionConditionThresholdArgs(
+                filter=f'resource.type = "cloud_run_revision" AND resource.labels.service_name = "expert-agent" AND metric.type = "run.googleapis.com/container/instance_count"',
+                aggregations=[
+                    gcp.monitoring.AlertPolicyConditionConditionThresholdAggregationArgs(
+                        alignment_period="60s",
+                        per_series_aligner="ALIGN_MAX",
+                        cross_series_reducer="REDUCE_SUM",
+                        group_by_fields=["resource.labels.service_name"],
+                    ),
+                ],
+                comparison="COMPARISON_GT",
+                threshold_value=int(env_config["cloud_run_max_instances"] * 0.8),
+                duration="300s",
+                trigger=gcp.monitoring.AlertPolicyConditionConditionThresholdTriggerArgs(
+                    count=1,
+                ),
+            ),
+        ),
+    ],
+    notification_channels=notification_channels,
+    alert_strategy=gcp.monitoring.AlertPolicyAlertStrategyArgs(
+        auto_close="86400s",  # 1 day
+    ),
+    documentation=gcp.monitoring.AlertPolicyDocumentationArgs(
+        content=f"Cloud Run service 'expert-agent' in {env} is approaching max instances ({env_config['cloud_run_max_instances']}). Consider increasing max_instances or investigating traffic spike.",
+        mime_type="text/markdown",
+    ),
+    opts=pulumi.ResourceOptions(depends_on=enabled_apis),
+)
+
+# Alert: Cloud SQL High CPU (> 80% over 10 minutes)
+sql_cpu_alert = gcp.monitoring.AlertPolicy(
+    f"cloud-sql-cpu-{env}",
+    project=project_id,
+    display_name=f"[{env.upper()}] Cloud SQL CPU > 80%",
+    combiner="OR",
+    conditions=[
+        gcp.monitoring.AlertPolicyConditionArgs(
+            display_name="CPU utilization exceeds 80%",
+            condition_threshold=gcp.monitoring.AlertPolicyConditionConditionThresholdArgs(
+                filter='resource.type = "cloudsql_database" AND metric.type = "cloudsql.googleapis.com/database/cpu/utilization"',
+                aggregations=[
+                    gcp.monitoring.AlertPolicyConditionConditionThresholdAggregationArgs(
+                        alignment_period="300s",
+                        per_series_aligner="ALIGN_MEAN",
+                    ),
+                ],
+                comparison="COMPARISON_GT",
+                threshold_value=0.80,  # 80%
+                duration="600s",
+                trigger=gcp.monitoring.AlertPolicyConditionConditionThresholdTriggerArgs(
+                    count=1,
+                ),
+            ),
+        ),
+    ],
+    notification_channels=notification_channels,
+    alert_strategy=gcp.monitoring.AlertPolicyAlertStrategyArgs(
+        auto_close="604800s",  # 7 days
+    ),
+    documentation=gcp.monitoring.AlertPolicyDocumentationArgs(
+        content=f"Cloud SQL instance in {env} has CPU > 80% for 10+ minutes. Consider scaling up the instance tier or optimizing queries.",
+        mime_type="text/markdown",
+    ),
+    opts=pulumi.ResourceOptions(depends_on=enabled_apis),
+)
+
+export("alerting_configured", alerting_email is not None)
+
+# ============================================
 # Exports
 # ============================================
 export("project_id", project_id)
