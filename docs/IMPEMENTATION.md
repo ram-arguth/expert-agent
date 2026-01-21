@@ -2002,8 +2002,8 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [ ] **Load Testing:** Simulate concurrent users in Gamma. Verify Cloud Run scales.
 - [x] **Accessibility E2E Tests:** `e2e/accessibility.spec.ts`
   - [x] Keyboard navigation works for all interactive elements (via Axe)
-  - [ ] Focus trap in modal dialogs
-  - [ ] Skip links functional for screen readers
+  - [x] Focus trap in modal dialogs
+  - [x] Skip links functional for screen readers
   - [x] Color contrast meets WCAG AA (automated axe checks)
   - [x] ARIA labels on interactive elements (via Axe)
 
