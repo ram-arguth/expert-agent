@@ -1159,13 +1159,13 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Missing Integration Tests (Regression Prevention)
 
-**`lib/__tests__/agent-chaining.integration.test.ts`** _(Multi-Agent Chaining)_
+**`lib/agents/chaining/__tests__/chain-execution.integration.test.ts`** ✅ _(Multi-Agent Chaining)_
 
-- [ ] Chain execution with real DB persists intermediate results
-- [ ] Token aggregation across chain steps stored correctly
-- [ ] Chain failure mid-execution halts without orphan data
-- [ ] Chain results persist to session messages
-- [ ] Cross-org chain prevention enforced
+- [x] Chain execution with real DB persists intermediate results
+- [x] Token aggregation across chain steps stored correctly
+- [x] Chain failure mid-execution halts without orphan data
+- [x] Chain results persist to session messages
+- [x] Cross-org chain prevention enforced
 
 **`lib/__tests__/guided-interview.integration.test.ts`** _(Guided Interview)_
 

@@ -25,6 +25,13 @@ vi.mock("@/lib/authz/cedar", () => ({
   },
 }));
 
+// Mock Chain Executor
+vi.mock("@/lib/agents/chaining/executor", () => ({
+  chainExecutor: {
+    execute: vi.fn(),
+  },
+}));
+
 // Helper to create mock request
 function createMockRequest(options: {
   method: "GET" | "POST";
@@ -187,12 +194,20 @@ describe("POST /api/agents/:agentId/chain", () => {
       },
     });
 
+    // Mock executor throwing invalid chain error
+    const { chainExecutor } = await import("@/lib/agents/chaining/executor");
+    vi.mocked(chainExecutor.execute).mockRejectedValue(
+      new Error("Invalid chain: No mapper exists"),
+    );
+
     const response = await POST(request, createContext("legal-advisor"));
     const data = await response.json();
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Invalid Chain");
-    expect(data.validation.valid).toBe(false);
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Invalid Chain");
+    // expect(data.validation.valid).toBe(false); // validation details not returned in new impl
   });
 
   it("executes valid chain successfully", async () => {
@@ -215,6 +230,19 @@ describe("POST /api/agents/:agentId/chain", () => {
         targetAgents: ["legal-advisor"],
       },
     });
+
+    const { chainExecutor } = await import("@/lib/agents/chaining/executor");
+    vi.mocked(chainExecutor.execute).mockResolvedValue({
+      chainId: "test-chain",
+      success: true,
+      steps: [
+        { agentId: "ux-analyst", success: true, durationMs: 10, output: {} },
+        { agentId: "legal-advisor", success: true, durationMs: 10, output: {} },
+      ],
+      totalDurationMs: 20,
+      totalTokenUsage: { input: 10, output: 10, total: 20 },
+      finalOutput: {},
+    } as any);
 
     const response = await POST(request, createContext("ux-analyst"));
     const data = await response.json();
@@ -249,6 +277,38 @@ describe("POST /api/agents/:agentId/chain", () => {
         targetAgents: ["legal-advisor", "finance-planner"],
       },
     });
+
+    const { chainExecutor } = await import("@/lib/agents/chaining/executor");
+    vi.mocked(chainExecutor.execute).mockResolvedValue({
+      chainId: "test-chain",
+      success: true,
+      steps: [
+        {
+          agentId: "ux-analyst",
+          success: true,
+          durationMs: 10,
+          output: {},
+          tokenUsage: { input: 0, output: 0, total: 0 },
+        },
+        {
+          agentId: "legal-advisor",
+          success: true,
+          durationMs: 10,
+          output: {},
+          tokenUsage: { input: 0, output: 0, total: 0 },
+        },
+        {
+          agentId: "finance-planner",
+          success: true,
+          durationMs: 10,
+          output: {},
+          tokenUsage: { input: 0, output: 0, total: 0 },
+        },
+      ],
+      totalDurationMs: 30,
+      totalTokenUsage: { input: 10, output: 10, total: 20 },
+      finalOutput: {},
+    } as any);
 
     const response = await POST(request, createContext("ux-analyst"));
     const data = await response.json();
@@ -286,6 +346,16 @@ describe("POST /api/agents/:agentId/chain", () => {
         targetAgents: ["legal-advisor"],
       },
     });
+
+    const { chainExecutor } = await import("@/lib/agents/chaining/executor");
+    vi.mocked(chainExecutor.execute).mockResolvedValue({
+      chainId: "test-chain",
+      success: true,
+      steps: [],
+      totalDurationMs: 20,
+      totalTokenUsage: { input: 100, output: 50, total: 150 },
+      finalOutput: {},
+    } as any);
 
     const response = await POST(request, createContext("ux-analyst"));
     const data = await response.json();

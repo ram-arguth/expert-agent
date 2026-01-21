@@ -138,6 +138,9 @@ export interface ChainExecutionResult {
     output: number;
     total: number;
   };
+
+  /** Session ID where the chain execution was persisted */
+  sessionId?: string;
 }
 
 // =============================================================================
