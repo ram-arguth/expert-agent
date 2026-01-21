@@ -322,8 +322,7 @@ availableSecrets:
     # - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
     #   env: "DATABASE_URL"
 
-images:
-  - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${SHORT_SHA}"
-  - "${_ARTIFACT_REGISTRY}/${_SERVICE_NAME}:${_ENV}-latest"
+# NOTE: No 'images' section needed - Kaniko pushes images directly to registry
+# The images section is only for docker push builds, not Kaniko builds
 
 timeout: "1800s" # 30 minutes
