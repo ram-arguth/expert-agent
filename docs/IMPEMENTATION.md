@@ -1157,6 +1157,29 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Progress indicator updates
 - [x] "Start Analysis" enabled when complete
 
+#### Missing Integration Tests (Regression Prevention)
+
+**`lib/__tests__/agent-chaining.integration.test.ts`** _(Multi-Agent Chaining)_
+
+- [ ] Chain execution with real DB persists intermediate results
+- [ ] Token aggregation across chain steps stored correctly
+- [ ] Chain failure mid-execution halts without orphan data
+- [ ] Chain results persist to session messages
+- [ ] Cross-org chain prevention enforced
+
+**`lib/__tests__/guided-interview.integration.test.ts`** _(Guided Interview)_
+
+- [ ] Interview session persists across browser refresh
+- [ ] Interview answers stored in DB correctly
+- [ ] Interview resume after page navigation maintains state
+- [ ] Analysis triggered with all collected answers
+
+**`lib/__tests__/omni-agent.integration.test.ts`** _(OmniAgent Orchestrator)_
+
+- [ ] Classification persists to session
+- [ ] Redirect preserves query context
+- [ ] Fallback message stored correctly
+
 ---
 
 ## Phase 3: Core Application – Query Flow & File Handling
@@ -1481,6 +1504,30 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] Warning appears when quota low
 - [x] Upgrade prompt on quota exhausted
 - [x] Upgrade button links to billing
+
+#### Missing Integration Tests (Regression Prevention)
+
+**`lib/__tests__/memory-summarization.integration.test.ts`** _(Session Archival)_
+
+- [ ] Stale sessions detected and summarized end-to-end
+- [ ] Summary stored to GCS and URL updated in DB
+- [ ] Archived session messages retained correctly
+- [ ] Resumed archived session loads summary into context
+
+**`lib/__tests__/export-share.integration.test.ts`** _(Export & Share)_
+
+- [ ] PDF generation includes all report sections
+- [ ] DOCX export format correct (enterprise)
+- [ ] Share link ACL respects org settings
+- [ ] Revoked share link returns 404
+- [ ] Share to team updates artifact ACL
+
+**`lib/__tests__/error-handling.integration.test.ts`** _(Error Recovery)_
+
+- [ ] Vertex AI timeout returns graceful error
+- [ ] Concurrent token deductions don't over-deduct
+- [ ] File upload + query race handled correctly
+- [ ] Session reload after error preserves data
 
 ---
 
@@ -1879,6 +1926,45 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 - [x] **Context Menu:** Right-click "Ask about this" sends selected text. (`background.js`)
 - [x] **Auth:** Uses existing session cookie (same domain).
 - [x] **Display:** Show quick answer in popup, "View full" opens web app.
+
+### 6.5 Phase 6 E2E Test Requirements (Missing)
+
+**`e2e/org-member-management.spec.ts`** _(Admin Interfaces)_
+
+- [ ] Admin adds new member via invite
+- [ ] Admin changes member role
+- [ ] Admin removes member (cascade check)
+- [ ] Non-admin cannot access admin controls
+- [ ] Role change reflected in member list
+
+**`e2e/org-context-files.spec.ts`** _(Context File Management)_
+
+- [ ] Admin uploads context file
+- [ ] Context file appears in list with metadata
+- [ ] Admin deletes context file
+- [ ] Member sees but cannot modify files
+
+**`e2e/audit-logs.spec.ts`** _(Audit Logging - Enterprise)_
+
+- [ ] Login event appears in audit log
+- [ ] Query event includes agent and tokens
+- [ ] Admin action (role change) logged
+- [ ] Filter by date range works
+- [ ] Filter by event type works
+
+**`e2e/usage-analytics.spec.ts`** _(Usage Analytics)_
+
+- [ ] Per-user token consumption displayed
+- [ ] Per-agent breakdown shown
+- [ ] Date range filtering works
+- [ ] Export CSV downloads correctly
+
+**`e2e/browser-extension.spec.ts`** _(Browser Extension)_
+
+- [ ] Extension popup renders correctly
+- [ ] Context menu sends selected text
+- [ ] Response displays in popup
+- [ ] "View full" opens web app
 
 ### 6.4 Guided Interview Mode ✅
 
