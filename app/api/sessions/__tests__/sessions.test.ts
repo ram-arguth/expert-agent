@@ -65,6 +65,7 @@ const mockSessions = [
     updatedAt: new Date("2026-01-12T15:30:00Z"),
     archived: false,
     summaryUrl: null,
+    metadata: null,
     messages: [
       {
         id: "msg-1",
@@ -85,6 +86,7 @@ const mockSessions = [
     updatedAt: new Date("2026-01-08T10:00:00Z"),
     archived: false,
     summaryUrl: null,
+    metadata: null,
     messages: [
       {
         id: "msg-2",
@@ -107,6 +109,7 @@ const mockSessionDetail = {
   updatedAt: new Date("2026-01-12T15:30:00Z"),
   archived: false,
   summaryUrl: null,
+  metadata: null,
   messages: [
     {
       id: "msg-1",
@@ -525,6 +528,7 @@ describe("Sessions API", () => {
         updatedAt: new Date(),
         archived: false,
         summaryUrl: null,
+        metadata: null,
       } as never);
       vi.mocked(prisma.session.update).mockResolvedValueOnce({} as never);
 

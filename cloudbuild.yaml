@@ -207,21 +207,26 @@ steps:
   # ============================================
   # Step 6: Run database migrations
   # ============================================
-  # TODO: Re-enable once database is configured via IaC
-  # - id: "run-migrations"
-  #   name: "node:20-alpine"
-  #   entrypoint: "sh"
-  #   args:
-  #     - "-c"
-  #     - |
-  #       npm install -g pnpm@9
-  #       pnpm config set store-dir /workspace/.pnpm-store
-  #       pnpm db:migrate || echo "Database migrations not configured yet, skipping"
-  #   secretEnv: ["DATABASE_URL"]
-  #   volumes:
-  #     - name: pnpm-store
-  #       path: /workspace/.pnpm-store
-  #   waitFor: ["deploy-cloud-run"]
+  - id: "run-migrations"
+    name: "node:20-alpine"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        npm install -g pnpm@9
+        pnpm config set store-dir /workspace/.pnpm-store
+        if [ "$_ENV" = "dev" ]; then
+          echo "⚠️ Using db:push for DEV environment (protoyping mode)..."
+          pnpm db:push --accept-data-loss
+        else
+          echo "Using db:migrate for ${_ENV} environment..."
+          pnpm db:migrate
+        fi
+    secretEnv: ["DATABASE_URL"]
+    volumes:
+      - name: pnpm-store
+        path: /workspace/.pnpm-store
+    waitFor: ["deploy-cloud-run"]
 
   # ============================================
   # Step 7: Smoke test
@@ -253,7 +258,7 @@ steps:
 
         echo "❌ Smoke test failed after 5 attempts"
         exit 1
-    waitFor: ["deploy-cloud-run"]
+    waitFor: ["run-migrations"]
 
   # ============================================
   # Step 8: E2E Tests (Playwright) - all environments
@@ -318,9 +323,8 @@ availableSecrets:
   secretManager:
     - versionName: projects/${_PROJECT_ID}/secrets/e2e-test-secret/versions/latest
       env: "E2E_TEST_SECRET"
-    # TODO: Re-enable once database is configured via IaC
-    # - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
-    #   env: "DATABASE_URL"
+    - versionName: projects/${_PROJECT_ID}/secrets/database-url/versions/latest
+      env: "DATABASE_URL"
 
 # NOTE: No 'images' section needed - Kaniko pushes images directly to registry
 # The images section is only for docker push builds, not Kaniko builds

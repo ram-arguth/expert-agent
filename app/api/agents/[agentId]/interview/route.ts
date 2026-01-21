@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { logger } from "@/lib/observability";
+import { prisma } from "@/lib/db/client";
 
 // =============================================================================
 // Types and Schemas
@@ -313,52 +314,12 @@ const INTERVIEW_CONFIGS: Record<string, InterviewConfig> = {
 };
 
 // =============================================================================
-// Session State (In-memory for now, would use Redis/DB in production)
+// Session State
 // =============================================================================
 
-interface InterviewSession {
-  id: string;
-  agentId: string;
-  userId: string;
+interface InterviewState {
   currentStepIndex: number;
   answers: Record<string, string>;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const sessions = new Map<string, InterviewSession>();
-
-function generateSessionId(): string {
-  return `interview-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function getSession(sessionId: string): InterviewSession | undefined {
-  return sessions.get(sessionId);
-}
-
-function createSession(agentId: string, userId: string): InterviewSession {
-  const session: InterviewSession = {
-    id: generateSessionId(),
-    agentId,
-    userId,
-    currentStepIndex: 0,
-    answers: {},
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  sessions.set(session.id, session);
-  return session;
-}
-
-function updateSession(
-  sessionId: string,
-  updates: Partial<InterviewSession>,
-): void {
-  const session = sessions.get(sessionId);
-  if (session) {
-    Object.assign(session, updates, { updatedAt: new Date() });
-    sessions.set(sessionId, session);
-  }
 }
 
 // =============================================================================
@@ -425,26 +386,50 @@ export async function POST(
     const { sessionId, answer, skipQuestion } = parseResult.data;
 
     // Get or create session
-    let session: InterviewSession;
+    let session;
+    let state: InterviewState;
+
     if (sessionId) {
-      const existingSession = getSession(sessionId);
-      if (!existingSession) {
+      // Fetch existing session
+      session = await prisma.session.findUnique({
+        where: { id: sessionId },
+      });
+
+      if (!session) {
         return NextResponse.json(
           { error: "Session not found" },
           { status: 404 },
         );
       }
-      if (existingSession.userId !== userId) {
+      if (session.userId !== userId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
       }
-      session = existingSession;
+
+      // Parse metadata
+      state = (session.metadata as unknown as InterviewState) || {
+        currentStepIndex: 0,
+        answers: {},
+      };
     } else {
-      session = createSession(agentId, userId);
+      // Create new session
+      state = {
+        currentStepIndex: 0,
+        answers: {},
+      };
+
+      session = await prisma.session.create({
+        data: {
+          userId,
+          agentId,
+          metadata: state as any,
+        },
+      });
     }
 
     // Process answer if provided
-    if (sessionId && (answer !== undefined || skipQuestion)) {
-      const currentStep = config.steps[session.currentStepIndex];
+    let stateUpdated = false;
+    if (answer !== undefined || skipQuestion) {
+      const currentStep = config.steps[state.currentStepIndex];
 
       if (currentStep) {
         if (skipQuestion) {
@@ -455,7 +440,8 @@ export async function POST(
             );
           }
           // Skip to next question
-          session.currentStepIndex++;
+          state.currentStepIndex++;
+          stateUpdated = true;
         } else if (answer !== undefined) {
           // Validate answer
           if (currentStep.required && !answer.trim()) {
@@ -491,40 +477,46 @@ export async function POST(
           }
 
           // Store answer and advance
-          session.answers[currentStep.id] = answer;
-          session.currentStepIndex++;
+          state.answers[currentStep.id] = answer;
+          state.currentStepIndex++;
+          stateUpdated = true;
         }
-
-        updateSession(session.id, {
-          currentStepIndex: session.currentStepIndex,
-          answers: session.answers,
-        });
       }
+    }
+
+    // Update DB if state changed
+    if (stateUpdated) {
+      await prisma.session.update({
+        where: { id: session.id },
+        data: {
+          metadata: state as any,
+        },
+      });
     }
 
     // Calculate state
     const totalSteps = config.steps.length;
-    const isComplete = session.currentStepIndex >= totalSteps;
+    const isComplete = state.currentStepIndex >= totalSteps;
     const currentQuestion = isComplete
       ? null
-      : config.steps[session.currentStepIndex];
-    const progress = Math.round((session.currentStepIndex / totalSteps) * 100);
+      : config.steps[state.currentStepIndex];
+    const progress = Math.round((state.currentStepIndex / totalSteps) * 100);
 
     // Check if all required questions answered
     const requiredAnswered = config.requiredStepIds.every(
-      (stepId) => session.answers[stepId] !== undefined,
+      (stepId) => state.answers[stepId] !== undefined,
     );
     const canStartAnalysis = requiredAnswered;
 
     const response: InterviewResponse = {
       sessionId: session.id,
-      currentStep: session.currentStepIndex + 1,
+      currentStep: state.currentStepIndex + 1,
       totalSteps,
       progress,
       isComplete,
       currentQuestion,
       answers:
-        Object.keys(session.answers).length > 0 ? session.answers : undefined,
+        Object.keys(state.answers).length > 0 ? state.answers : undefined,
       canStartAnalysis,
       nextAction: isComplete
         ? "complete"
@@ -538,7 +530,7 @@ export async function POST(
         userId,
         agentId,
         sessionId: session.id,
-        currentStep: session.currentStepIndex,
+        currentStep: state.currentStepIndex,
         isComplete,
       },
       "Interview step processed",

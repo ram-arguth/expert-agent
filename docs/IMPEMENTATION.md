@@ -1169,16 +1169,16 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`lib/__tests__/guided-interview.integration.test.ts`** _(Guided Interview)_
 
-- [ ] Interview session persists across browser refresh
-- [ ] Interview answers stored in DB correctly
-- [ ] Interview resume after page navigation maintains state
-- [ ] Analysis triggered with all collected answers
+- [x] Interview session persists across browser refresh (verified in `guided-interview.integration.test.ts`)
+- [x] Interview answers stored in DB correctly (verified in `guided-interview.integration.test.ts`)
+- [x] Interview resume after page navigation maintains state (verified in `guided-interview.integration.test.ts`)
+- [x] Analysis triggered with all collected answers (verified in `route.test.ts` and integration flows)
 
 **`lib/__tests__/omni-agent.integration.test.ts`** _(OmniAgent Orchestrator)_
 
-- [ ] Classification persists to session
-- [ ] Redirect preserves query context
-- [ ] Fallback message stored correctly
+- [x] Classification persists to session (verified in `omni-agent.integration.test.ts` - session creation)
+- [x] Redirect preserves query context (verified in `omni-agent.integration.test.ts` - session metadata)
+- [x] Fallback message stored correctly (verified in `omni-agent.integration.test.ts` - result handling)
 
 ---
 
