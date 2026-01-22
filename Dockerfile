@@ -4,7 +4,8 @@
 # ============================================
 # Stage 1: Dependencies
 # ============================================
-FROM node:20-alpine AS deps
+FROM node:20-slim AS deps
+RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 
 # Install pnpm
@@ -19,7 +20,7 @@ RUN pnpm install --frozen-lockfile --prod=false
 # ============================================
 # Stage 2: Build
 # ============================================
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 
 # Install pnpm
@@ -41,13 +42,16 @@ RUN pnpm build
 # ============================================
 # Stage 3: Production Runner
 # ============================================
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
 
 # Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=8080
+
+# Install OpenSSL for Prisma compatibility
+RUN apt-get update -y && apt-get install -y openssl ca-certificates
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
