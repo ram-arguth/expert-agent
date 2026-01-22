@@ -213,6 +213,7 @@ steps:
     args:
       - "-c"
       - |
+        apt-get update -y && apt-get install -y openssl ca-certificates
         npm install -g pnpm@9
         pnpm config set store-dir /workspace/.pnpm-store
         if [ "$_ENV" = "dev" ]; then
