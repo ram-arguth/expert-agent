@@ -208,7 +208,7 @@ steps:
   # Step 6: Run database migrations
   # ============================================
   - id: "run-migrations"
-    name: "node:20-alpine"
+    name: "node:20-slim"
     entrypoint: "sh"
     args:
       - "-c"
