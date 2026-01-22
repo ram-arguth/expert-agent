@@ -222,7 +222,7 @@ steps:
         # Start Proxy in background (Unix socket mode) to match Cloud Run environment
         mkdir -p /cloudsql
         ./cloud-sql-proxy --unix-socket /cloudsql expert-ai-dev:us-west1:expert-agent-db-dev-842d77f &
-        PROXY_PID=$!
+        PROXY_PID=$$!
 
         echo "Waiting for Cloud SQL Proxy to start..."
         sleep 5
@@ -238,7 +238,7 @@ steps:
         fi
 
         # Cleanup
-        kill $PROXY_PID
+        kill $$PROXY_PID
     secretEnv: ["DATABASE_URL"]
     volumes:
       - name: pnpm-store
