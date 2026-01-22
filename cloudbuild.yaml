@@ -213,6 +213,20 @@ steps:
     args:
       - "-c"
       - |
+        apt-get update -y && apt-get install -y openssl ca-certificates curl
+
+        # Install Cloud SQL Proxy
+        curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64
+        chmod +x cloud-sql-proxy
+
+        # Start Proxy in background (Unix socket mode) to match Cloud Run environment
+        mkdir -p /cloudsql
+        ./cloud-sql-proxy --unix-socket /cloudsql expert-ai-dev:us-west1:expert-agent-db-dev-842d77f &
+        PROXY_PID=$!
+
+        echo "Waiting for Cloud SQL Proxy to start..."
+        sleep 5
+
         npm install -g pnpm@9
         pnpm config set store-dir /workspace/.pnpm-store
         if [ "$_ENV" = "dev" ]; then
@@ -222,6 +236,9 @@ steps:
           echo "Using db:migrate for ${_ENV} environment..."
           pnpm db:migrate
         fi
+
+        # Cleanup
+        kill $PROXY_PID
     secretEnv: ["DATABASE_URL"]
     volumes:
       - name: pnpm-store
