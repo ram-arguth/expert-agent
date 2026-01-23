@@ -1524,10 +1524,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`lib/__tests__/error-handling.integration.test.ts`** _(Error Recovery)_
 
-- [ ] Vertex AI timeout returns graceful error
-- [ ] Concurrent token deductions don't over-deduct
+- [x] Vertex AI failure prevents token deduction (implemented)
+- [x] Concurrent token deductions don't over-deduct (atomicity verified)
 - [ ] File upload + query race handled correctly
-- [ ] Session reload after error preserves data
+- [x] Session persistence failure handled gracefully
 
 ---
 
