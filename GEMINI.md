@@ -833,6 +833,15 @@ When monitoring Cloud Build:
 - **Avoid**: Long `WaitDurationSeconds` values (180+) when polling `command_status`
 - **Prefer**: 30-60 second intervals with multiple checks
 
+### 11.3 Iterative Development Workflow
+
+> **⚠️ MANDATORY:** You must commit and push your changes to the `dev` branch after EVERY successful iteration or significant step.
+
+- **Do NOT wait** for a "complete feature" before pushing.
+- **Commit often**: "WIP" commits are acceptable on the `dev` branch.
+- **Push immediately**: Ensure the remote `dev` branch is always up-to-date with your local state.
+- **Why**: This acts as a save point and prevents work loss.
+
 ---
 
 ## 12. Cloud Build Troubleshooting

@@ -101,6 +101,7 @@ describe('Agent Landing Page', () => {
     it('renders UX Analyst page with all sections', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -129,6 +130,7 @@ describe('Agent Landing Page', () => {
     it('renders Legal Advisor page', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'legal-advisor' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -140,6 +142,7 @@ describe('Agent Landing Page', () => {
     it('renders Finance Planner page', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'finance-planner' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -151,6 +154,7 @@ describe('Agent Landing Page', () => {
     it('shows beta badge for beta agents', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'legal-advisor' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -161,6 +165,7 @@ describe('Agent Landing Page', () => {
     it('does not show beta badge for released agents', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -171,6 +176,7 @@ describe('Agent Landing Page', () => {
     it('includes try now CTA with correct link', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -188,6 +194,7 @@ describe('Agent Landing Page', () => {
     it('includes pricing link', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -199,6 +206,7 @@ describe('Agent Landing Page', () => {
     it('renders features list', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -210,6 +218,7 @@ describe('Agent Landing Page', () => {
     it('renders use cases with examples', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -221,6 +230,7 @@ describe('Agent Landing Page', () => {
     it('renders FAQ section', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -232,6 +242,7 @@ describe('Agent Landing Page', () => {
       await expect(
         AgentLandingPage({
           params: Promise.resolve({ agentId: 'non-existent-agent' }),
+          searchParams: Promise.resolve({}),
         })
       ).rejects.toThrow('NEXT_NOT_FOUND');
     });
@@ -241,6 +252,7 @@ describe('Agent Landing Page', () => {
     it('shows tier requirement for pro agents', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'legal-advisor' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -251,6 +263,7 @@ describe('Agent Landing Page', () => {
     it('does not show tier requirement for free agents', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -263,6 +276,7 @@ describe('Agent Landing Page', () => {
     it('displays agent category badge', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'ux-analyst' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -273,6 +287,7 @@ describe('Agent Landing Page', () => {
     it('displays correct category for legal agent', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'legal-advisor' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);
@@ -283,6 +298,7 @@ describe('Agent Landing Page', () => {
     it('displays correct category for finance agent', async () => {
       const Page = await AgentLandingPage({
         params: Promise.resolve({ agentId: 'finance-planner' }),
+        searchParams: Promise.resolve({}),
       });
 
       render(Page);

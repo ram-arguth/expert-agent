@@ -377,20 +377,63 @@ function CapabilityIcon({ icon }: { icon: string }) {
 // Page Component
 // =============================================================================
 
+// =============================================================================
+// Page Component
+// =============================================================================
+
+import { AbTestTracker } from '@/components/analytics/ab-test-tracker';
+import { AbCtaButton } from '@/components/analytics/ab-cta-button';
+
 export default async function AgentLandingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ agentId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { agentId } = await params;
-  const agent = AGENTS[agentId];
+  const { variant } = await searchParams;
+  
+  // Clone the agent config so we can modify it for variants without affecting global state
+  const baseAgent = AGENTS[agentId];
 
-  if (!agent) {
+  if (!baseAgent) {
     notFound();
   }
 
+  const agent = { ...baseAgent };
+  const variantId = typeof variant === 'string' ? variant : 'control';
+  
+  // ===========================================================================
+  // A/B Test Configuration
+  // ===========================================================================
+  let experimentId = '';
+  
+  // Example Experiment: UX Analyst Positioning
+  if (agentId === 'ux-analyst') {
+    experimentId = 'ux_positioning_v1';
+    
+    if (variantId === 'b') {
+      agent.tagline = 'Data-Driven UX Audit & Optimization';
+      agent.description = 'Stop guessing. Get empirically-backed UX insights powered by advanced AI analysis of your actual product screenshots. Identify friction points instantly.';
+    }
+  }
+
+  // Use 'control' if no specific experiment active or no variant match
+  const finalVariantId = experimentId ? variantId : 'control';
+  const finalExperimentId = experimentId || 'none';
+
   return (
     <div className="space-y-16">
+      {/* A/B Test Tracker */}
+      {experimentId && (
+        <AbTestTracker 
+          experimentId={experimentId} 
+          variantId={finalVariantId} 
+          agentId={agentId} 
+        />
+      )}
+
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white md:p-12">
         <div className="relative z-10 max-w-3xl">
@@ -404,17 +447,31 @@ export default async function AgentLandingPage({
             <Badge variant="secondary" className="bg-white/10">
               {agent.category}
             </Badge>
+            
+            {/* Debug Badge for A/B Test Visibility (Dev only) */}
+            {process.env.NODE_ENV !== 'production' && experimentId && (
+              <Badge variant="outline" className="border-purple-500 text-purple-400">
+                Exp: {finalExperimentId} / {finalVariantId}
+              </Badge>
+            )}
           </div>
           <h1 className="mb-4 text-4xl font-bold md:text-5xl">{agent.name}</h1>
           <p className="mb-6 text-xl text-slate-300">{agent.tagline}</p>
           <p className="mb-8 text-slate-400">{agent.description}</p>
           <div className="flex flex-wrap gap-4">
-            <Button size="lg" className="gap-2" asChild>
-              <Link href={`/chat?agent=${agent.id}`}>
-                Try {agent.name}
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-            </Button>
+            {/* Primary CTA with A/B Tracking */}
+            <AbCtaButton 
+              size="lg" 
+              className="gap-2" 
+              href={`/chat?agent=${agent.id}`}
+              experimentId={finalExperimentId}
+              variantId={finalVariantId}
+              agentId={agentId}
+            >
+              Try {agent.name}
+              <ArrowRight className="h-5 w-5" />
+            </AbCtaButton>
+            
             <Button size="lg" variant="outline" className="border-white/20 bg-white/5" asChild>
               <Link href="/pricing">View Pricing</Link>
             </Button>
@@ -517,12 +574,19 @@ export default async function AgentLandingPage({
           Try {agent.name} now and get expert-level insights in seconds.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          <Button size="lg" className="gap-2" asChild>
-            <Link href={`/chat?agent=${agent.id}`}>
-              Start Using {agent.name}
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-          </Button>
+          <AbCtaButton 
+            size="lg" 
+            className="gap-2" 
+            href={`/chat?agent=${agent.id}`}
+            experimentId={finalExperimentId}
+            variantId={finalVariantId}
+            agentId={agentId}
+            conversionType="bottom_cta_click"
+          >
+            Start Using {agent.name}
+            <ArrowRight className="h-5 w-5" />
+          </AbCtaButton>
+
           {agent.tier !== 'free' && (
             <p className="w-full text-sm text-muted-foreground">
               Requires {agent.tier === 'pro' ? 'Pro' : 'Enterprise'} plan

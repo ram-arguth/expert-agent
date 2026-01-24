@@ -138,6 +138,22 @@ export const METRIC_DEFINITIONS: Record<string, MetricDefinition> = {
     labels: ['org_id', 'agent_id'],
   },
 
+  // Experiment metrics
+  'experiment.view': {
+    name: 'expert_agent/experiment/view',
+    description: 'Experiment variant views',
+    type: 'counter',
+    unit: '1',
+    labels: ['experiment_id', 'variant_id', 'agent_id'],
+  },
+  'experiment.conversion': {
+    name: 'expert_agent/experiment/conversion',
+    description: 'Experiment conversions',
+    type: 'counter',
+    unit: '1',
+    labels: ['experiment_id', 'variant_id', 'agent_id', 'conversion_type'],
+  },
+
   // Security metrics
   'security.blocked': {
     name: 'expert_agent/security/blocked',
@@ -545,6 +561,38 @@ export function recordSessionCreated(orgId: string, agentId: string): void {
  */
 export function setActiveSessionCount(orgId: string, count: number): void {
   setGauge('session.active', count, { org_id: orgId });
+}
+
+/**
+ * Record experiment view
+ */
+export function recordExperimentView(
+  experimentId: string,
+  variantId: string,
+  agentId: string
+): void {
+  incrementCounter('experiment.view', 1, {
+    experiment_id: experimentId,
+    variant_id: variantId,
+    agent_id: agentId,
+  });
+}
+
+/**
+ * Record experiment conversion
+ */
+export function recordExperimentConversion(
+  experimentId: string,
+  variantId: string,
+  agentId: string,
+  conversionType: string
+): void {
+  incrementCounter('experiment.conversion', 1, {
+    experiment_id: experimentId,
+    variant_id: variantId,
+    agent_id: agentId,
+    conversion_type: conversionType,
+  });
 }
 
 /**
