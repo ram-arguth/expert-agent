@@ -1507,12 +1507,12 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 #### Missing Integration Tests (Regression Prevention)
 
-**`lib/__tests__/memory-summarization.integration.test.ts`** _(Session Archival)_
+**`lib/__tests__/memory-summarization.integration.test.ts`** _(Session Archival)_ ✅
 
-- [ ] Stale sessions detected and summarized end-to-end
-- [ ] Summary stored to GCS and URL updated in DB
-- [ ] Archived session messages retained correctly
-- [ ] Resumed archived session loads summary into context
+- [x] Stale sessions detected and summarized end-to-end
+- [x] Summary stored to GCS and URL updated in DB
+- [x] Archived session messages retained correctly
+- [x] Resumed archived session loads summary into context
 
 **`lib/__tests__/export-share.integration.test.ts`** _(Export & Share)_
 
