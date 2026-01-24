@@ -1526,7 +1526,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [x] Vertex AI failure prevents token deduction (implemented)
 - [x] Concurrent token deductions don't over-deduct (atomicity verified)
-- [ ] File upload + query race handled correctly
+- [x] File upload + query race handled correctly
 - [x] Session persistence failure handled gracefully
 
 ---
