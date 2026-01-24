@@ -461,10 +461,10 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 **`infra/cloud-run.integration.test.ts`** _(Post-deployment smoke tests)_
 
-- [ ] Cloud Run service responds to health check
-- [ ] Can connect to Cloud SQL
-- [ ] Can read from Secret Manager
-- [ ] Can write to GCS bucket
+- [x] Cloud Run service responds to health check
+- [x] Can connect to Cloud SQL
+- [x] Can read from Secret Manager
+- [x] Can write to GCS bucket
 
 **`lib/__tests__/security.integration.test.ts`** _(Security hardening)_ ✅
 
