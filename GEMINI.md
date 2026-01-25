@@ -787,6 +787,18 @@ git push origin $TAG   # → deploys to expert-ai-prod (requires approval)
 4. **Stage Isolation**: Each environment has its own promotion gate
 5. **Audit Trail**: Clear record of what code went to which environment when
 
+### 10.1 Pre-Commit Hooks (MANDATORY)
+
+> **⚠️ HARD REQUIREMENT:** NEVER bypass pre-commit hooks.
+
+> [!CAUTION]
+> **DO NOT USE `--no-verify`**
+>
+> - Pre-commit hooks (`husky`, `lint-staged`) are the first line of defense.
+> - Bypassing them compromises code quality and breaks the build.
+> - If a hook fails, **FIX THE ISSUE**, do not bypass the check.
+> - **NEVER** run `git commit --no-verify` or `git push --no-verify`.
+
 ---
 
 ## 11. Assistant Interaction Preferences
