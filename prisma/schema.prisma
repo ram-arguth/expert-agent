@@ -60,6 +60,10 @@ model Org {
   stripeCustomerId String?
   plan             String  @default("free") // "free", "pro", "enterprise"
 
+  // Vertex AI Search Configuration
+  vertexSearchEnabled     Boolean @default(false)
+  vertexSearchDataStoreId String? // ID of the datastore in GCP (e.g., "projects/.../locations/.../collections/.../dataStores/...")
+
   // Token quota
   tokensRemaining Int       @default(1000)
   tokensMonthly   Int       @default(1000)

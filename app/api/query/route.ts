@@ -42,6 +42,7 @@ import {
   UX_ANALYST_PROMPT_TEMPLATE,
   renderToMarkdown,
 } from "@/lib/agents/ux-analyst";
+import { searchDataStore } from "@/lib/search/vertex-search-client";
 
 // Query request schema
 const QueryRequestSchema = z.object({
@@ -225,6 +226,39 @@ export async function POST(request: NextRequest) {
     // 8. Load org context (if in org context)
     const orgContext = await loadOrgContext(session.user.id, agentId);
 
+    // 8a. Vertex AI Search (RAG) - If enabled for org
+    let retrievedContext = '';
+    if (orgId) {
+      const org = await prisma.org.findUnique({
+        where: { id: orgId },
+        select: { vertexSearchEnabled: true, vertexSearchDataStoreId: true }
+      });
+
+      if (org?.vertexSearchEnabled && org.vertexSearchDataStoreId) {
+        // Construct query from input (either specific field or json string)
+        // For simple agents, we search using the 'additionalContext' or just the whole input summary.
+        // For MVP, we'll try to use 'additionalContext' if present, or fall back to a generic search if we had a specific query field.
+        // Since input is generic Record<string, unknown>, we look for common text fields.
+        const searchQuery = (validatedInputs as any).additionalContext as string || 
+                            (validatedInputs as any).query as string || 
+                            (validatedInputs as any).productDescription as string ||
+                            "";
+
+        if (searchQuery) {
+           const searchResults = await searchDataStore({
+             query: searchQuery,
+             dataStoreId: org.vertexSearchDataStoreId
+           });
+           
+           if (searchResults.length > 0) {
+             retrievedContext = searchResults.map(r => 
+               `[Source: ${r.title}]\n${r.snippet}`
+             ).join('\n\n');
+           }
+        }
+      }
+    }
+
     // 8b. Load locale context
     let localizedContext = '';
     if (locale && agent.config.localeVariants && agent.config.localeVariants[locale]) {
@@ -237,6 +271,7 @@ export async function POST(request: NextRequest) {
       ...processedFiles.files,
       orgContext,
       localizedContext,
+      retrievedContext,
     };
 
     const compiledPrompt = Handlebars.compile(agent.promptTemplate)(

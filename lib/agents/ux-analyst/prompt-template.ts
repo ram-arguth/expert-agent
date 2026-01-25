@@ -40,6 +40,12 @@ Analyze the provided screenshots/mockups of a {{productType}} application and pr
 {{localizedContext}}
 {{/if}}
 
+{{#if retrievedContext}}
+  ## Retrieved Knowledge (Organization Awareness)
+  The following information was retrieved from your organization's knowledge base and may be relevant to this analysis:
+  {{retrievedContext}}
+{{/if}}
+
 {{#if additionalContext}}
 ## Additional Context
 
