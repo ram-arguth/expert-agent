@@ -47,6 +47,7 @@ import {
 const QueryRequestSchema = z.object({
   agentId: z.string().min(1),
   sessionId: z.string().uuid().optional(),
+  locale: z.string().optional(),
   inputs: z.record(z.unknown()),
   files: z
     .array(
@@ -59,6 +60,8 @@ const QueryRequestSchema = z.object({
     )
     .optional(),
 });
+
+// ... (existing code)
 
 // Agent registry (expandable)
 const AGENT_REGISTRY: Record<
@@ -108,7 +111,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { agentId, sessionId, inputs, files } = requestValidation.data;
+    const { agentId, sessionId, locale, inputs, files } = requestValidation.data;
 
     // 3. Get agent configuration
     const agent = AGENT_REGISTRY[agentId];
@@ -222,11 +225,18 @@ export async function POST(request: NextRequest) {
     // 8. Load org context (if in org context)
     const orgContext = await loadOrgContext(session.user.id, agentId);
 
+    // 8b. Load locale context
+    let localizedContext = '';
+    if (locale && agent.config.localeVariants && agent.config.localeVariants[locale]) {
+      localizedContext = agent.config.localeVariants[locale].localizedContext || '';
+    }
+
     // 9. Compile prompt
     const promptContext = {
       ...validatedInputs,
       ...processedFiles.files,
       orgContext,
+      localizedContext,
     };
 
     const compiledPrompt = Handlebars.compile(agent.promptTemplate)(

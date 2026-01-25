@@ -955,7 +955,7 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - SEO metadata and OpenGraph tags for all agents
   - Not-found handler for invalid agents
   - 23 unit tests covering SSG, metadata, rendering
-- [ ] **A/B Testing for Landing Pages:** Implement variant selection (randomized or via query param). Track conversion metrics (CTA clicks, signups) per variant.
+- [x] **A/B Testing for Landing Pages:** Implement variant selection (randomized or via query param). Track conversion metrics (CTA clicks, signups) per variant.
 - [ ] **Localization Support:** Agent catalog supports `localeVariants` field mapping locale → context file overrides (e.g., "Tax Advisor" → US/UK/Japan regulatory docs).
 
 ### 2.6 OmniAgent Orchestrator (Single Entry Point)

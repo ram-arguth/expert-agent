@@ -35,6 +35,11 @@ Analyze the provided screenshots/mockups of a {{productType}} application and pr
 - **URL:** {{this.url}}
 {{/each}}
 
+{{#if localizedContext}}
+## Region-Specific Guidelines
+{{localizedContext}}
+{{/if}}
+
 {{#if additionalContext}}
 ## Additional Context
 

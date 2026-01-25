@@ -39,8 +39,10 @@ export { UX_ANALYST_PROMPT_TEMPLATE, compilePrompt } from './prompt-template';
 // Renderer
 export { renderToMarkdown } from './renderer';
 
+import { AgentConfig } from '../types';
+
 // Agent configuration
-export const UX_ANALYST_CONFIG = {
+export const UX_ANALYST_CONFIG: AgentConfig = {
   id: 'ux-analyst',
   displayName: 'UX Analyst',
   description:
@@ -52,4 +54,9 @@ export const UX_ANALYST_CONFIG = {
   supportsGuidedInterview: true,
   supportsFileUpload: true,
   supportsStreaming: true,
+  localeVariants: {
+    'en-GB': {
+      localizedContext: "Analyze usability with strict adherence to UK Accessibility Regulations 2018 (PSBAR) and Equality Act 2010.",
+    },
+  },
 } as const;
