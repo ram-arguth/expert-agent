@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@google-cloud/discoveryengine": "^2.5.2",
     "@google-cloud/opentelemetry-cloud-trace-exporter": "^3.0.0",
     "@google-cloud/storage": "^7.18.0",
     "@google/genai": "^1.0.0",
