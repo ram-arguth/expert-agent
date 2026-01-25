@@ -52,3 +52,4 @@ infra/.pulumi/
 infra/*.pyc
 infra/__pycache__/
 infra/venv/
+.tmp/

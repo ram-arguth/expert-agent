@@ -21,6 +21,7 @@ vi.mock("../../../../lib/db", () => ({
       findFirst: vi.fn(),
     },
     org: {
+      findUnique: vi.fn(),
       update: vi.fn(),
     },
     session: {
@@ -145,6 +146,13 @@ describe("POST /api/query", () => {
     });
     mockDeductTokens.mockResolvedValue({ success: true, newBalance: 9400 });
     mockFindFirstMembership.mockResolvedValue({ orgId: "org-1" });
+
+    // Mock org.findUnique for Vertex AI Search integration
+    (prisma.org.findUnique as Mock).mockResolvedValue({
+      id: "org-1",
+      vertexSearchEnabled: false,
+      vertexSearchDataStoreId: null,
+    });
 
     mockCreateSession.mockResolvedValue({ id: "session-1" });
     mockCreateUsageRecord.mockResolvedValue({ id: "usage-1" });

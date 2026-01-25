@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Use project-local .tmp for temp files to avoid permission issues
+export TMPDIR="$(pwd)/.tmp"
+mkdir -p "$TMPDIR"
+
 # Pre-commit checks - must pass before commit
 echo "🔍 Running pre-commit checks..."
 
@@ -9,25 +13,22 @@ echo "📝 Running lint..."
 pnpm lint-staged
 
 # 2. Type check
-# Note: Global typecheck temporarily disabled due to pre-existing technical debt
-# (implicit any types, stale Prisma client). TODO: Fix legacy errors and re-enable.
+# Note: Skipped until Prisma client is regenerated (pnpm db:generate).
+# The Prisma cache has permission issues blocking regeneration.
+# TODO: Run `pnpm db:generate` with PostgreSQL running to fix.
 # echo "🔧 Running typecheck..."
 # pnpm typecheck
 
 # 3. Run unit tests (fast, <30s target)
-# Note: Temporarily disabled due to EPERM environment restriction in local dev.
-# CI will run full tests. TODO: Fix local test environment issue.
-# echo "🧪 Running unit tests..."
-# pnpm test:unit -- --run
+echo "🧪 Running unit tests..."
+pnpm test:unit -- --run
 
 # 4. Check AuthZ coverage
-# Note: Temporarily disabled due to EPERM environment restriction.
-# echo "🔐 Checking Cedar authorization coverage..."
-# pnpm test:authz-coverage
+echo "🔐 Checking Cedar authorization coverage..."
+pnpm test:authz-coverage
 
 # 5. Check component usage (MANDATORY - blocking)
-# Note: Temporarily disabled due to EPERM environment restriction.
-# echo "🧩 Checking shared component usage..."
-# pnpm test:component-usage
+echo "🧩 Checking shared component usage..."
+pnpm test:component-usage
 
 echo "✅ All pre-commit checks passed!"

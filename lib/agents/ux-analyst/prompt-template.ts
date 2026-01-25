@@ -160,20 +160,42 @@ export function compilePrompt(input: Record<string, unknown>): string {
 
   // Replace simple variables
   const simpleVars = [
-    'productType',
-    'targetAudience',
-    'primaryUserTask',
-    'accessibilityLevel',
-    'analysisDepth',
-    'additionalContext',
-    'orgContext',
+    "productType",
+    "targetAudience",
+    "primaryUserTask",
+    "accessibilityLevel",
+    "analysisDepth",
+    "additionalContext",
+    "orgContext",
+    "localizedContext",
+    "retrievedContext",
   ];
 
   for (const key of simpleVars) {
     const value = input[key] as string | undefined;
     if (value) {
-      prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
+      prompt = prompt.replace(new RegExp(`{{${key}}}`, "g"), value);
     }
+  }
+
+  // Handle conditional blocks for localizedContext
+  if (input.localizedContext) {
+    prompt = prompt.replace(
+      /{{#if localizedContext}}([\s\S]*?){{\/if}}/g,
+      "$1",
+    );
+  } else {
+    prompt = prompt.replace(/{{#if localizedContext}}[\s\S]*?{{\/if}}/g, "");
+  }
+
+  // Handle conditional blocks for retrievedContext
+  if (input.retrievedContext) {
+    prompt = prompt.replace(
+      /{{#if retrievedContext}}([\s\S]*?){{\/if}}/g,
+      "$1",
+    );
+  } else {
+    prompt = prompt.replace(/{{#if retrievedContext}}[\s\S]*?{{\/if}}/g, "");
   }
 
   return prompt;
