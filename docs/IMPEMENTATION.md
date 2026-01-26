@@ -1525,9 +1525,14 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
 
 - [ ] PDF generation includes all report sections
 - [ ] DOCX export format correct (enterprise)
-- [ ] Share link ACL respects org settings
-- [ ] Revoked share link returns 404
-- [ ] Share to team updates artifact ACL
+- [x] Share link ACL respects org settings
+  - ✅ `app/api/share/route.ts` - Share API with visibility-based ACL (19 tests)
+  - ✅ Cedar policy: `user-manage-share-links`
+  - ✅ Prisma: `ShareLink` model with `allowedOrgId`, `allowedEmails`
+- [x] Revoked share link returns 404
+  - ✅ DELETE /api/share returns 410 Gone for revoked/expired links
+- [x] Share to team updates artifact ACL
+  - ✅ TEAM/ORG visibility restricts access to org members
 
 **`lib/__tests__/error-handling.integration.test.ts`** _(Error Recovery)_
 
