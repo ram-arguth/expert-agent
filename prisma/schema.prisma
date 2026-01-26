@@ -178,9 +178,10 @@ model Session {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  org      Org?      @relation(fields: [orgId], references: [id], onDelete: SetNull)
-  messages Message[]
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org        Org?        @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  messages   Message[]
+  shareLinks ShareLink[]
 
   @@index([userId])
   @@index([orgId])
@@ -409,4 +410,53 @@ enum AuditAction {
   SETTINGS_CHANGED
   SSO_CONFIGURED
   DOMAIN_VERIFIED
+
+  // Share operations
+  SHARE_CREATED
+  SHARE_REVOKED
+  SHARE_ACCESSED
+}
+
+// ============================================
+// Share Links (Artifact Sharing)
+// ============================================
+
+model ShareLink {
+  id        String @id @default(uuid())
+  sessionId String // The session/artifact being shared
+  createdBy String // User who created the share
+
+  // Link configuration
+  token      String          @unique // Random token for URL
+  visibility ShareVisibility @default(PRIVATE)
+
+  // Access control
+  allowedOrgId  String? // If TEAM/ORG, restrict to this org
+  allowedEmails String[] // Specific email addresses (for PRIVATE)
+
+  // Link state
+  isRevoked Boolean   @default(false)
+  expiresAt DateTime? // Optional expiration
+
+  // Usage tracking
+  accessCount    Int       @default(0)
+  lastAccessedAt DateTime?
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  // Relations
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([sessionId])
+  @@index([createdBy])
+}
+
+enum ShareVisibility {
+  PRIVATE // Anyone with link (requires login)
+  TEAM // Team/org members only
+  ORG // Organization members only
+  PUBLIC // No authentication required (future)
 }

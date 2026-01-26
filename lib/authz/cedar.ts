@@ -169,6 +169,12 @@ export const CedarActions = {
   ProcessWebhook: "ProcessWebhook",
   TriggerSummarization: "TriggerSummarization",
   RouteQuery: "RouteQuery",
+
+  // Share actions
+  CreateShareLink: "CreateShareLink",
+  GetShareLink: "GetShareLink",
+  RevokeShareLink: "RevokeShareLink",
+  AccessSharedContent: "AccessSharedContent",
 } as const;
 
 export type CedarActionType = (typeof CedarActions)[keyof typeof CedarActions];
@@ -662,6 +668,51 @@ class CedarEngine {
                 matches: true,
                 reason: "Admin/owner/billing_manager can manage billing",
               };
+            }
+          }
+        }
+        return { matches: false };
+      },
+    });
+
+    // Users can manage share links for their sessions
+    this.policies.push({
+      id: "user-manage-share-links",
+      effect: "permit",
+      priority: 60,
+      evaluate: (req) => {
+        if (req.principal.type !== "User") return { matches: false };
+
+        const shareActions: readonly string[] = [
+          CedarActions.CreateShareLink,
+          CedarActions.GetShareLink,
+          CedarActions.RevokeShareLink,
+          CedarActions.AccessSharedContent,
+        ];
+
+        if (shareActions.includes(req.action.id)) {
+          // Anyone can access shared content (ACL checked in route)
+          if (req.action.id === CedarActions.AccessSharedContent) {
+            return { matches: true, reason: "User can access shared content" };
+          }
+
+          // Create/revoke requires ownership
+          if (
+            req.action.id === CedarActions.CreateShareLink ||
+            req.action.id === CedarActions.RevokeShareLink
+          ) {
+            if (req.resource.attributes?.ownerId === req.principal.id) {
+              return {
+                matches: true,
+                reason: "User can manage own share links",
+              };
+            }
+          }
+
+          // Get share link for own sessions
+          if (req.action.id === CedarActions.GetShareLink) {
+            if (req.resource.attributes?.ownerId === req.principal.id) {
+              return { matches: true, reason: "User can view own share links" };
             }
           }
         }
