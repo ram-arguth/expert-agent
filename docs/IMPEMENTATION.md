@@ -2006,7 +2006,9 @@ See [docs/DNS.md](./DNS.md) for detailed documentation.
   - UI: `agent-catalog.spec.ts`, `dynamic-form.spec.ts`, `file-upload-flow.spec.ts`,
     `session-history.spec.ts`, `highlight-follow-up.spec.ts`, `chat-panel.spec.ts`,
     `omni-agent.spec.ts`, `responsive-mobile.spec.ts`
-- [ ] **Load Testing:** Simulate concurrent users in Gamma. Verify Cloud Run scales.
+- [x] **Load Testing:** Simulate concurrent users in Gamma. Verify Cloud Run scales.
+  - ✅ k6 load test scripts in `load-tests/`: `smoke-test.js`, `spike-test.js`, `user-flow.js`
+  - ✅ Helper script: `scripts/run-load-test.sh`
 - [x] **Accessibility E2E Tests:** `e2e/accessibility.spec.ts`
   - [x] Keyboard navigation works for all interactive elements (via Axe)
   - [x] Focus trap in modal dialogs
